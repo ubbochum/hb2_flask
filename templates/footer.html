@@ -1,0 +1,9 @@
+<footer>
+    <hr>
+    <p>
+        A joint project between the <a href="http://www.ub.ruhr-uni-bochum.de/">University Library Bochum</a> and the <a href="http://www.ub.tu-dortmund.de">University Library Dortmund</a>.<br/>
+        <a href="{{ url_for('contact') }}"><i class="fa fa-envelope-o"></i> {{ _('Contact') }}</a> | <button class="btn btn-default" onclick="TogetherJS(this); return false;">Start TogetherJS</button>
+        {#changed: <time datetime="$date$">{{ now }}</time>#}
+    </p>
+</footer>
+<script src="{{ url_for('static', filename='js/togetherjs-min.js') }}"></script>

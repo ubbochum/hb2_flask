@@ -1,0 +1,63 @@
+{% extends 'site_base.html' %}
+{% import 'bootstrap_macros.html' as bootstrap %}
+{% block site_content %}
+    {{ super() }}
+    {% if current_user.is_authenticated %}
+        <div class="row">
+            <div class="col-sm-offset-1 col-sm-10">
+                <h3>{{ _('Register New Titles') }}</h3>
+                <div class="col-sm-3">
+                    <a class="btn btn-default btn-lg" href="/create/from_identifiers" disabled="disabled"><i class="fa fa-barcode"></i> {{ _('I have IDs') }}</a><br/>
+                    <span class="help-block">{{ _('Import one or more ISBNs, DOIs, or PubMed IDs') }}</span>
+                </div>
+                <div class="col-sm-3">
+                    <a class="btn btn-default btn-lg" href="/create/publication" disabled="disabled"><i class="fa fa-keyboard-o"></i> {{ _("I don't have IDs") }}</a><br/>
+                    <span class="help-block">{{ _('Choose a Type and enter the Data Manually') }}</span>
+                </div>
+                <div class="col-sm-3">
+                    <a class="btn btn-default btn-lg" href="{{ url_for('file_upload') }}"><i class="fa fa-cloud-upload"></i> {{ _('I have a List') }}</a><br/>
+                    <span class="help-block">{{ _('Upload a List of Citations in BibTeX, RIS, Word, Excel, PDF...') }}</span>
+                </div>
+                <div class="col-sm-3">
+                    <a class="btn btn-default btn-lg" href="/create/from_search" disabled="disabled"><i class="fa fa-search-plus"></i> {{ _('I want to search') }}</a><br/>
+                    <span class="help-block">{{ _('Import one or more Titles by Searching') }}</span>
+                </div>
+                <div class="clearfix"></div>
+                <h3>{{ _('Profile') }}</h3>
+                <div class="col-sm-3">
+                    <img src="/static/site/bochum/img/person.svg" alt="{{ _('Person Dummy') }}" width="120px">
+                </div>
+                <div class="col-sm-6">{{ lipsum() }}</div>
+                <div class="clearfix"></div>
+
+                {% if numFound > 0 %}
+                    <h3>{{ _('My Titles') }}</h3>
+                    {{ pagination.info }}
+                    {{ pagination.links }}
+                    {% include 'record_list.html' %}
+                    {{ pagination.links }}
+                {% endif %}
+            </div>
+        </div>
+    {% else %}
+        <div class="row">
+            <div class="col-sm-4">
+                <h4><img src="/static/site/bochum/img/1_circle.svg" width="20%"> {{ _('Register Publications') }}</h4>
+                <p>{{ _('Send us your list of publications in whatsoever form, we will edit it into beautiful metadata.') }}</p>
+                <p><a class="btn btn-primary" href="{{ url_for('login', next='/create/from_file') }}"><i class="fa fa-sign-in"></i> {{ _('Sign In') }}</a></p>
+            </div>
+            <div class="col-sm-4">
+                <h4><img src="/static/site/bochum/img/2_circle.svg" width="20%"><span style="color: #BDBDBD"> {{ _('Integrate with ORCID') }}</span></h4>
+                <p>{{ _('With just a few clicks we will make you and your work individually recognisable on the web and in important data sources.') }}</p>
+                <p>Learn more in this short <a href="https://vimeo.com/97150912">video clip</a>.</p>
+                <p class="alert alert-info">{{ _('This feature will be available in 2016!') }}</p>
+            </div>
+            <div class="col-sm-4">
+                <h4><img src="/static/site/bochum/img/3_circle.svg" width="20%"><span style="color: #BDBDBD"> {{ _('Embed Publication List') }}</span></h4>
+                <p>{{ _('If you maintain your publications in our research bibliography you can embed this list on your own homepage and have it perpetually updated by registering new titles with us.') }}</p>
+                <p>If you are currently interested in using this service, please consult <a href="http://bibliographie-trac.ub.rub.de/wiki/Publikationslisten">our docs</a> or <a href="{{ url_for('contact') }}">contac us</a>.</p>
+                <p class="alert alert-info">{{ _('This feature will be available in 2016!') }}</p>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}

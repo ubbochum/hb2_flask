@@ -1,0 +1,7 @@
+<a href="/retrieve/{{ record.pubtype }}/{{ record.id }}">{{ record.title }}</a><br/>
+{% if record.person %}
+    {% for author in record.person %}{{ author }}{% if not loop.last %}; {% endif %}{% endfor %}
+    {% else %}
+    {% for corp in record.institution %}{{ corp }}{% if not loop.last %}; {% endif %}{% endfor %}
+{% endif %},
+{% if record.circa == 'y' %}{{ _('ca.') }} {% endif %}{{ record.fdate }}

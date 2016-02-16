@@ -1,0 +1,98 @@
+{% extends 'site_base.html' %}
+{% import 'drill_down.html' as drill_down with context %}
+{% block site_content %}
+    {{ super() }}
+    {% include 'confirm_delete_modal.html' %}
+    <p>{% include 'admin_nav.html' %}</p>
+        <div class="row">
+            <div class="col-sm-3">
+                {{ drill_down.facets(facet_data.fperson, 'fperson', heading='Person', target='dashboard') }}
+                {{ drill_down.facets(facet_data.pubtype, 'pubtype', heading='Publication Type', target='dashboard') }}
+                {{ drill_down.facets(facet_data.editorial_status, 'editorial_status', heading='Editorial Status', target='dashboard') }}
+                {{ drill_down.facets(facet_data.publication_status, 'publication_status', heading='Publication Status', target='dashboard') }}
+{#                {{ drill_down.facets(facet_data.owner, 'owner', heading='Owner') }}#}
+                {{ drill_down.facets(facet_data.deskman, 'deskman', heading='Deskman', target='dashboard') }}
+            </div>
+            <div class="col-sm-9">
+                {{ pagination.info }}
+                {% include 'remove_filters.html' %}
+                {{ pagination.links }}
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <td>#</td>
+                            <td>{{ _('Editorial Status') }}</td>
+                            <td>{{ _('Title') }}</td>
+                            <td>{{ _('Created') }}</td>
+                            <td>{{ _('Changed') }}</td>
+{#                            <td>{{ _('Owner') }}</td>#}
+{#                            <td>{{ _('Deskman') }}</td>#}
+                            <td>{{ _('Action') }}</td>
+                        </tr>
+                    </thead>
+                    {% for record in records %}
+                        <tr>
+                            <th scope="row">{{ loop.index + offset }}</th>
+                            <td>
+                                <span class="label label-{% if record.editorial_status == 'new' %}info{% elif record.editorial_status == 'in_process' %}default{% elif record.editorial_status == 'processed' %}primary{% elif record.editorial_status == 'final_editing' %}warning{% elif record.editorial_status == 'finalized' %}success{% endif %}">{% if record.locked %} <i class="fa fa-lock"></i> {% endif %}{{ record.editorial_status|capitalize }}</span>
+                            </td>
+                            <td>{% include 'resultlist_record.html' %}<br/>
+    {#                        {% for author in record.author %}{{ author.literal }}{% endfor %}, {% if record.circa == 'y' %}ca. {% endif %}{% if record.issued %}{{ record.issued.values()|list()|first|first }}{% endif %}</td>#}
+                            <td>{{ (now - record.recordCreationDate|mk_time())|humanize() }}</td>
+                            <td>{{ (now - record.recordChangeDate|mk_time())|humanize() }}</td>
+{#                            <td>{{ record.owner }}</td>#}
+{#                            <td>{{ record.deskman }}</td>#}
+                            <td class="dropdown">
+                                <button class="btn btn-default dropdown-toggle" type="button" id="action{{ loop.index }}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true"><i class="fa fa-cog"></i> Action <span class="fa fa-caret-down"></span></button>
+                                <ul class="dropdown-menu" aria-labelledby="action{{ loop.index }}">
+                                    <li><a href="{{ url_for('show_record', pubtype=record.pubtype, record_id=record.id) }}"><i class="fa fa-eye"></i> {{ _('View') }}</a></li>
+                                    {% if not record.locked %}<li id="{{ record.id }}" class="{{ record.id }}_edit"><a href="{{ url_for('edit_record', record_id=record.id, pubtype=record.pubtype) }}" class="lock_me"><i class="fa fa-pencil"></i> {{ _('Edit') }}</a></li>
+                                    {% if current_user.role == 'admin' %}<li class="bg-danger {{ record.id }}_del"><a href="#" data-href="{{ url_for('delete_record', record_id=record.id) }}" data-toggle="modal" data-target="#confirm-delete"><i class="fa fa-trash"></i> {{ _('Delete') }}</a></li>{% endif %}{% endif %}
+                                    <li class="divider" role="separator"></li>
+                                    <li class="dropdown-header"><i class="fa fa-plus"></i> {{ _('Add') }}</li>
+                                    <li class="disabled"><a href="{{ url_for('add_file', record_id=record.id) }}" disabled="disabled">{{ _('File') }}</a></li>
+                                </ul>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </table>
+                {{ pagination.links }}
+            </div>
+        </div>
+{% endblock %}
+{% block scripts %}
+    {{ super() }}
+    <script src="{{ url_for('static', filename='js/socket.io.js') }}"></script>
+    <script>
+        function page_reload(){
+            setTimeout(function(){
+                        document.location = '/{{ del_redirect }}';
+                        }, 1000);
+        }
+        $('#confirm-delete').on('show.bs.modal', function(event) {
+            $(this).find('.btn-ok').attr('href', $(event.relatedTarget).data('href'));
+        });
+        $(document).on('click', '.btn-ok', function(event){
+            event.preventDefault();
+            $.get($('.btn-ok').attr('href'), function(data){
+                if(data.deleted == true){
+                    page_reload();
+                }
+            });
+        });
+    </script>
+    <script>
+        var socket = io.connect('http://127.0.0.1:5000/hb2');
+        $(document).on('click', '.lock_me', function(event){
+            //event.preventDefault();
+            socket.emit('lock', {data: $(this).closest('li').attr('id')});
+        });
+        socket.on('locked', function(msg){
+            $('.' + msg.data + '_edit').remove();
+            $('.' + msg.data + '_del').remove();
+        });
+        socket.on('unlocked', function(msg){
+            console.log(JSON.stringify(msg));
+        });
+    </script>
+{% endblock %}
