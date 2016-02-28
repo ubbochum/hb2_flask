@@ -1,6 +1,9 @@
+#!/usr/bin/env python
+# encoding: utf-8
+
 # The MIT License
 #
-#  Copyright 2015 UB Bochum <bibliographie-ub@rub.de>.
+#  Copyright 2015-2016 University Library Bochum <ottomanhistoriography@ruhr-uni-bochum.de>.
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a copy
 #  of this software and associated documentation files (the "Software"), to deal
@@ -26,6 +29,7 @@ import secrets
 from werkzeug import iri_to_uri
 import simplejson as json
 import logging
+#import time
 
 logging.basicConfig (level=logging.INFO,
     format='%(asctime)s %(levelname)-4s %(message)s',
@@ -34,7 +38,7 @@ logging.basicConfig (level=logging.INFO,
 
 class Solr(object):
     def __init__(self, host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, application='solr', handler='select',
-                 query='*:*', fquery=[], fields=[], writer='python', start='0', rows='10', facet='true',
+                 query='*:*', fquery=[], fields=[], writer='python', start='0', rows='10', facet='false',
                  facet_fields=secrets.SOLR_FACETS, facet_mincount=0, facet_limit=10, facet_offset=0, sort='score desc',
                  terms_fl='', terms_limit=10, terms_prefix='', terms_sort='count', mlt=False, mlt_fields=[],
                  omitHeader='false', query_field='', sort_facet_by_index={}, fuzzy='false',
@@ -42,7 +46,7 @@ class Solr(object):
                  spellcheck_count=5, suggest_query='', group='false', group_field='', group_limit=1,
                  group_sort='score desc', group_ngroups='true', coordinates='0,0', json_nl='arrmap',# cursor='',
                  boost_most_recent='false', csv_separator='\t', core=secrets.SOLR_CORE, stats='false', stats_fl=[],
-                 data='', del_id=''):
+                 data='', del_id='', export_field='', json_facet={}):
         self.host = host
         self.port = port
         self.application = application
@@ -94,16 +98,19 @@ class Solr(object):
         self.stats_fl = stats_fl
         self.data = data
         self.del_id = del_id
+        self.export_field = export_field
+        #self.export_dir = export_dir
+        self.json_facet = json_facet
 
     def request(self):
         params = ''
         url = 'http://%s:%s/%s/' % (self.host, self.port, self.application)
         if self.core != '':
             url += '%s/' % self.core
-        fuzzy_tilde= ''
+        fuzzy_tilde = ''
         if self.fuzzy == 'true':
             fuzzy_tilde = '~'
-        if self.facet == 'true':
+        if self.facet == 'true': # Old-style facetting...
             facets = '&facet.field='.join(self.facet_fields)
             params = '%s?q=%s%s&wt=%s&start=%s&rows=%s&facet.limit=%s&facet.mincount=%s&facet.offset=%s&facet.field=%s&json.nl=%s&facet=%s&facet.sort=%s&omitHeader=%s&defType=%s&facet.threads=-1' % (
                 self.handler, self.query, fuzzy_tilde, self.writer, self.start, self.rows, self.facet_limit,
@@ -136,6 +143,9 @@ class Solr(object):
                 params += '&boost=recip(ms(NOW/YEAR,year_boost),3.16e-11,1,1)'
             if self.writer == 'csv':
                 params += '&csv.separator=%s' % self.csv_separator
+            #logging.info(self.json_facet)
+            if self.json_facet:
+                params += '&json.facet=%s' % (json.dumps(self.json_facet))
         if len(self.fquery) > 0:
             for fq in (self.fquery):
                 try:
@@ -155,12 +165,14 @@ class Solr(object):
             params += '&fl=%s' % '+'.join(self.fields)
         if self.mlt is True:
             self.facet = 'false'
-            mparams = '%s/%s?q=%s&mlt=true&mlt.fl=%s&mlt.count=10&fl=%s&wt=%s&defType=%s' % (
-                self.application, self.handler, self.query, '+'.join(self.mlt_fields), '+'.join(self.fields),
+            mparams = '%s?q=%s&mlt=true&mlt.fl=%s&mlt.count=10&fl=%s&wt=%s&defType=%s' % (
+                self.handler, self.query, '+'.join(self.mlt_fields), '+'.join(self.fields),
                 self.writer, self.defType)
             # if self.boost_most_recent == 'true':
             #     params += '&boost=recip(ms(NOW/YEAR,year_boost),3.16e-11,1,1)'
             #self.response = eval(urllib.request.urlopen('%s%s' % (url, mparams)).read())
+            #logging.info(url)
+            #logging.info(mparams)
             self.response = eval(requests.get('%s%s' % (url, mparams)).text)
             for mlt in self.response.get('moreLikeThis'):
                 self.mlt_results = self.response.get('moreLikeThis').get(mlt).get('docs')
@@ -223,6 +235,9 @@ class Solr(object):
             self.facets = self.response.get('facet_counts').get('facet_fields')
         if len(self.facet_tree) > 0:
             self.tree = self.response.get('facet_counts').get('facet_pivot')
+        if self.json_facet:
+            #logging.info(self.response.get('facets'))
+            self.facets = self.response.get('facets')
         if self.spellcheck == 'true' or self.handler.endswith('suggest'):
             try:
                 self.suggestions = self.response.get('spellcheck').get('suggestions')
@@ -277,6 +292,24 @@ class Solr(object):
         url = 'http://%s:%s/%s/%s/update?commit=true' % (self.host, self.port, self.application, self.core)
         resp = requests.post(url, headers={'Content-type': 'application/json'}, data=json.dumps({'delete': {'id': self.del_id}}))
         return resp.status_code
+
+    def export(self):
+        done = False
+        cm = '*'
+        export_docs = []
+        while not done:
+            resp = requests.get('http://%s:%s/%s/%s/query?q=*:*&sort=id asc&fl=%s&cursorMark=%s' % (self.host, self.port, self.application, self.core, self.export_field, cm)).json()
+            for doc in resp.get('response').get('docs'):
+                export_docs.append(json.loads(doc.get(self.export_field)))
+            if cm == resp.get('nextCursorMark'):
+                done = True
+            cm = resp.get('nextCursorMark')
+
+        #with open('%s/%s_%s.json' % (self.export_dir, self.core, int(time.time())), 'w') as dumpfile:
+            #json.dump(export_docs, dumpfile, indent=4)
+
+        #return '%s/%s_%s.json' % (self.export_dir, self.core, int(time.time()))
+        return export_docs
 
     def __len__(self):
         return len(self.results)

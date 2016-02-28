@@ -26,6 +26,7 @@ import base64
 import datetime
 import re
 import xmlrpc.client
+from io import BytesIO
 
 import requests
 #import pickle
@@ -33,7 +34,8 @@ import humanize
 import simplejson as json
 import wtforms_json
 import orcid
-from flask import Flask, render_template, redirect, request, jsonify, flash, url_for, Markup, g
+import time
+from flask import Flask, render_template, redirect, request, jsonify, flash, url_for, Markup, g, send_file
 from flask.ext.babel import Babel
 from flask.ext.bootstrap import Bootstrap
 from flask.ext.paginate import Pagination
@@ -47,7 +49,7 @@ from urllib import parse
 from lxml import etree
 from datadiff import diff_dict
 from fuzzywuzzy import fuzz
-
+from multiprocessing import Pool
 from solr_handler import Solr
 from processors import mods_processor
 from forms import *
@@ -272,8 +274,8 @@ def persons():
     query = '*:*'
     filterquery = request.values.getlist('filter')
 
-    persons_solr = Solr(query=query, start=(page - 1) * 10, core='person', facet='true',
-                      facet_fields=['affiliation'], fquery=filterquery)
+    persons_solr = Solr(query=query, start=(page - 1) * 10, core='person',
+                        json_facet={'affiliation': {'type': 'term', 'field': 'affiliation'}}, fquery=filterquery)
     persons_solr.request()
 
     num_found = persons_solr.count()
@@ -324,7 +326,7 @@ def search():
     else:
         sorting = 'fdate desc'
 
-    search_solr = Solr(start=(page - 1) * 10, query=query, fquery=filterquery, sort=sorting)
+    search_solr = Solr(start=(page - 1) * 10, query=query, fquery=filterquery, sort=sorting, json_facet=secrets.SOLR_FACETS)
     search_solr.request()
     num_found = search_solr.count()
     if num_found == 1:
@@ -371,7 +373,7 @@ def flash_errors(form):
         for error in errors:
             flash('Error in the %s field: %s' % (getattr(form, field).label.text, error), 'error')
 
-def _record2solr(form, action):
+def _record2solr_doc(form, action):
     if action == 'update':
         if form.data.get('editorial_status') == 'new':
             form.editorial_status.data = 'in_process'
@@ -467,6 +469,10 @@ def _record2solr(form, action):
     record_solr = Solr(core='hb2', data=[solr_data])
     record_solr.update()
 
+def _record2solr(form):
+    record_solr = Solr(core='hoe', data=[_record2solr_doc(form)])
+    record_solr.update()
+
 @app.route('/orcid2name/<orcid_id>')
 @login_required
 def orcid2name(orcid_id=''):
@@ -484,7 +490,39 @@ def dashboard():
     filterquery = request.values.getlist('filter')
     logging.info(filterquery)
     #Solr(start=(page - 1) * 10, query=query, fquery=filterquery, sort=sorting)
-    dashboard_solr = Solr(start=(page - 1) * 10, query=query, sort='recordCreationDate asc', facet_fields=['fperson', 'pubtype', 'publication_status', 'editorial_status', 'owner', 'deskman'], fquery=filterquery)
+    DASHBOARD_FACETS = {
+        'pubtype':
+            {
+                'type': 'terms',
+                'field': 'pubtype'
+            },
+        'fperson':
+            {
+                'type': 'terms',
+                'field': 'fperson'
+            },
+        'publication_status':
+            {
+                'type': 'terms',
+                'field': 'publication_status'
+            },
+        'editorial_status':
+            {
+                'type': 'terms',
+                'field': 'editorial_status'
+            },
+        'owner':
+            {
+                'type': 'terms',
+                'field': 'owner'
+            },
+        'deskman':
+            {
+                'type': 'terms',
+                'field': 'deskman'
+            },
+    }
+    dashboard_solr = Solr(start=(page - 1) * 10, query=query, sort='recordCreationDate asc', json_facet=DASHBOARD_FACETS, fquery=filterquery)
     dashboard_solr.request()
 
     num_found = dashboard_solr.count()
@@ -584,7 +622,8 @@ def orgas():
     query = '*:*'
     filterquery = request.values.getlist('filter')
 
-    orgas_solr = Solr(query=query, start=(page - 1) * 10, core='organisation', facet='true', facet_fields=['destatis_id'], fquery=filterquery)
+    orgas_solr = Solr(query=query, start=(page - 1) * 10, core='organisation',
+                      json_facet={'destatis_id': {'type': 'term', 'field': 'destatis_id'}}, fquery=filterquery)
     orgas_solr.request()
 
     num_found = orgas_solr.count()
@@ -779,7 +818,7 @@ def new_record(pubtype='ArticleJournal'):
             record_solr = Solr(core='hb2', data=[solr_data])
             record_solr.update()
         else:
-            _record2solr(form, action='create')
+            _record2solr_doc(form, action='create')
         return jsonify({'status': 200})
 
     for person in form.person:
@@ -798,7 +837,7 @@ def new_record(pubtype='ArticleJournal'):
             flash_errors(form)
             return render_template('tabbed_form.html', form=form, header=gettext('New Record'),
                                    site=theme(request.access_route), action='create', pubtype=pubtype)
-        _record2solr(form, action='create')
+        _record2solr_doc(form, action='create')
         return redirect(url_for('dashboard'))
 
     if request.args.get('subtype'):
@@ -1203,18 +1242,23 @@ def login():
                                            'passwd': base64.b64encode(request.form.get('password').encode('ascii'))}).json()
             #logging.info(authuser)
             if authuser.get('email'):
-                if not redis_store.exists(request.form.get('username')):
+                user_solr = Solr(core='hb2_users', query='id:%s' % authuser.get('id'), facet='false')
+                user_solr.request()
+                if user_solr.count() == 0:
+                    tmp = {}
                     accesstoken = make_secure_token(
                         base64.b64encode(request.form.get('username').encode('ascii')) + base64.b64encode(
                             request.form.get('password').encode('ascii')))
-                    redis_store.hset(request.form.get('username'), 'name', '%s %s' % (authuser.get('given_name'), authuser.get('last_name')))
-                    redis_store.hset(request.form.get('username'), 'email', authuser.get('email'))
-                    redis_store.hset(request.form.get('username'), 'role', 'user')
-                    redis_store.hset(request.form.get('username'), 'gndid', '')
-                    redis_store.hset(request.form.get('username'), 'accesstoken', accesstoken)
+                    tmp.setdefault('id', request.form.get('username').encode('ascii'))
+                    tmp.setdefault('name', '%s %s' % (authuser.get('given_name'), authuser.get('last_name')))
+                    tmp.setdefault('email', authuser.get('email'))
+                    tmp.setdefault('role', 'user')
+                    tmp.setdefault('accesstoken', accesstoken)
                     user.name = '%s %s' % (authuser.get('given_name'), authuser.get('last_name'))
                     user.email = authuser.get('email')
                     user.accesstoken = accesstoken
+                    new_user_solr = Solr(core='hb2_users', data=[tmp], facet='false')
+                    new_user_solr.update()
                 login_user(user)
 
                 return redirect(next or url_for('homepage'))
@@ -1236,16 +1280,19 @@ def login():
             }).json()
             #logging.info(user_info)
             if authuser.get('access_token'):
-                if not redis_store.exists(request.form.get('username')):
-                    redis_store.hset(user.id, 'name', user_info.get('name'))
-                    redis_store.hset(user.id, 'email', user_info.get('email'))
-                    redis_store.hset(user.id, 'gndid', '')
-                    redis_store.hset(user.id, 'role', 'user')
-                    redis_store.hset(user.id, 'accesstoken', authuser.get('access_token'))
+                user_solr = Solr(core='hb2_users', query='accesstoken:%s' % authuser.get('access_token'), facet='false')
+                user_solr.request()
+                if user_solr.count() == 0:
+                    tmp = {}
+                    tmp.setdefault('name', user_info.get('name'))
+                    tmp.setdefault('email', user_info.get('email'))
+                    tmp.setdefault('role', 'user')
+                    tmp.setdefault('accesstoken', authuser.get('access_token'))
                     user.name = user_info.get('name')
                     user.email = user_info.get('email')
                     user.accesstoken = authuser.get('accesstoken')
-
+                    new_user_solr = Solr(core='hb2_users', data=[tmp], facet='false')
+                    new_user_solr.update()
                 login_user(user)
                 return redirect(next or url_for('homepage'))
             else:
@@ -1288,6 +1335,82 @@ def unlock_message(message):
 @socketio.on('connect', namespace='/hb2')
 def connect():
     emit('my response', {'data': 'connected'})
+
+@app.route('/export/solr_dump')
+def export_solr_dump():
+    '''
+    Export the wtf_json field of every doc in the index to a new document in the users core and to the user's local file
+    system. Uses the current user's ID and a timestamp as the document ID and file name.
+    '''
+    filename = '%s_%s.json' % (current_user.id, int(time.time()))
+    export_solr = Solr(export_field='wtf_json')
+    export_docs = export_solr.export()
+    target_solr = Solr(core='hoe_users', data=[{'id': filename, 'dump': json.dumps(export_docs)}])
+    target_solr.update()
+
+    return send_file(BytesIO(str.encode(json.dumps(export_docs))), attachment_filename=filename, as_attachment=True)
+
+@app.route('/import/solr_dumps')
+def import_solr_dumps():
+    '''
+    Import Solr dumps either from the users core or from the local file system.
+    '''
+    page = int(request.args.get('page', 1))
+    solr_dumps = Solr(core='hoe_users', query='id:*.json', facet='false', start=(page - 1) * 10)
+    solr_dumps.request()
+    num_found = solr_dumps.count()
+    pagination = Pagination(page=page, total=num_found, found=num_found, bs_version=3, search=True,
+                                record_name=gettext('dumps'),
+                                search_msg=gettext('Showing {start} to {end} of {found} {record_name}'))
+    mystart = 1 + (pagination.page - 1) * pagination.per_page
+    form = FileUploadForm()
+    return render_template('solr_dumps.html', records=solr_dumps.results, offset=mystart - 1, pagination=pagination,
+                           header=gettext('Import Dump'), del_redirect='import/solr_dumps', form=form)
+
+def _import_data(doc):
+    form = PUBTYPE2FORM.get(doc.get('pubtype')).from_json(doc)
+    return _record2solr_doc(form)
+
+@app.route('/import/solr_dump/<filename>', methods=['GET', 'POST'])
+def import_solr_dump(filename=''):
+    thedata = ''
+    solr_data = []
+    if request.method == 'GET':
+        if filename:
+            import_solr = Solr(core='hoe_users', query='id:%s' % filename, facet='false')
+            import_solr.request()
+
+            thedata = json.loads(import_solr.results[0].get('dump')[0])
+    elif request.method == 'POST':
+        form = FileUploadForm()
+        if form.validate_on_submit():
+            thedata = json.loads(form.file.data.stream.read())
+
+    pool = Pool(4)
+    solr_data.append(pool.map(_import_data, thedata))
+    import_solr = Solr(core='hoe', data=solr_data[0])
+    import_solr.update()
+
+    flash('%s records imported!' % len(thedata), 'success')
+
+    return redirect('dashboard')
+
+@app.route('/delete/solr_dump/<record_id>')
+def delete_dump(record_id=''):
+    delete_record_solr = Solr(core='hoe_users', del_id=record_id)
+    delete_record_solr.delete()
+
+    return jsonify({'deleted': True})
+
+@app.route('/retrieve/related_items/<relation>/<record_ids>')
+def show_related_item(relation='', record_ids=''):
+    query = query='{!terms f=id}%s' % record_ids
+    if ',' not in record_ids:
+        query = 'id:%s' % record_ids
+    relation_solr = Solr(query=query, facet='false')
+    relation_solr.request()
+
+    return jsonify({'relation': relation, 'docs': relation_solr.results})
 
 # if __name__ == '__main__':
 #     app.run()
