@@ -17,3 +17,7 @@
         {% include 'footer.html' %}
     </div>
 {% endblock %}
+{% block scripts %}
+    {{ super() }}
+    {% block site_scripts %}{% endblock %}
+{% endblock %}

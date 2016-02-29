@@ -542,6 +542,18 @@ def dashboard():
                            target='dashboard',
                            )
 
+@app.route('/make_admin/<user_id>')
+@login_required
+def make_admin(user_id=''):
+    if user_id:
+        ma_solr = Solr(core='hoe_users', data=[{'id': user_id, 'role': {'set': 'admin'}}])
+        ma_solr.update()
+        flash(gettext('%s upgraded to admin!' % user_id), 'success')
+        return redirect(url_for('index'))
+    else:
+        flash(gettext('You did not supply an ID!'), 'danger')
+        return redirect(url_for('superadmin'))
+
 @app.route('/superadmin', methods=['GET'])
 @login_required
 def superadmin():
@@ -552,7 +564,19 @@ def superadmin():
     sa_solr = Solr(core='hb2', fquery=['locked:true', 'recordChangeDate:[* TO NOW-1HOUR]'], rows=5000)
     sa_solr.request()
 
-    return render_template('superadmin.html', records=sa_solr.results, header=gettext('Superadmin Board'), site=theme(request.access_route))
+    page = int(request.args.get('page', 1))
+    solr_dumps = Solr(core='hb2_users', query='id:*.json', facet='false', start=(page - 1) * 10)
+    solr_dumps.request()
+    num_found = solr_dumps.count()
+    pagination = Pagination(page=page, total=num_found, found=num_found, bs_version=3, search=True,
+                                record_name=gettext('dumps'),
+                                search_msg=gettext('Showing {start} to {end} of {found} {record_name}'))
+    mystart = 1 + (pagination.page - 1) * pagination.per_page
+    form = FileUploadForm()
+
+    return render_template('superadmin.html', records=sa_solr.results, header=gettext('Superadmin Board'),
+                           import_records=solr_dumps.results, offset=mystart - 1, pagination=pagination,
+                           del_redirect=url_for('superadmin'), form=form, site=theme(request.access_route))
 
 @app.route('/unlock/<record_id>', methods=['GET'])
 @login_required
@@ -1345,7 +1369,7 @@ def export_solr_dump():
     filename = '%s_%s.json' % (current_user.id, int(time.time()))
     export_solr = Solr(export_field='wtf_json')
     export_docs = export_solr.export()
-    target_solr = Solr(core='hoe_users', data=[{'id': filename, 'dump': json.dumps(export_docs)}])
+    target_solr = Solr(core='hb2_users', data=[{'id': filename, 'dump': json.dumps(export_docs)}])
     target_solr.update()
 
     return send_file(BytesIO(str.encode(json.dumps(export_docs))), attachment_filename=filename, as_attachment=True)
@@ -1356,7 +1380,7 @@ def import_solr_dumps():
     Import Solr dumps either from the users core or from the local file system.
     '''
     page = int(request.args.get('page', 1))
-    solr_dumps = Solr(core='hoe_users', query='id:*.json', facet='false', start=(page - 1) * 10)
+    solr_dumps = Solr(core='hb2_users', query='id:*.json', facet='false', start=(page - 1) * 10)
     solr_dumps.request()
     num_found = solr_dumps.count()
     pagination = Pagination(page=page, total=num_found, found=num_found, bs_version=3, search=True,
@@ -1416,4 +1440,4 @@ def show_related_item(relation='', record_ids=''):
 #     app.run()
 
 if __name__ == '__main__':
-    socketio.run(app)
+    socketio.run(app, port=5005)

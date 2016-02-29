@@ -1,6 +1,5 @@
 <div class="row">
     <div class="col-sm-12"><h3>{{ _('Admin Actions') }}</h3>
-
         <div class="btn-group">
             <div class="btn-group">
                 <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown"><i
@@ -29,5 +28,8 @@
             </div>
             <a href="/consolidate/persons" type="button" class="btn btn-default"><i class="fa fa-users"></i> {{ _('Consolidate Persons') }}</a>
         </div>
+        {% if header != 'Superadmin Board' %}<div class="pull-right">
+            <a href="{{ url_for('superadmin') }}" type="button" class="btn btn-warning"><i class="fa fa-bomb"></i> {{ _('Super Admin') }}</a><br/>{{ _('Use with Care!') }}
+        </div>{% endif %}
     </div>
 </div>
