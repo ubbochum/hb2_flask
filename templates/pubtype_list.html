@@ -28,7 +28,6 @@
                         <li><a href="{{ url_for('new_record', pubtype='Chapter', subtype='abstract') }}">{{ _('Abstract') }}</a></li>
                         <li><a href="{{ url_for('new_record', pubtype='Chapter', subtype='afterword') }}">{{ _('Afterword') }}</a></li>
                         <li><a href="{{ url_for('new_record', pubtype='Chapter', subtype='festschrift') }}">{{ _('Festschrift') }}</a></li>
-                        <li><a href="{{ url_for('new_record', pubtype='Chapter', subtype='homily') }}">{{ _('Homily') }}</a></li>
                         <li><a href="{{ url_for('new_record', pubtype='Chapter', subtype='interview') }}">{{ _('Interview') }}</a></li>
                         <li><a href="{{ url_for('new_record', pubtype='Chapter', subtype='introduction') }}">{{ _('Introduction') }}</a></li>
                         <li><a href="{{ url_for('new_record', pubtype='Chapter', subtype='lexicon_article') }}">{{ _('Article in Lexicon') }}</a></li>
@@ -36,6 +35,7 @@
                         <li><a href="{{ url_for('new_record', pubtype='Chapter', subtype='poster') }}">{{ _('Poster') }}</a></li>
                         <li><a href="{{ url_for('new_record', pubtype='Chapter', subtype='poster_abstract') }}">{{ _('Poster Abstract') }}</a></li>
                         <li><a href="{{ url_for('new_record', pubtype='Chapter', subtype='review') }}">{{ _('Review') }}</a></li>
+                        <li><a href="{{ url_for('new_record', pubtype='Chapter', subtype='sermon') }}">{{ _('Sermon') }}</a></li>
                     </ul>
                 </li>
                 <li>
@@ -63,11 +63,11 @@
                     <ul>
                         <li><a href="{{ url_for('new_record', pubtype='Other', subtype='article_lexicon') }}">{{ _('Article in Lexicon') }}</a></li>
                         <li><a href="{{ url_for('new_record', pubtype='Other', subtype='festschrift') }}">{{ _('Festschrift') }}</a></li>
-                        <li><a href="{{ url_for('new_record', pubtype='Other', subtype='homily') }}">{{ _('Homily') }}</a></li>
                         <li><a href="{{ url_for('new_record', pubtype='Other', subtype='lecture_notes') }}">{{ _('Lecture Notes') }}</a></li>
                         <li><a href="{{ url_for('new_record', pubtype='Other', subtype='poster') }}">{{ _('Poster') }}</a></li>
                         <li><a href="{{ url_for('new_record', pubtype='Other', subtype='poster_abstract') }}">{{ _('Poster Abstract') }}</a></li>
                         <li><a href="{{ url_for('new_record', pubtype='Other', subtype='report') }}">{{ _('Report') }}</a></li>
+                        <li><a href="{{ url_for('new_record', pubtype='Other', subtype='sermon') }}">{{ _('Sermon') }}</a></li>
                     </ul>
                 </li>
                 <li><a href="{{ url_for('new_record', pubtype='Patent') }}">{{ _('Patent') }}</a></li>
@@ -77,7 +77,6 @@
                         <li><a href="{{ url_for('new_record', pubtype='Thesis', subtype='bachelor_thesis') }}">{{ _('Bachelor Thesis') }}</a></li>
                         <li><a href="{{ url_for('new_record', pubtype='Thesis', subtype='diploma_thesis') }}">{{ _('Diploma Thesis') }}</a></li>
                         <li><a href="{{ url_for('new_record', pubtype='Thesis', subtype='dissertation') }}">{{ _('Dissertation') }}</a></li>
-                        <li><a href="{{ url_for('new_record', pubtype='Thesis', subtype='festschrift') }}">{{ _('Festschrift') }}</a></li>
                         <li><a href="{{ url_for('new_record', pubtype='Thesis', subtype='habilitation') }}">{{ _('Habilitation') }}</a></li>
                         <li><a href="{{ url_for('new_record', pubtype='Thesis', subtype='magisterarbeit') }}">{{ _('Magisterarbeit') }}</a></li>
                         <li><a href="{{ url_for('new_record', pubtype='Thesis', subtype='masters_thesis') }}">{{ _("Master's Thesis") }}</a></li>
@@ -116,7 +115,12 @@
                 {% if current_user.role == 'admin' %}
                     <div class="col-sm-4">
                     <ul class="list-unstyled">
-                <li><a href="{{ url_for('new_record', pubtype='Conference') }}">{{ _('Conference') }}</a></li>
+                <li>
+                    <a href="{{ url_for('new_record', pubtype='Conference') }}">{{ _('Conference') }}</a>
+                    <ul>
+                        <li><a href="{{ url_for('new_record', pubtype='Conference', subtype='festschrift') }}">{{ _('Festschrift') }}</a></li>
+                    </ul>
+                </li>
                 <li>
                     <a href="{{ url_for('new_record', pubtype='Edition') }}">{{ _('Edition') }}</a>
                     <ul>
@@ -129,13 +133,13 @@
                     <ul>
                         <li><a href="{{ url_for('new_record', pubtype='InternetDocument', subtype='abstract') }}">{{ _('Abstract') }}</a></li>
                         <li><a href="{{ url_for('new_record', pubtype='InternetDocument', subtype='habilitation') }}">{{ _('Habilitation') }}</a></li>
-                        <li><a href="{{ url_for('new_record', pubtype='InternetDocument', subtype='homily') }}">{{ _('Homily') }}</a></li>
                         <li><a href="{{ url_for('new_record', pubtype='InternetDocument', subtype='interview') }}">{{ _('Interview') }}</a></li>
                         <li><a href="{{ url_for('new_record', pubtype='InternetDocument', subtype='lexicon_article') }}">{{ _('Article in Lexicon') }}</a></li>
                         <li><a href="{{ url_for('new_record', pubtype='InternetDocument', subtype='meeting_abstract') }}">{{ _('Meeting Abstract') }}</a></li>
                         <li><a href="{{ url_for('new_record', pubtype='InternetDocument', subtype='poster') }}">{{ _('Poster') }}</a></li>
                         <li><a href="{{ url_for('new_record', pubtype='InternetDocument', subtype='poster_abstract') }}">{{ _('Poster Abstract') }}</a></li>
                         <li><a href="{{ url_for('new_record', pubtype='InternetDocument', subtype='review') }}">{{ _('Review') }}</a></li>
+                        <li><a href="{{ url_for('new_record', pubtype='InternetDocument', subtype='sermon') }}">{{ _('Sermon') }}</a></li>
                     </ul>
                 </li>
                 <li><a href="{{ url_for('new_record', pubtype='Journal') }}">{{ _('Journal') }}</a></li>
@@ -146,7 +150,11 @@
                         <li><a href="{{ url_for('new_record', pubtype='Lecture', subtype='meeting_abstract') }}">{{ _('Meeting Abstract') }}</a></li>
                     </ul>
                 </li>
-                <li><a href="{{ url_for('new_record', pubtype='LegalCommentary') }}">{{ _('Legal Commentary') }}</a>
+                <li>
+                    <a href="{{ url_for('new_record', pubtype='LegalCommentary') }}">{{ _('Legal Commentary') }}</a>
+                    <ul>
+                        <li><a href="{{ url_for('new_record', pubtype='LegalCommentary', subtype='festschrift') }}">{{ _('Festschrift') }}</a></li>
+                    </ul>
                 </li>
                 <li><a href="{{ url_for('new_record', pubtype='Newspaper') }}">{{ _('Newspaper') }}</a></li>
                 <li><a href="{{ url_for('new_record', pubtype='PressRelease') }}">{{ _('Press Release') }}</a></li>

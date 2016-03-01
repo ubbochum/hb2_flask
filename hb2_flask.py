@@ -561,7 +561,7 @@ def superadmin():
         flash(gettext('For Admins ONLY!!!'))
         return redirect(url_for('homepage'))
     # Get locked records that were last changed more than one hour ago...
-    sa_solr = Solr(core='hb2', fquery=['locked:true', 'recordChangeDate:[* TO NOW-1HOUR]'], rows=5000)
+    sa_solr = Solr(core='hb2', fquery=['locked:true', 'recordChangeDate:[* TO NOW-1HOUR]'], sort='recordChangeDate desc')
     sa_solr.request()
 
     page = int(request.args.get('page', 1))
@@ -1202,10 +1202,10 @@ class User(UserMixin):
         self.email = email
         self.gndid = gndid
         self.accesstoken = accesstoken
-        if redis_store.exists(id):
-            _user = redis_store.hgetall(id)
-            tmp = json.dumps(_user)
-            _user = json.loads(tmp)
+        user_solr = Solr(core='hb2_users', query='id:%s' % id, facet='false')
+        user_solr.request()
+        if user_solr.count() > 0:
+            _user = user_solr.results[0]
             self.name = _user.get('name')
             self.role = _user.get('role')
             self.email = _user.get('email')
@@ -1217,7 +1217,10 @@ class User(UserMixin):
 
     @classmethod
     def get_user(self_class, id):
-        return redis_store.hgetall(id)
+        user_solr = Solr(core='hb2_users', query='id:%s' % id, facet='false')
+        user_solr.request()
+
+        return user_solr.results[0]
 
     @classmethod
     def get(self_class, id):

@@ -85,3 +85,5 @@ thead {background-color: #e8efcf; border-top: 2px solid #8dae10; text-transform:
             padding-bottom: 18px;
         }*/
 .select2-container--default, .select2-search--inline, .select2-search__field{width: 100% !important;}
+.multi_enclosure .control-label, .subfield_label {font-size: 14px; font-weight: 700;}
+.multi_enclosure .form-group {margin-bottom: 0;}
