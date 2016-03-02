@@ -260,8 +260,17 @@
 .fa-unlock-alt:before {
   content: ""; }
 
+.fa-minus-square-o:before {
+  content: ""; }
+
+.fa-plus-square-o:before {
+  content: ""; }
+
 .fa-university:before {
   content: ""; }
+
+.fa-bomb:before {
+  content: ""; }
 
 .fa-newspaper-o:before {
   content: ""; }
@@ -274,5 +283,8 @@
 
 .fa-clone:before {
   content: ""; }
+
+.fa-hand-paper-o:before {
+  content: ""; }
 
 /*# sourceMappingURL=font-awesome.css.map */

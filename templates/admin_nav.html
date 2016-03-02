@@ -29,7 +29,7 @@
             <a href="/consolidate/persons" type="button" class="btn btn-default"><i class="fa fa-users"></i> {{ _('Consolidate Persons') }}</a>
         </div>
         {% if header != 'Superadmin Board' %}<div class="pull-right">
-            <a href="{{ url_for('superadmin') }}" type="button" class="btn btn-warning"><i class="fa fa-bomb"></i> {{ _('Super Admin') }}</a><br/>{{ _('Use with Care!') }}
+            <a href="{{ url_for('superadmin') }}" type="button" class="btn btn-danger"><i class="fa fa-bomb"></i> {{ _('Super Admin') }}</a><br/><i class="fa fa-warning"></i> {{ _('Proceed with Caution!') }}
         </div>{% endif %}
     </div>
 </div>

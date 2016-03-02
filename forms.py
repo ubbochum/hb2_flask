@@ -62,7 +62,7 @@ LANGUAGES = [
         ('ara', gettext('Arabic')),
         ('hun', gettext('Hungarian')),
         ('swe', gettext('Swedish')),
-        ('ukr', gettext(('Ukranian'))),
+        ('ukr', gettext('Ukranian')),
         ('heb', gettext('Hebrew')),
         ('hrv', gettext('Croatian')),
         ('slo', gettext('Slovak')),
@@ -208,7 +208,7 @@ class PersonForm(Form):
     #former_name = StringField(gettext('Former Name'), validators=[Optional()], widget=CustomTextInput(placeholder=gettext('Family name, given name')), description=gettext('If you have more than one former name, please separate them by semicolon.'))
     gnd = StringField(gettext('GND'), validators=[Optional(), Regexp('(1|10)\d{7}[0-9X]|[47]\d{6}-\d|[1-9]\d{0,7}-[0-9X]|3\d{7}[0-9X]')])
     orcid = StringField(gettext('ORCID'), validators=[Optional()])
-    role = SelectField(gettext('Role'))
+    role = SelectMultipleField(gettext('Role'))
     corresponding_author = BooleanField(gettext('Corresponding Author'), validators=[Optional()], description=gettext('The person handling the publication process'))
 
     admin_only = ['gnd']
@@ -428,7 +428,7 @@ class PersonProfileForm(PersonForm):
 
 class CorporationForm(Form):
     name = StringField(gettext('Name'))
-    role = SelectField(gettext('Role'), choices=[
+    role = SelectMultipleField(gettext('Role'), choices=[
         ('', gettext('Select a Role')),
         ('edt', gettext('Editor')),
         ('his', gettext('Host institution')),
@@ -972,7 +972,7 @@ class ChapterInLegalCommentaryForm(ChapterForm):
 class ChapterInMonographForm(ChapterForm):
     subtype = SelectField(gettext('Subtype'), validators=[Optional()], choices=[
         ('', gettext('Select a Subtype')),
-        ('foreword', gettext('Foreword')),
+        ('introduction', gettext('Introduction')),
         ('afterword', gettext('Afterword')),
     ])
 

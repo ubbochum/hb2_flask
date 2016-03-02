@@ -95,6 +95,143 @@ FORM_COUNT_RE = re.compile('-\d+$')
 GND_RE = re.compile('(1|10)\d{7}[0-9X]|[47]\d{6}-\d|[1-9]\d{0,7}-[0-9X]|3\d{7}[0-9X]')
 UUID_RE = re.compile('[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}')
 
+PUBTYPE2TEXT = {
+    'ArticleJournal': gettext('Article in Journal'),
+    'ArticleNewspaper': gettext('Article in Newspaper'),
+    'AudioBook': gettext('Audio Book'),
+    'AudioVideoDocument': gettext('Audio or Video Document'),
+    'Chapter': gettext('Chapter in...'),
+    'ChapterInLegalCommentary': gettext('Chapter in a Legal Commentary'),
+    'ChapterInMonograph': gettext('Chapter in a Monograph'),
+    'Collection': gettext('Collection'),
+    'Conference': gettext('Conference'),
+    'Edition': gettext('Edition'),
+    'InternetDocument': gettext('Internet Document'),
+    'Journal': gettext('Journal'),
+    'Lecture': gettext('Lecture'),
+    'LegalCommentary': gettext('Legal Commentary'),
+    'Monograph': gettext('Monograph'),
+    'Newspaper': gettext('Newspaper'),
+    'Other': gettext('Other'),
+    'Patent': gettext('Patent'),
+    'PressRelease': gettext('Press Release'),
+    'RadioTVProgram': gettext('Radio or TV Program'),
+    'Series': gettext('Series'),
+    'Software': gettext('Software'),
+    'SpecialIssue': gettext('Special Issue'),
+    'Standard': gettext('Standard'),
+    'Thesis': gettext('Thesis'),
+}
+
+SUBTYPE2TEXT = {
+    'article_lexicon': gettext('Article in Lexicon'),
+    'abstract': gettext('Abstract'),
+    'afterword': gettext('Afterword'),
+    'bachelor_thesis': gettext('Bachelor Thesis'),
+    'diploma_thesis': gettext('Diploma Thesis'),
+    'dissertation': gettext('Dissertation'),
+    'dramatic_work': gettext('Dramatic Work'),
+    'festschrift': gettext('Festschrift'),
+    'first_state_examination': gettext('1st State Examination'),
+    'habilitation': gettext('Habilitation'),
+    'image_database': gettext('Image Database'),
+    'interview': gettext('Interview'),
+    'introduction': gettext('Introduction'),
+    'lecture_notes': gettext('Lecture Notes'),
+    'magisterarbeit': gettext('Magisterarbeit'),
+    'masters_thesis': gettext("Master's Thesis"),
+    'meeting_abstract': gettext('Meeting Abstract'),
+    'notated_music': gettext('Notated Music'),
+    'poster': gettext('Poster'),
+    'poster_abstract': gettext('Poster Abstract'),
+    'report': gettext('Report'),
+    'review': gettext('Review'),
+    'second_state_examination': gettext('2nd State Examination'),
+    'sermon': gettext('Sermon'),
+}
+
+ROLE_MAP = {
+    'abr': gettext('Abridger'),
+    'act': gettext('Actor'),
+    'aut': gettext('Author'),
+    'aft': gettext('Author of Afterword'),
+    'arr': gettext('Arranger'),
+    'aui': gettext('Author of Introduction'),
+    'chr': gettext('Choreographer'),
+    'cmp': gettext('Composer'),
+    'ctb': gettext('Contributor'),
+    'cst': gettext('Costume Designer'),
+    'cwt': gettext('Commentator for written text'),
+    'drt': gettext('Director'),
+    'edt': gettext('Editor'),
+    'elg': gettext('Electrician'),
+    'fmk': gettext('Filmmaker'),
+    'hnr': gettext('Honoree'),
+    'his': gettext('Host institution'),
+    'ill': gettext('Illustrator'),
+    'itr': gettext('Instrumentalist'),
+    'ive': gettext('Interviewee'),
+    'ivr': gettext('Interviewer'),
+    'inv': gettext('Inventor'),
+    'mod': gettext('Moderator'),
+    'mus': gettext('Musician'),
+    'org': gettext('Originator'),
+    'pdr': gettext('Project Director'),
+    'pht': gettext('Photographer'),
+    'pmn': gettext('Production Manager'),
+    'pro': gettext('Producer'),
+    'prg': gettext('Programmer'),
+    'red': gettext('Redaktor'),
+    'std': gettext('Set Designer'),
+    'sng': gettext('Singer'),
+    'spk': gettext('Speaker'),
+    'stl': gettext('Storyteller'),
+    'trl': gettext('Translator'),
+    'tcd': gettext('Technical Director'),
+    'ths': gettext('Thesis Advisor'),
+}
+
+LANGUAGE_MAP = {
+    'eng': gettext('English'),
+    'ger': gettext('German'),
+    'fre': gettext('French'),
+    'rus': gettext('Russian'),
+    'spa': gettext('Spanish'),
+    'ita': gettext('Italian'),
+    'jap': gettext('Japanese'),
+    'lat': gettext('Latin'),
+    'zhn': gettext('Chinese'),
+    'dut': gettext('Dutch'),
+    'tur': gettext('Turkish'),
+    'por': gettext('Portuguese'),
+    'pol': gettext('Polish'),
+    'gre': gettext('Greek'),
+    'srp': gettext('Serbian'),
+    'cat': gettext('Catalan'),
+    'dan': gettext('Danish'),
+    'cze': gettext('Czech'),
+    'kor': gettext('Korean'),
+    'ara': gettext('Arabic'),
+    'hun': gettext('Hungarian'),
+    'swe': gettext('Swedish'),
+    'ukr': gettext('Ukranian'),
+    'heb': gettext('Hebrew'),
+    'hrv': gettext('Croatian'),
+    'slo': gettext('Slovak'),
+    'nor': gettext('Norwegian'),
+    'rum': gettext('Romanian'),
+    'fin': gettext('Finnish'),
+    'geo': gettext('Georgian'),
+    'bul': gettext('Bulgarian'),
+    'grc': gettext('Ancient Greek'),
+    'ind': gettext('Indonesian Language'),
+    'gmh': gettext('Middle High German'),
+    'mon': gettext('Mongolian Language'),
+    'peo': gettext('Persian'),
+    'alb': gettext('Albanian'),
+    'bos': gettext('Bosnian'),
+}
+
 @app.template_filter('rem_form_count')
 def rem_form_count_filter(mystring):
     '''Remove trailing form counts to display only categories in FormField/FieldList combinations.'''
@@ -106,7 +243,6 @@ def mk_time_filter(mytime):
         return datetime.datetime.strptime(mytime, '%Y-%m-%d %H:%M:%S.%f')
     except ValueError:
         return datetime.datetime.strptime(mytime, '%Y-%m-%dT%H:%M:%S.%fZ')
-
 
 @app.template_filter('last_split')
 def last_split_filter(category):
@@ -120,6 +256,10 @@ def get_name(record):
 @app.template_filter('filter_remove')
 def filter_remove_filter(fqstring, category):
     re.compile()
+
+@app.template_filter('deserialize_json')
+def deserialize_json_filter(thejson):
+    return json.loads(thejson)
 
 def theme(ip):
     # logging.info(ip[0])
@@ -561,8 +701,14 @@ def superadmin():
         flash(gettext('For Admins ONLY!!!'))
         return redirect(url_for('homepage'))
     # Get locked records that were last changed more than one hour ago...
-    sa_solr = Solr(core='hb2', fquery=['locked:true', 'recordChangeDate:[* TO NOW-1HOUR]'], sort='recordChangeDate desc')
+    locked_page = int(request.args.get('locked_page', 1))
+    sa_solr = Solr(core='hb2', fquery=['locked:true', 'recordChangeDate:[* TO NOW-1HOUR]'], sort='recordChangeDate asc')
     sa_solr.request()
+    locked_num_found = sa_solr.count()
+    locked_pagination = Pagination(page=locked_page, total=locked_num_found, found=locked_num_found, bs_version=3, search=True,
+                                record_name=gettext('records'), href='?locked_page={0}',
+                                search_msg=gettext('Showing {start} to {end} of {found} {record_name}'))
+    locked_start = 1 + (locked_pagination.page - 1) * locked_pagination.per_page
 
     page = int(request.args.get('page', 1))
     solr_dumps = Solr(core='hb2_users', query='id:*.json', facet='false', start=(page - 1) * 10)
@@ -576,7 +722,8 @@ def superadmin():
 
     return render_template('superadmin.html', records=sa_solr.results, header=gettext('Superadmin Board'),
                            import_records=solr_dumps.results, offset=mystart - 1, pagination=pagination,
-                           del_redirect=url_for('superadmin'), form=form, site=theme(request.access_route))
+                           del_redirect='superadmin', form=form, site=theme(request.access_route),
+                           locked_offset = locked_start - 1, locked_pagination=locked_pagination)
 
 @app.route('/unlock/<record_id>', methods=['GET'])
 @login_required
@@ -882,50 +1029,6 @@ def new_record(pubtype='ArticleJournal'):
 
 @app.route('/retrieve/<pubtype>/<record_id>')
 def show_record(pubtype, record_id=''):
-    ROLE_MAP = {
-        'ann': gettext('Annotator'),
-        'aut': gettext('Author'),
-        'aft': gettext('Author of Afterword'),
-        'aui': gettext('Author of Introduction'),
-        'ato': gettext('Autographer'),
-        'bnd': gettext('Binder'),
-        'dte': gettext('Dedicatee'),
-        'dto': gettext('Dedicator'),
-        'edt': gettext('Editor'),
-        'fmo': gettext('Former Owner'),
-        'hnr': gettext('Honoree'),
-        'his': gettext('Host institution'),
-        'ill': gettext('Illuminator'),
-        'ive': gettext('Interviewee'),
-        'ivr': gettext('Interviewer'),
-        'pat': gettext('Patron'),
-        'prt': gettext('Printer'),
-        'scr': gettext('Scribe'),
-        'spk': gettext('Speaker'),
-        'trl': gettext('Translator'),
-    }
-    LANGUAGE_MAP = {
-        'alb': gettext('Albanian'),
-        'ara': gettext('Arabic'),
-        'bos': gettext('Bosnian'),
-        'bul': gettext('Bulgarian'),
-        'hrv': gettext('Croatian'),
-        'dut': gettext('Dutch'),
-        'eng': gettext('English'),
-        'fre': gettext('French'),
-        'ger': gettext('German'),
-        'grc': gettext('Ancient Greek'),
-        'gre': gettext('Modern Greek'),
-        'ita': gettext('Italian'),
-        'lat': gettext('Latin'),
-        'peo': gettext('Persian'),
-        'pol': gettext('Polish'),
-        'rum': gettext('Romanian'),
-        'rus': gettext('Russian'),
-        'srp': gettext('Serbian'),
-        'spa': gettext('Spanish'),
-        'tur': gettext('Turkish'),
-    }
     show_record_solr = Solr( query='id:%s' % record_id)
     show_record_solr.request()
 
@@ -935,7 +1038,8 @@ def show_record(pubtype, record_id=''):
 
     return render_template('record.html', record=form, header=form.data.get('title'), site=theme(request.access_route),
                            action='retrieve', record_id=record_id, del_redirect='dashboard', pubtype=pubtype,
-                           role_map=ROLE_MAP, lang_map=LANGUAGE_MAP, locked=locked)
+                           role_map=ROLE_MAP, lang_map=LANGUAGE_MAP, pubtype_map=PUBTYPE2TEXT, subtype_map=SUBTYPE2TEXT,
+                           genre_map=GENRE2TEXT, locked=locked)
 
 @app.route('/retrieve/person/<person_id>')
 def show_person(person_id=''):
