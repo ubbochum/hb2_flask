@@ -36,7 +36,7 @@ import wtforms_json
 import orcid
 import time
 from flask import Flask, render_template, redirect, request, jsonify, flash, url_for, Markup, g, send_file
-from flask.ext.babel import Babel
+from flask.ext.babel import Babel, lazy_gettext
 from flask.ext.bootstrap import Bootstrap
 from flask.ext.paginate import Pagination
 from flask_humanize import Humanize
@@ -96,140 +96,140 @@ GND_RE = re.compile('(1|10)\d{7}[0-9X]|[47]\d{6}-\d|[1-9]\d{0,7}-[0-9X]|3\d{7}[0
 UUID_RE = re.compile('[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}')
 
 PUBTYPE2TEXT = {
-    'ArticleJournal': gettext('Article in Journal'),
-    'ArticleNewspaper': gettext('Article in Newspaper'),
-    'AudioBook': gettext('Audio Book'),
-    'AudioVideoDocument': gettext('Audio or Video Document'),
-    'Chapter': gettext('Chapter in...'),
-    'ChapterInLegalCommentary': gettext('Chapter in a Legal Commentary'),
-    'ChapterInMonograph': gettext('Chapter in a Monograph'),
-    'Collection': gettext('Collection'),
-    'Conference': gettext('Conference'),
-    'Edition': gettext('Edition'),
-    'InternetDocument': gettext('Internet Document'),
-    'Journal': gettext('Journal'),
-    'Lecture': gettext('Lecture'),
-    'LegalCommentary': gettext('Legal Commentary'),
-    'Monograph': gettext('Monograph'),
-    'Newspaper': gettext('Newspaper'),
-    'Other': gettext('Other'),
-    'Patent': gettext('Patent'),
-    'PressRelease': gettext('Press Release'),
-    'RadioTVProgram': gettext('Radio or TV Program'),
-    'Series': gettext('Series'),
-    'Software': gettext('Software'),
-    'SpecialIssue': gettext('Special Issue'),
-    'Standard': gettext('Standard'),
-    'Thesis': gettext('Thesis'),
+    'ArticleJournal': lazy_gettext('Article in Journal'),
+    'ArticleNewspaper': lazy_gettext('Article in Newspaper'),
+    'AudioBook': lazy_gettext('Audio Book'),
+    'AudioVideoDocument': lazy_gettext('Audio or Video Document'),
+    'Chapter': lazy_gettext('Chapter in...'),
+    'ChapterInLegalCommentary': lazy_gettext('Chapter in a Legal Commentary'),
+    'ChapterInMonograph': lazy_gettext('Chapter in a Monograph'),
+    'Collection': lazy_gettext('Collection'),
+    'Conference': lazy_gettext('Conference'),
+    'Edition': lazy_gettext('Edition'),
+    'InternetDocument': lazy_gettext('Internet Document'),
+    'Journal': lazy_gettext('Journal'),
+    'Lecture': lazy_gettext('Lecture'),
+    'LegalCommentary': lazy_gettext('Legal Commentary'),
+    'Monograph': lazy_gettext('Monograph'),
+    'Newspaper': lazy_gettext('Newspaper'),
+    'Other': lazy_gettext('Other'),
+    'Patent': lazy_gettext('Patent'),
+    'PressRelease': lazy_gettext('Press Release'),
+    'RadioTVProgram': lazy_gettext('Radio or TV Program'),
+    'Series': lazy_gettext('Series'),
+    'Software': lazy_gettext('Software'),
+    'SpecialIssue': lazy_gettext('Special Issue'),
+    'Standard': lazy_gettext('Standard'),
+    'Thesis': lazy_gettext('Thesis'),
 }
 
 SUBTYPE2TEXT = {
-    'article_lexicon': gettext('Article in Lexicon'),
-    'abstract': gettext('Abstract'),
-    'afterword': gettext('Afterword'),
-    'bachelor_thesis': gettext('Bachelor Thesis'),
-    'diploma_thesis': gettext('Diploma Thesis'),
-    'dissertation': gettext('Dissertation'),
-    'dramatic_work': gettext('Dramatic Work'),
-    'festschrift': gettext('Festschrift'),
-    'first_state_examination': gettext('1st State Examination'),
-    'habilitation': gettext('Habilitation'),
-    'image_database': gettext('Image Database'),
-    'interview': gettext('Interview'),
-    'introduction': gettext('Introduction'),
-    'lecture_notes': gettext('Lecture Notes'),
-    'magisterarbeit': gettext('Magisterarbeit'),
-    'masters_thesis': gettext("Master's Thesis"),
-    'meeting_abstract': gettext('Meeting Abstract'),
-    'notated_music': gettext('Notated Music'),
-    'poster': gettext('Poster'),
-    'poster_abstract': gettext('Poster Abstract'),
-    'report': gettext('Report'),
-    'review': gettext('Review'),
-    'second_state_examination': gettext('2nd State Examination'),
-    'sermon': gettext('Sermon'),
+    'article_lexicon': lazy_gettext('Article in Lexicon'),
+    'abstract': lazy_gettext('Abstract'),
+    'afterword': lazy_gettext('Afterword'),
+    'bachelor_thesis': lazy_gettext('Bachelor Thesis'),
+    'diploma_thesis': lazy_gettext('Diploma Thesis'),
+    'dissertation': lazy_gettext('Dissertation'),
+    'dramatic_work': lazy_gettext('Dramatic Work'),
+    'festschrift': lazy_gettext('Festschrift'),
+    'first_state_examination': lazy_gettext('1st State Examination'),
+    'habilitation': lazy_gettext('Habilitation'),
+    'image_database': lazy_gettext('Image Database'),
+    'interview': lazy_gettext('Interview'),
+    'introduction': lazy_gettext('Introduction'),
+    'lecture_notes': lazy_gettext('Lecture Notes'),
+    'magisterarbeit': lazy_gettext('Magisterarbeit'),
+    'masters_thesis': lazy_gettext("Master's Thesis"),
+    'meeting_abstract': lazy_gettext('Meeting Abstract'),
+    'notated_music': lazy_gettext('Notated Music'),
+    'poster': lazy_gettext('Poster'),
+    'poster_abstract': lazy_gettext('Poster Abstract'),
+    'report': lazy_gettext('Report'),
+    'review': lazy_gettext('Review'),
+    'second_state_examination': lazy_gettext('2nd State Examination'),
+    'sermon': lazy_gettext('Sermon'),
 }
 
 ROLE_MAP = {
-    'abr': gettext('Abridger'),
-    'act': gettext('Actor'),
-    'aut': gettext('Author'),
-    'aft': gettext('Author of Afterword'),
-    'arr': gettext('Arranger'),
-    'aui': gettext('Author of Introduction'),
-    'chr': gettext('Choreographer'),
-    'cmp': gettext('Composer'),
-    'ctb': gettext('Contributor'),
-    'cst': gettext('Costume Designer'),
-    'cwt': gettext('Commentator for written text'),
-    'drt': gettext('Director'),
-    'edt': gettext('Editor'),
-    'elg': gettext('Electrician'),
-    'fmk': gettext('Filmmaker'),
-    'hnr': gettext('Honoree'),
-    'his': gettext('Host institution'),
-    'ill': gettext('Illustrator'),
-    'itr': gettext('Instrumentalist'),
-    'ive': gettext('Interviewee'),
-    'ivr': gettext('Interviewer'),
-    'inv': gettext('Inventor'),
-    'mod': gettext('Moderator'),
-    'mus': gettext('Musician'),
-    'org': gettext('Originator'),
-    'pdr': gettext('Project Director'),
-    'pht': gettext('Photographer'),
-    'pmn': gettext('Production Manager'),
-    'pro': gettext('Producer'),
-    'prg': gettext('Programmer'),
-    'red': gettext('Redaktor'),
-    'std': gettext('Set Designer'),
-    'sng': gettext('Singer'),
-    'spk': gettext('Speaker'),
-    'stl': gettext('Storyteller'),
-    'trl': gettext('Translator'),
-    'tcd': gettext('Technical Director'),
-    'ths': gettext('Thesis Advisor'),
+    'abr': lazy_gettext('Abridger'),
+    'act': lazy_gettext('Actor'),
+    'aut': lazy_gettext('Author'),
+    'aft': lazy_gettext('Author of Afterword'),
+    'arr': lazy_gettext('Arranger'),
+    'aui': lazy_gettext('Author of Introduction'),
+    'chr': lazy_gettext('Choreographer'),
+    'cmp': lazy_gettext('Composer'),
+    'ctb': lazy_gettext('Contributor'),
+    'cst': lazy_gettext('Costume Designer'),
+    'cwt': lazy_gettext('Commentator for written text'),
+    'drt': lazy_gettext('Director'),
+    'edt': lazy_gettext('Editor'),
+    'elg': lazy_gettext('Electrician'),
+    'fmk': lazy_gettext('Filmmaker'),
+    'hnr': lazy_gettext('Honoree'),
+    'his': lazy_gettext('Host institution'),
+    'ill': lazy_gettext('Illustrator'),
+    'itr': lazy_gettext('Instrumentalist'),
+    'ive': lazy_gettext('Interviewee'),
+    'ivr': lazy_gettext('Interviewer'),
+    'inv': lazy_gettext('Inventor'),
+    'mod': lazy_gettext('Moderator'),
+    'mus': lazy_gettext('Musician'),
+    'org': lazy_gettext('Originator'),
+    'pdr': lazy_gettext('Project Director'),
+    'pht': lazy_gettext('Photographer'),
+    'pmn': lazy_gettext('Production Manager'),
+    'pro': lazy_gettext('Producer'),
+    'prg': lazy_gettext('Programmer'),
+    'red': lazy_gettext('Redaktor'),
+    'std': lazy_gettext('Set Designer'),
+    'sng': lazy_gettext('Singer'),
+    'spk': lazy_gettext('Speaker'),
+    'stl': lazy_gettext('Storyteller'),
+    'trl': lazy_gettext('Translator'),
+    'tcd': lazy_gettext('Technical Director'),
+    'ths': lazy_gettext('Thesis Advisor'),
 }
 
 LANGUAGE_MAP = {
-    'eng': gettext('English'),
-    'ger': gettext('German'),
-    'fre': gettext('French'),
-    'rus': gettext('Russian'),
-    'spa': gettext('Spanish'),
-    'ita': gettext('Italian'),
-    'jap': gettext('Japanese'),
-    'lat': gettext('Latin'),
-    'zhn': gettext('Chinese'),
-    'dut': gettext('Dutch'),
-    'tur': gettext('Turkish'),
-    'por': gettext('Portuguese'),
-    'pol': gettext('Polish'),
-    'gre': gettext('Greek'),
-    'srp': gettext('Serbian'),
-    'cat': gettext('Catalan'),
-    'dan': gettext('Danish'),
-    'cze': gettext('Czech'),
-    'kor': gettext('Korean'),
-    'ara': gettext('Arabic'),
-    'hun': gettext('Hungarian'),
-    'swe': gettext('Swedish'),
-    'ukr': gettext('Ukranian'),
-    'heb': gettext('Hebrew'),
-    'hrv': gettext('Croatian'),
-    'slo': gettext('Slovak'),
-    'nor': gettext('Norwegian'),
-    'rum': gettext('Romanian'),
-    'fin': gettext('Finnish'),
-    'geo': gettext('Georgian'),
-    'bul': gettext('Bulgarian'),
-    'grc': gettext('Ancient Greek'),
-    'ind': gettext('Indonesian Language'),
-    'gmh': gettext('Middle High German'),
-    'mon': gettext('Mongolian Language'),
-    'peo': gettext('Persian'),
-    'alb': gettext('Albanian'),
-    'bos': gettext('Bosnian'),
+    'eng': lazy_gettext('English'),
+    'ger': lazy_gettext('German'),
+    'fre': lazy_gettext('French'),
+    'rus': lazy_gettext('Russian'),
+    'spa': lazy_gettext('Spanish'),
+    'ita': lazy_gettext('Italian'),
+    'jap': lazy_gettext('Japanese'),
+    'lat': lazy_gettext('Latin'),
+    'zhn': lazy_gettext('Chinese'),
+    'dut': lazy_gettext('Dutch'),
+    'tur': lazy_gettext('Turkish'),
+    'por': lazy_gettext('Portuguese'),
+    'pol': lazy_gettext('Polish'),
+    'gre': lazy_gettext('Greek'),
+    'srp': lazy_gettext('Serbian'),
+    'cat': lazy_gettext('Catalan'),
+    'dan': lazy_gettext('Danish'),
+    'cze': lazy_gettext('Czech'),
+    'kor': lazy_gettext('Korean'),
+    'ara': lazy_gettext('Arabic'),
+    'hun': lazy_gettext('Hungarian'),
+    'swe': lazy_gettext('Swedish'),
+    'ukr': lazy_gettext('Ukranian'),
+    'heb': lazy_gettext('Hebrew'),
+    'hrv': lazy_gettext('Croatian'),
+    'slo': lazy_gettext('Slovak'),
+    'nor': lazy_gettext('Norwegian'),
+    'rum': lazy_gettext('Romanian'),
+    'fin': lazy_gettext('Finnish'),
+    'geo': lazy_gettext('Georgian'),
+    'bul': lazy_gettext('Bulgarian'),
+    'grc': lazy_gettext('Ancient Greek'),
+    'ind': lazy_gettext('Indonesian Language'),
+    'gmh': lazy_gettext('Middle High German'),
+    'mon': lazy_gettext('Mongolian Language'),
+    'peo': lazy_gettext('Persian'),
+    'alb': lazy_gettext('Albanian'),
+    'bos': lazy_gettext('Bosnian'),
 }
 
 @app.template_filter('rem_form_count')
@@ -350,13 +350,13 @@ def homepage():
         num_found = index_solr.count()
         records = index_solr.results
         if num_found == 0:
-            flash(gettext("You haven't registered any records with us yet. Please do so now..."), 'danger')
+            flash(lazy_gettext("You haven't registered any records with us yet. Please do so now..."), 'danger')
         else:
             pagination = Pagination(page=page, total=num_found, found=num_found, bs_version=3, search=True,
-                                    record_name=gettext('titles'),
-                                    search_msg=gettext('Showing {start} to {end} of {found} {record_name}'))
+                                    record_name=lazy_gettext('titles'),
+                                    search_msg=lazy_gettext('Showing {start} to {end} of {found} {record_name}'))
             mystart = 1 + (pagination.page - 1) * pagination.per_page
-    return render_template('index.html', header=gettext('Home'), site=theme(request.access_route), numFound=num_found,
+    return render_template('index.html', header=lazy_gettext('Home'), site=theme(request.access_route), numFound=num_found,
                            records=records, pagination=pagination, offset=mystart - 1)
 
 @app.route('/search/external/gbv', methods=['POST'])
@@ -398,14 +398,14 @@ def duplicates():
     logging.info(duplicates_solr.response)
     num_found = duplicates_solr.count()
     if num_found == 0:
-        flash(gettext('There are currently no Duplicates!'))
+        flash(lazy_gettext('There are currently no Duplicates!'))
         return redirect(url_for('dashboard'))
     pagination = Pagination(page=page, total=num_found, found=num_found, bs_version=3, search=True,
-                            record_name=gettext('duplicate groups'),
-                            search_msg=gettext('Showing {start} to {end} of {found} {record_name}'))
+                            record_name=lazy_gettext('duplicate groups'),
+                            search_msg=lazy_gettext('Showing {start} to {end} of {found} {record_name}'))
     mystart = 1 + (pagination.page - 1) * pagination.per_page
     return render_template('duplicates.html', groups=duplicates_solr.results, pagination=pagination,
-                        header=gettext('Duplicates'), site=theme(request.access_route), offset=mystart - 1)
+                        header=lazy_gettext('Duplicates'), site=theme(request.access_route), offset=mystart - 1)
 
 @app.route('/persons')
 def persons():
@@ -421,17 +421,17 @@ def persons():
     num_found = persons_solr.count()
 
     if num_found == 0:
-        flash(gettext('There Are No Persons Yet!'))
-        return render_template('persons.html', header=gettext('Persons'), site=theme(request.access_route),
+        flash(lazy_gettext('There Are No Persons Yet!'))
+        return render_template('persons.html', header=lazy_gettext('Persons'), site=theme(request.access_route),
                                facet_data=persons_solr.facets, results=persons_solr.results,
                                offset=mystart - 1, query=query, filterquery=filterquery,
                                now=datetime.datetime.now())
     else:
         pagination = Pagination(page=page, total=num_found, found=num_found, bs_version=3, search=True,
-                                record_name=gettext('titles'),
-                                search_msg=gettext('Showing {start} to {end} of {found} Persons'))
+                                record_name=lazy_gettext('titles'),
+                                search_msg=lazy_gettext('Showing {start} to {end} of {found} Persons'))
         mystart = 1 + (pagination.page - 1) * pagination.per_page
-    return render_template('persons.html', header=gettext('Persons'), site=theme(request.access_route),
+    return render_template('persons.html', header=lazy_gettext('Persons'), site=theme(request.access_route),
                            facet_data=persons_solr.facets, results=persons_solr.results,
                            offset=mystart - 1, query=query, filterquery=filterquery, pagination=pagination,
                            now=datetime.datetime.now(), del_redirect='persons')
@@ -472,14 +472,15 @@ def search():
     if num_found == 1:
         return redirect(url_for('show_record', record_id=search_solr.results[0].get('id'), pubtype=search_solr.results[0].get('pubtype')))
     elif num_found == 0:
-        flash(gettext('Your Search Found no Results'))
+        flash(lazy_gettext('Your Search Found no Results'))
         return redirect(url_for('homepage'))
     else:
-        pagination = Pagination(page=page, total=num_found, found=num_found, bs_version=3, search=True, record_name=gettext('titles'), search_msg=gettext('Showing {start} to {end} of {found} {record_name}'))
+        logging.error(search_solr.facets)
+        pagination = Pagination(page=page, total=num_found, found=num_found, bs_version=3, search=True, record_name=lazy_gettext('titles'), search_msg=lazy_gettext('Showing {start} to {end} of {found} {record_name}'))
         mystart = 1 + (pagination.page - 1) * pagination.per_page
         #myend = mystart + pagination.per_page - 1
         logging.info(query)
-        return render_template('resultlist.html', records=search_solr.results, pagination=pagination, facet_data=search_solr.facets, header=gettext('Resultlist'), site=theme(request.access_route), offset=mystart - 1, query=query, filterquery=filterquery)
+        return render_template('resultlist.html', records=search_solr.results, pagination=pagination, facet_data=search_solr.facets, header=lazy_gettext('Resultlist'), site=theme(request.access_route), offset=mystart - 1, query=query, filterquery=filterquery)
 
 @csrf.exempt
 @app.route('/apparent_duplicate', methods=['GET', 'POST'])
@@ -604,13 +605,11 @@ def _record2solr_doc(form, action):
             solr_data.setdefault('doi', form.data.get(field).strip())
         if field == 'WOSID':
             solr_data.setdefault('isi_id', form.data.get(field).strip())
-    #solr = requests.post('http://127.0.0.1:8983/solr/hb2/update/json?commit=true', data=json.dumps([solr_data]),
-                         #headers={'Content-type': 'application/json'})
-    record_solr = Solr(core='hb2', data=[solr_data])
-    record_solr.update()
+
+    return solr_data
 
 def _record2solr(form):
-    record_solr = Solr(core='hoe', data=[_record2solr_doc(form)])
+    record_solr = Solr(core='hb2', data=[_record2solr_doc(form)])
     record_solr.update()
 
 @app.route('/orcid2name/<orcid_id>')
@@ -668,62 +667,57 @@ def dashboard():
     num_found = dashboard_solr.count()
     pagination = ''
     if num_found == 0:
-        flash(gettext('There Are No Records Yet!'), 'danger')
+        flash(lazy_gettext('There Are No Records Yet!'), 'danger')
     else:
         pagination = Pagination(page=page, total=num_found, found=num_found, bs_version=3, search=True,
-                                record_name=gettext('titles'),
-                                search_msg=gettext('Showing {start} to {end} of {found} {record_name}'))
+                                record_name=lazy_gettext('titles'),
+                                search_msg=lazy_gettext('Showing {start} to {end} of {found} {record_name}'))
         mystart = 1 + (pagination.page - 1) * pagination.per_page
         # myend = mystart + pagination.per_page - 1
 
     return render_template('dashboard.html', records=dashboard_solr.results, facet_data=dashboard_solr.facets,
-                           header=gettext('Dashboard'), site=theme(request.access_route), offset=mystart - 1,
+                           header=lazy_gettext('Dashboard'), site=theme(request.access_route), offset=mystart - 1,
                            query=query, filterquery=filterquery, pagination=pagination, now=datetime.datetime.now(),
-                           target='dashboard',
+                           target='dashboard', del_redirect='dashboard'
                            )
 
 @app.route('/make_admin/<user_id>')
 @login_required
 def make_admin(user_id=''):
     if user_id:
-        ma_solr = Solr(core='hoe_users', data=[{'id': user_id, 'role': {'set': 'admin'}}])
+        ma_solr = Solr(core='hb2_users', data=[{'id': user_id, 'role': {'set': 'admin'}}])
         ma_solr.update()
-        flash(gettext('%s upgraded to admin!' % user_id), 'success')
+        flash(lazy_gettext('%s upgraded to admin!' % user_id), 'success')
         return redirect(url_for('index'))
     else:
-        flash(gettext('You did not supply an ID!'), 'danger')
+        flash(lazy_gettext('You did not supply an ID!'), 'danger')
         return redirect(url_for('superadmin'))
 
 @app.route('/superadmin', methods=['GET'])
 @login_required
 def superadmin():
     if current_user.role != 'admin':
-        flash(gettext('For Admins ONLY!!!'))
+        flash(lazy_gettext('For Admins ONLY!!!'))
         return redirect(url_for('homepage'))
     # Get locked records that were last changed more than one hour ago...
-    locked_page = int(request.args.get('locked_page', 1))
-    sa_solr = Solr(core='hb2', fquery=['locked:true', 'recordChangeDate:[* TO NOW-1HOUR]'], sort='recordChangeDate asc')
-    sa_solr.request()
-    locked_num_found = sa_solr.count()
-    locked_pagination = Pagination(page=locked_page, total=locked_num_found, found=locked_num_found, bs_version=3, search=True,
-                                record_name=gettext('records'), href='?locked_page={0}',
-                                search_msg=gettext('Showing {start} to {end} of {found} {record_name}'))
-    locked_start = 1 + (locked_pagination.page - 1) * locked_pagination.per_page
-
     page = int(request.args.get('page', 1))
-    solr_dumps = Solr(core='hb2_users', query='id:*.json', facet='false', start=(page - 1) * 10)
+    locked_solr = Solr(core='hb2', fquery=['locked:true', 'recordChangeDate:[* TO NOW-1HOUR]'], sort='recordChangeDate asc',
+                   start=(page - 1) * 10)
+    locked_solr.request()
+    num_found = locked_solr.count()
+    pagination = Pagination(page=page, total=num_found, found=num_found, bs_version=3, search=True,
+                                record_name=lazy_gettext('records'),
+                                search_msg=lazy_gettext('Showing {start} to {end} of {found} {record_name}'))
+    mystart = 1 + (pagination.page - 1) * pagination.per_page
+
+    solr_dumps = Solr(core='hb2_users', query='id:*.json', facet='false', rows=10000)
     solr_dumps.request()
     num_found = solr_dumps.count()
-    pagination = Pagination(page=page, total=num_found, found=num_found, bs_version=3, search=True,
-                                record_name=gettext('dumps'),
-                                search_msg=gettext('Showing {start} to {end} of {found} {record_name}'))
-    mystart = 1 + (pagination.page - 1) * pagination.per_page
     form = FileUploadForm()
 
-    return render_template('superadmin.html', records=sa_solr.results, header=gettext('Superadmin Board'),
+    return render_template('superadmin.html', locked_records=locked_solr.results, header=lazy_gettext('Superadmin Board'),
                            import_records=solr_dumps.results, offset=mystart - 1, pagination=pagination,
-                           del_redirect='superadmin', form=form, site=theme(request.access_route),
-                           locked_offset = locked_start - 1, locked_pagination=locked_pagination)
+                           del_redirect='superadmin', form=form, site=theme(request.access_route))
 
 @app.route('/unlock/<record_id>', methods=['GET'])
 @login_required
@@ -783,8 +777,8 @@ def file_upload():
             ticket = trac.ticket.create('Datendatei: %s' % form.file.data.filename, admin_record, attrs, True)
             attachment = trac.ticket.putAttachment(str(ticket), form.file.data.filename, 'Datei zur Dateneingabe', form.file.data.stream.read(), True)
             #return redirect('http://bibliographie-trac.ub.rub.de/ticket/' + str(ticket))
-        flash(gettext('Thank you for uploading your data! We will now edit them and make them available as soon as possible.'))
-    return render_template('file_upload.html', header=gettext('Dashboard'), site=theme(request.access_route), form=form)
+        flash(lazy_gettext('Thank you for uploading your data! We will now edit them and make them available as soon as possible.'))
+    return render_template('file_upload.html', header=lazy_gettext('Dashboard'), site=theme(request.access_route), form=form)
 
 @app.route('/organisations')
 def orgas():
@@ -800,16 +794,16 @@ def orgas():
     num_found = orgas_solr.count()
 
     if num_found == 0:
-        flash(gettext('There Are No Organisations Yet!'))
-        return render_template('orgas.html', header=gettext('Organisations'), site=theme(request.access_route),
+        flash(lazy_gettext('There Are No Organisations Yet!'))
+        return render_template('orgas.html', header=lazy_gettext('Organisations'), site=theme(request.access_route),
                                facet_data=orgas_solr.facets, results=orgas_solr.results,
                                offset=mystart - 1, query=query, filterquery=filterquery, now=datetime.datetime.now())
     else:
         pagination = Pagination(page=page, total=num_found, found=num_found, bs_version=3, search=True,
-                                record_name=gettext('titles'),
-                                search_msg=gettext('Showing {start} to {end} of {found} Organisational Units'))
+                                record_name=lazy_gettext('titles'),
+                                search_msg=lazy_gettext('Showing {start} to {end} of {found} Organisational Units'))
         mystart = 1 + (pagination.page - 1) * pagination.per_page
-    return render_template('orgas.html', header=gettext('Organisations'), site=theme(request.access_route), facet_data=orgas_solr.facets, results=orgas_solr.results,
+    return render_template('orgas.html', header=lazy_gettext('Organisations'), site=theme(request.access_route), facet_data=orgas_solr.facets, results=orgas_solr.results,
                            offset=mystart - 1, query=query, filterquery=filterquery, pagination=pagination, now=datetime.datetime.now())
 
 def _orga2solr(form):
@@ -850,7 +844,7 @@ def new_orga():
     form.owner[0].data = current_user.email
     form.created.data = datetime.datetime.now()
     form.changed.data = datetime.datetime.now()
-    return render_template('linear_form.html', header=gettext('New Organisation'), site=theme(request.access_route), form=form, action='create', pubtype='organisation')
+    return render_template('linear_form.html', header=lazy_gettext('New Organisation'), site=theme(request.access_route), form=form, action='create', pubtype='organisation')
 
 def _person2solr(form):
     tmp = {}
@@ -950,12 +944,12 @@ def new_person():
     form.id.data = uuid.uuid4()
     form.owner[0].data = current_user.email
 
-    return render_template('tabbed_form.html', header=gettext('New Person'), site=theme(request.access_route), form=form, action='create', pubtype='person')
+    return render_template('tabbed_form.html', header=lazy_gettext('New Person'), site=theme(request.access_route), form=form, action='create', pubtype='person')
 
 @app.route('/create/publication')
 @login_required
 def new_by_form():
-    return render_template('pubtype_list.html', header=gettext('New Record by Publication Type'), site=theme(request.access_route))
+    return render_template('pubtype_list.html', header=lazy_gettext('New Record by Publication Type'), site=theme(request.access_route))
 
 @app.route('/create/<pubtype>', methods=['GET', 'POST'])
 @login_required
@@ -1006,7 +1000,7 @@ def new_record(pubtype='ArticleJournal'):
     if form.validate_on_submit():
         if form.errors:
             flash_errors(form)
-            return render_template('tabbed_form.html', form=form, header=gettext('New Record'),
+            return render_template('tabbed_form.html', form=form, header=lazy_gettext('New Record'),
                                    site=theme(request.access_route), action='create', pubtype=pubtype)
         _record2solr_doc(form, action='create')
         return redirect(url_for('dashboard'))
@@ -1025,7 +1019,7 @@ def new_record(pubtype='ArticleJournal'):
         else:
             person.role.choices = USER_ROLES
 
-    return render_template('tabbed_form.html', form=form, header=gettext('New Record'), site=theme(request.access_route), pubtype=pubtype, action='create', record_id=form.id.data)
+    return render_template('tabbed_form.html', form=form, header=lazy_gettext('New Record'), site=theme(request.access_route), pubtype=pubtype, action='create', record_id=form.id.data)
 
 @app.route('/retrieve/<pubtype>/<record_id>')
 def show_record(pubtype, record_id=''):
@@ -1039,7 +1033,7 @@ def show_record(pubtype, record_id=''):
     return render_template('record.html', record=form, header=form.data.get('title'), site=theme(request.access_route),
                            action='retrieve', record_id=record_id, del_redirect='dashboard', pubtype=pubtype,
                            role_map=ROLE_MAP, lang_map=LANGUAGE_MAP, pubtype_map=PUBTYPE2TEXT, subtype_map=SUBTYPE2TEXT,
-                           genre_map=GENRE2TEXT, locked=locked)
+                           locked=locked)
 
 @app.route('/retrieve/person/<person_id>')
 def show_person(person_id=''):
@@ -1084,14 +1078,14 @@ def edit_orga(orga_id=''):
         if form.errors:
             flash_errors(form)
             return render_template('linear_form.html', form=form,
-                                   header=gettext('Edit: %(title)s', title=form.data.get('title')),
+                                   header=lazy_gettext('Edit: %(title)s', title=form.data.get('title')),
                                    site=theme(request.access_route), action='update')
         _orga2solr(form)
         return redirect(url_for('orgas'))
 
     form.changed.data = datetime.datetime.now()
 
-    return render_template('linear_form.html', form=form, header=gettext('Edit: %(orga)s', orga=form.data.get('pref_label')), site=theme(request.access_route), action='update', pubtype='organisation')
+    return render_template('linear_form.html', form=form, header=lazy_gettext('Edit: %(orga)s', orga=form.data.get('pref_label')), site=theme(request.access_route), action='update', pubtype='organisation')
 
 @app.route('/update/person/<person_id>', methods=['GET', 'POST'])
 @login_required
@@ -1114,14 +1108,14 @@ def edit_person(person_id=''):
         if form.errors:
             flash_errors(form)
             return render_template('tabbed_form.html', form=form,
-                                   header=gettext('Edit: %(title)s', title=form.data.get('title')),
+                                   header=lazy_gettext('Edit: %(title)s', title=form.data.get('title')),
                                    site=theme(request.access_route), action='update')
         _person2solr(form)
         return redirect(url_for('persons'))
 
     form.changed.data = datetime.datetime.now()
 
-    return render_template('tabbed_form.html', form=form, header=gettext('Edit: %(person)s', person=form.data.get('name')), site=theme(request.access_route), action='update', pubtype='person')
+    return render_template('tabbed_form.html', form=form, header=lazy_gettext('Edit: %(person)s', person=form.data.get('name')), site=theme(request.access_route), action='update', pubtype='person')
 
 @app.route('/delete/person/<person_id>')
 def delete_person(person_id=''):
@@ -1159,7 +1153,7 @@ def edit_record(record_id='', pubtype=''):
         form.pubtype.choices = USER_PUBTYPES
 
     if thedata.get('pubtype') != pubtype:
-        flash(Markup(gettext('<p><i class="fa fa-exclamation-triangle fa-3x"></i> <h3>The following data are incompatible with this publication type</h3></p>')) + _diff_struct(thedata, form.data), 'error')
+        flash(Markup(lazy_gettext('<p><i class="fa fa-exclamation-triangle fa-3x"></i> <h3>The following data are incompatible with this publication type</h3></p>')) + _diff_struct(thedata, form.data), 'error')
         form.pubtype.data = pubtype
 
     for person in form.person:
@@ -1171,9 +1165,9 @@ def edit_record(record_id='', pubtype=''):
         if form.errors:
             flash_errors(form)
             return render_template('tabbed_form.html', form=form,
-                                   header=gettext('Edit: %(title)s', title=form.data.get('title')),
+                                   header=lazy_gettext('Edit: %(title)s', title=form.data.get('title')),
                                    site=theme(request.access_route), action='update', pubtype=pubtype)
-        _record2solr(form, action='update')
+        _record2solr_doc(form, action='update')
         unlock_record_solr = Solr(core='hb2', data=[{'id': record_id, 'locked': {'set': 'false'}}])
         unlock_record_solr.update()
         return redirect(url_for('dashboard'))
@@ -1181,7 +1175,7 @@ def edit_record(record_id='', pubtype=''):
     form.changed.data = datetime.datetime.now()
     form.deskman.data = current_user.email
 
-    return render_template('tabbed_form.html', form=form, header=gettext('Edit: %(title)s',
+    return render_template('tabbed_form.html', form=form, header=lazy_gettext('Edit: %(title)s',
                                                                          title=form.data.get('title')),
                            site=theme(request.access_route), action='update', pubtype=pubtype, record_id=record_id)
 
@@ -1293,7 +1287,7 @@ def consolidate_persons():
             # except IndexError:
             #     logging.info('2) %s not found' % person)
             pass
-    return render_template('consolidate_persons.html', results=results, header=gettext('Consolidate Persons'), site=theme(request.access_route))
+    return render_template('consolidate_persons.html', results=results, header=lazy_gettext('Consolidate Persons'), site=theme(request.access_route))
 ########################################################################################################################
 class UserNotFoundError(Exception):
     pass
@@ -1334,9 +1328,9 @@ class User(UserMixin):
             return None
 
 class LoginForm(Form):
-    username = StringField(gettext('Username'))
-    password = PasswordField(gettext('Password'))
-    wayf = HiddenField(gettext('Where Are You From?'))
+    username = StringField(lazy_gettext('Username'))
+    password = PasswordField(lazy_gettext('Password'))
+    wayf = HiddenField(lazy_gettext('Where Are You From?'))
 
 def is_safe_url(target):
     ref_url = parse.urlparse(request.host_url)
@@ -1367,7 +1361,7 @@ def login():
         user_info = user.get_user(request.form.get('username'))
         next = get_redirect_target()
         if request.form.get('wayf') == 'bochum':
-            authuser = requests.post('https://api-test.ub.rub.de/ldap/authenticate/',
+            authuser = requests.post('https://api.ub.rub.de/ldap/authenticate/',
                                      data={'nocheck': 'true',
                                            'userid': base64.b64encode(request.form.get('username').encode('ascii')),
                                            'passwd': base64.b64encode(request.form.get('password').encode('ascii'))}).json()
@@ -1394,7 +1388,7 @@ def login():
 
                 return redirect(next or url_for('homepage'))
             else:
-                flash(gettext("Username and Password Don't Match"), 'danger')
+                flash(lazy_gettext("Username and Password Don't Match"), 'danger')
                 return redirect('login')
         elif request.form.get('wayf') == 'dortmund':
             #010188
@@ -1427,7 +1421,7 @@ def login():
                 login_user(user)
                 return redirect(next or url_for('homepage'))
             else:
-                flash(gettext("Username and Password Don't Match"), 'danger')
+                flash(lazy_gettext("Username and Password Don't Match"), 'danger')
                 return redirect('login')
 
     form = LoginForm()
@@ -1479,7 +1473,8 @@ def export_solr_dump():
     target_solr = Solr(core='hb2_users', data=[{'id': filename, 'dump': json.dumps(export_docs)}])
     target_solr.update()
 
-    return send_file(BytesIO(str.encode(json.dumps(export_docs))), attachment_filename=filename, as_attachment=True)
+    return send_file(BytesIO(str.encode(json.dumps(export_docs))), attachment_filename=filename, as_attachment=True,
+                     cache_timeout=1, add_etags=True)
 
 @app.route('/import/solr_dumps')
 def import_solr_dumps():
@@ -1491,16 +1486,16 @@ def import_solr_dumps():
     solr_dumps.request()
     num_found = solr_dumps.count()
     pagination = Pagination(page=page, total=num_found, found=num_found, bs_version=3, search=True,
-                                record_name=gettext('dumps'),
-                                search_msg=gettext('Showing {start} to {end} of {found} {record_name}'))
+                                record_name=lazy_gettext('dumps'),
+                                search_msg=lazy_gettext('Showing {start} to {end} of {found} {record_name}'))
     mystart = 1 + (pagination.page - 1) * pagination.per_page
     form = FileUploadForm()
     return render_template('solr_dumps.html', records=solr_dumps.results, offset=mystart - 1, pagination=pagination,
-                           header=gettext('Import Dump'), del_redirect='import/solr_dumps', form=form)
+                           header=lazy_gettext('Import Dump'), del_redirect='import/solr_dumps', form=form)
 
 def _import_data(doc):
     form = PUBTYPE2FORM.get(doc.get('pubtype')).from_json(doc)
-    return _record2solr_doc(form)
+    return _record2solr_doc(form, action='')
 
 @app.route('/import/solr_dump/<filename>', methods=['GET', 'POST'])
 def import_solr_dump(filename=''):
@@ -1508,7 +1503,7 @@ def import_solr_dump(filename=''):
     solr_data = []
     if request.method == 'GET':
         if filename:
-            import_solr = Solr(core='hoe_users', query='id:%s' % filename, facet='false')
+            import_solr = Solr(core='hb2_users', query='id:%s' % filename, facet='false')
             import_solr.request()
 
             thedata = json.loads(import_solr.results[0].get('dump')[0])
@@ -1519,7 +1514,7 @@ def import_solr_dump(filename=''):
 
     pool = Pool(4)
     solr_data.append(pool.map(_import_data, thedata))
-    import_solr = Solr(core='hoe', data=solr_data[0])
+    import_solr = Solr(core='hb2', data=solr_data[0])
     import_solr.update()
 
     flash('%s records imported!' % len(thedata), 'success')
@@ -1528,7 +1523,7 @@ def import_solr_dump(filename=''):
 
 @app.route('/delete/solr_dump/<record_id>')
 def delete_dump(record_id=''):
-    delete_record_solr = Solr(core='hoe_users', del_id=record_id)
+    delete_record_solr = Solr(core='hb2_users', del_id=record_id)
     delete_record_solr.delete()
 
     return jsonify({'deleted': True})

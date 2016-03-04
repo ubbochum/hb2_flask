@@ -4,9 +4,11 @@
     {{ super() }}
     <div class="row">
         <div class="col-sm-4" id="facets">
-            {{ drill_down.facets(facet_data.fperson, 'fperson', heading='Person') }}
-            {{ drill_down.facets(facet_data.fdate, 'fdate', heading='Publication Date') }}
-            {{ drill_down.facets(facet_data.language, 'language', heading='Language') }}
+            {% if facet_data%}
+                {{ drill_down.facets(facet_data.fperson, 'fperson', heading='Person') }}
+                {{ drill_down.facets(facet_data.fdate, 'fdate', heading='Publication Date') }}
+                {{ drill_down.facets(facet_data.language, 'language', heading='Language') }}
+            {% endif %}
         </div>
         <div class="col-sm-8">
             {{ pagination.info }}

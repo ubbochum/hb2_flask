@@ -37,13 +37,12 @@
                                 <span class="label label-{% if record.editorial_status == 'new' %}info{% elif record.editorial_status == 'in_process' %}default{% elif record.editorial_status == 'processed' %}primary{% elif record.editorial_status == 'final_editing' %}warning{% elif record.editorial_status == 'finalized' %}success{% endif %}">{% if record.locked %} <i class="fa fa-lock"></i> {% endif %}{{ record.editorial_status|capitalize }}</span>
                             </td>
                             <td>{% include 'resultlist_record.html' %}<br/>
-    {#                        {% for author in record.author %}{{ author.literal }}{% endfor %}, {% if record.circa == 'y' %}ca. {% endif %}{% if record.issued %}{{ record.issued.values()|list()|first|first }}{% endif %}</td>#}
                             <td>{{ (now - record.recordCreationDate|mk_time())|humanize() }}</td>
                             <td>{{ (now - record.recordChangeDate|mk_time())|humanize() }}</td>
 {#                            <td>{{ record.owner }}</td>#}
 {#                            <td>{{ record.deskman }}</td>#}
                             <td class="dropdown">
-                                <button class="btn btn-default dropdown-toggle" type="button" id="action{{ loop.index }}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true"><i class="fa fa-cog"></i> Action <span class="fa fa-caret-down"></span></button>
+                                <button class="btn btn-default dropdown-toggle" type="button" id="action{{ loop.index }}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true"><i class="fa fa-cog"></i> {{ _('Action') }} <span class="fa fa-caret-down"></span></button>
                                 <ul class="dropdown-menu" aria-labelledby="action{{ loop.index }}">
                                     <li><a href="{{ url_for('show_record', pubtype=record.pubtype, record_id=record.id) }}"><i class="fa fa-eye"></i> {{ _('View') }}</a></li>
                                     {% if not record.locked %}<li id="{{ record.id }}" class="{{ record.id }}_edit"><a href="{{ url_for('edit_record', record_id=record.id, pubtype=record.pubtype) }}" class="lock_me"><i class="fa fa-pencil"></i> {{ _('Edit') }}</a></li>
