@@ -608,8 +608,8 @@ def _record2solr_doc(form, action):
 
     return solr_data
 
-def _record2solr(form):
-    record_solr = Solr(core='hb2', data=[_record2solr_doc(form)])
+def _record2solr(form, action=''):
+    record_solr = Solr(core='hb2', data=[_record2solr_doc(form, action=action)])
     record_solr.update()
 
 @app.route('/orcid2name/<orcid_id>')
@@ -983,7 +983,7 @@ def new_record(pubtype='ArticleJournal'):
             record_solr = Solr(core='hb2', data=[solr_data])
             record_solr.update()
         else:
-            _record2solr_doc(form, action='create')
+            _record2solr(form, action='create')
         return jsonify({'status': 200})
 
     for person in form.person:
@@ -1002,7 +1002,7 @@ def new_record(pubtype='ArticleJournal'):
             flash_errors(form)
             return render_template('tabbed_form.html', form=form, header=lazy_gettext('New Record'),
                                    site=theme(request.access_route), action='create', pubtype=pubtype)
-        _record2solr_doc(form, action='create')
+        _record2solr(form, action='create')
         return redirect(url_for('dashboard'))
 
     if request.args.get('subtype'):
@@ -1167,7 +1167,7 @@ def edit_record(record_id='', pubtype=''):
             return render_template('tabbed_form.html', form=form,
                                    header=lazy_gettext('Edit: %(title)s', title=form.data.get('title')),
                                    site=theme(request.access_route), action='update', pubtype=pubtype)
-        _record2solr_doc(form, action='update')
+        _record2solr(form, action='update')
         unlock_record_solr = Solr(core='hb2', data=[{'id': record_id, 'locked': {'set': 'false'}}])
         unlock_record_solr.update()
         return redirect(url_for('dashboard'))
