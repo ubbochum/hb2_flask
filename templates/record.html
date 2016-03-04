@@ -413,9 +413,12 @@
             {% endif %}
         </dl>
         {% if config.DEBUG and current_user.role == 'admin' %}
-            <div id="json_edit">
+            {#<div id="json_edit">
                 <pre  contenteditable="true"><code class="language-json">{{ record.data|tojson|safe }}</code></pre>
                 {% include 'submit_form.html' %}
+            </div>#}
+            <div>
+                <pre><code class="language-json">{"record": {{ record.data|tojson|safe }}}</code></pre>
             </div>
         {% endif %}
         </div>
