@@ -25,6 +25,8 @@
 
 from lxml import etree
 import logging
+import pprint
+import simplejson as json
 
 try:
     import site_secrets as secrets
@@ -78,6 +80,9 @@ FREQUENCY_MAP = {
     'Three Times a Month': 'three_times_a_month',
     'Triennial': 'triennial',
 }
+
+with open('mesh_map.json') as mesh_map:
+    MESH_MAP = json.load(mesh_map)
 
 mc = etree.iterparse(secrets.MODS_TEST_FILE, tag='%smods' % MODS)
 
@@ -135,15 +140,20 @@ def get_names(twig):
                     if role.tag == '%sroleTerm' % MODS:
                         namerole = role.text
         #logging.info([family, first, realname, nametype, namerole, pnd])
-        names.append({'family': family, 'first': first, 'realname': realname, 'namerole': namerole, 'pnd': pnd})
+        names.append({'family': family, 'first': first, 'realname': realname, 'namerole': namerole, 'pnd': pnd, 'nametype': nametype})
     return names
 
 def get_wtf_names(elems):
-    wtf_names = []
+    wtf_pnames = []
+    wtf_cnames = []
     for name in get_names(elems):
-        wtf_names.append({'name': name.get('realname'), 'gnd': name.get('pnd'), 'orcid': '', 'role': name.get('namerole'), 'corresponding_author': False})
+        if name.get('nametype') == 'personal':
+            wtf_pnames.append({'name': name.get('realname'), 'gnd': name.get('pnd'), 'orcid': '', 'role': name.get('namerole'), 'corresponding_author': False})
+        else:
+            wtf_cnames.append(
+                {'name': name.get('realname'), 'gnd': name.get('pnd'), 'role': name.get('namerole'), 'isni': ''})
 
-    return {'person': wtf_names}
+    return {'person': wtf_pnames}, {'corporation': wtf_cnames}
 
 def get_csl_names(elems):
     csl_names = []
@@ -152,18 +162,38 @@ def get_csl_names(elems):
 
     return {'author': csl_names}
 
+def get_wtf_tocs(elems):
+    wtf_tocs = []
+    for toc in elems:
+        tmp = {}
+        tmp.setdefault('toc', toc.text)
+        tmp.setdefault('uri', toc.get('%shref' % XLINK))
+        wtf_tocs.append(tmp)
+
+    return {'table_of_contents': wtf_tocs}
+
+def get_wtf_mesh(elems):
+    wtf_mesh = []
+    authority = elems[0].get('%sauthority' % MODS)
+    for mesh in elems:
+        tmp = {}
+        tmp.setdefault('id', mesh.text)
+        tmp.setdefault('label', MESH_MAP.get(mesh))
+        wtf_mesh.append(tmp)
+
+    return {'%s_subject' % authority: wtf_mesh}
+
 try:
     CONVERTER_MAP = {
         #"./m:abstract[@language]/@language": lambda elem : {'': elem.text},
         #"./m:abstract[@shareable='no' and @lang]/@lang": lambda elem : {'': elem.text},
         "./m:abstract[@shareable='no']": {
-            'wtf': lambda elems: {'abstract': elems[0].text},
+            'wtf': lambda elems: {'abstract': {'content': elems[0].text, 'address': elems[0].get('%shref' % XLINK), 'label': '', 'shareable': False, 'language': elems[0].get('lang')}},
             'csl': lambda elems: {'abstract': elems[0].text},
             'solr': lambda elems: {'ro_abstract': elems[0].text},
             'oai_dc': (oai_elements, 'abstract')
         },
-        "./m:abstract[@xlink:href/@xlink:href]": {
-            'wtf': lambda elems: {'abstract': elems[0].text},
+        "./m:abstract[@xlink:href/@xlink:href]": {'wtf': lambda elems: {'abstract': {'content': elems[0].text, 'address': elems[0].get('%shref' % XLINK), 'label': '', 'shareable': True, 'language': elems[0].get('lang')}},'wtf': lambda elems: {'abstract': elems[0].text},
             'csl': lambda elems: {'abstract': elems[0].text},
             'solr': lambda elems: {'abstract': elems[0].text},
             'oai_dc': (oai_elements, 'abstract')
@@ -293,13 +323,13 @@ try:
         # "./m:originInfo/dateOther[@encoding='iso8601']": lambda elem : {'': elem.text},
         # "./m:originInfo/edition": lambda elem : {'': elem.text},
         # "./m:originInfo/place": lambda elem : {'': elem.text},
-        "./m:originInfo/place/placeTerm[@type='text']": {
+        "./m:originInfo/m:place/m:placeTerm[@type='text']": {
             'wtf': lambda elems: {'publisher_place': elems[0].text},
             'csl': lambda elems: {'publisher_place': elems[0].text},
             'solr': lambda elems: {'place': elems[0].text},
             #'oai_dc': (oai_elements, 'publisher_place')
         },
-        "./m:originInfo/publisher": {
+        "./m:originInfo/m:publisher": {
             'wtf': lambda elems: {'publisher': elems[0].text},
             'csl': lambda elems: {'publisher': elems[0].text},
             'solr': lambda elems: {'publisher': elems[0].text},
@@ -383,12 +413,20 @@ try:
         # "./m:relatedItem[@type='references']": lambda elem : {'': elem.text},
         # "./m:relatedItem[@type='series']": lambda elem : {'': elem.text},
         # "./m:subject": lambda elem : {'': elem.text},
-        # "./m:subject/m:topic":  lambda elems : {'keyword': [elem.text for elem in elems]},
+        "./m:subject/m:topic":  {
+            'wtf': lambda elems: {'keyword': [elem.text for elem in elems]}
+        },
         # "./m:subject/m:topic[@lang]/@lang": lambda elem : {'': elem.text},
-        # "./m:subject[@authority='mesh']": lambda elem : {'': elem.text},
+        "./m:subject[@authority='mesh']/m:topic": {
+            'wtf': get_wtf_mesh,
+            'solr': lambda elems: {'mesh_terms': [elem.text for elem in elems]}
+        },
         # "./m:subject[@authority='stw']": lambda elem : {'': elem.text},
         # "./m:subject[@authority='thesoz']": lambda elem : {'': elem.text},
-        # "./m:tableOfContents": lambda elem : {'': elem.text},
+        "./m:tableOfContents": {
+            'wtf': get_wtf_tocs,
+            'solr': lambda elems: {'toc_text': [elem.text for elem in elems]},
+        },
         # "./m:tableOfContents[@xlink:href]/@xlink:href": lambda elem : {'table_of_contents': elem},
         "./m:titleInfo[not(@type)]/m:title": {
             'wtf': lambda elems: {'title': elems[0].text},
@@ -456,11 +494,15 @@ for event, record in mc:
         except IndexError:
             pass
         except AttributeError:
-            logging.info(xpath_expr)
-            logging.info(record.xpath("./m:recordInfo/m:recordIdentifier", namespaces=NSMAP)[0].text)
-            for elem in elems:
-                logging.info(etree.tostring(elem))
-            raise
+            if type(data) == tuple:
+                for d in data:
+                    wtf.update(d)
+            else:
+                logging.info(xpath_expr)
+                logging.info(record.xpath("./m:recordInfo/m:recordIdentifier", namespaces=NSMAP)[0].text)
+                for elem in elems:
+                    logging.info(etree.tostring(elem))
+                raise
         try:
             data = CONVERTER_MAP.get(xpath_expr).get('csl')(elems)
             if list(data.values())[0]:
@@ -488,8 +530,9 @@ for event, record in mc:
             logging.info(record.xpath("./m:recordInfo/m:recordIdentifier", namespaces=NSMAP)[0].text)
             raise
 
-    logging.info('WTF %s' % wtf)
-    logging.info('OAI_DC %s' % etree.tostring(oai_dc))
-    logging.info('CSL %s' % csl)
-    logging.info('SOLR %s' % solr)
-    logging.info('####################################################################################################')
+    #logging.info('WTF %s' % wtf)
+    pprint.pprint(wtf)
+    #logging.info('OAI_DC %s' % etree.tostring(oai_dc))
+    #logging.info('CSL %s' % csl)
+    #logging.info('SOLR %s' % solr)
+    #logging.info('####################################################################################################')

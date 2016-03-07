@@ -191,11 +191,11 @@ class URIForm(Form):
     label = StringField(lazy_gettext('Label'), validators=[Optional()])
 
 class TableOfContentsForm(Form):
-    address = StringField('URI', validators=[URL(), Optional()], widget=CustomTextInput(placeholder=lazy_gettext('e.g. http://d-nb.info/1035670232/04')))
-    label = TextAreaField(lazy_gettext('Table of Contents'), validators=[Optional()])
+    uri = StringField('URI', validators=[URL(), Optional()], widget=CustomTextInput(placeholder=lazy_gettext('e.g. http://d-nb.info/1035670232/04')))
+    toc = TextAreaField(lazy_gettext('Table of Contents'), validators=[Optional()])
 
 class AbstractForm(URIForm):
-    label = TextAreaField(lazy_gettext('Abstract'), validators=[Optional()])
+    content = TextAreaField(lazy_gettext('Abstract'), validators=[Optional()])
     language = SelectField(lazy_gettext('Language'), validators=[Optional()], choices=LANGUAGES)
     shareable = BooleanField(lazy_gettext('Shareable'))
 
@@ -509,7 +509,7 @@ class WorkForm(Form):
     lcsh_subject = FieldList(FormField(IDLForm), min_entries=1)
     thesoz_subject = FieldList(FormField(IDLForm), min_entries=1)
 
-    abstract = FieldList(FormField(AbstractForm), validators=[Optional()])
+    abstract = FieldList(FormField(AbstractForm), min_entries=1)
     number_of_pages = StringField(lazy_gettext('Extent'), validators=[Optional()])
     medium= StringField(lazy_gettext('Medium'), validators=[Optional()])
     note = TextAreaField(lazy_gettext('Notes'), validators=[Optional()], widget=CustomTextInput(placeholder=lazy_gettext('Additional information about the work')))
@@ -551,7 +551,7 @@ class PrintedWorkForm(WorkForm):
     publisher = StringField(lazy_gettext('Publisher'), validators=[Optional()])
     publisher_place = StringField(lazy_gettext('Place of Publication'), validators=[Optional()])
     edition = StringField('Edition', validators=[Optional()])
-    table_of_contents = FieldList(FormField(TableOfContentsForm))
+    table_of_contents = FieldList(FormField(TableOfContentsForm), min_entries=1)
     #open_access = BooleanField(lazy_gettext('Open Access'))
     has_part = FieldList(FormField(HasPartForm), min_entries=1)
 
