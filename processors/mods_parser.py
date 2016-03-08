@@ -81,8 +81,9 @@ FREQUENCY_MAP = {
     'Triennial': 'triennial',
 }
 
+SUBJECT_MAPS = {}
 with open('mesh_map.json') as mesh_map:
-    MESH_MAP = json.load(mesh_map)
+    SUBJECT_MAPS.setdefault('mesh', json.load(mesh_map))
 
 mc = etree.iterparse(secrets.MODS_TEST_FILE, tag='%smods' % MODS)
 
@@ -172,30 +173,40 @@ def get_wtf_tocs(elems):
 
     return {'table_of_contents': wtf_tocs}
 
-def get_wtf_mesh(elems):
-    wtf_mesh = []
-    authority = elems[0].get('%sauthority' % MODS)
-    for mesh in elems:
+def get_wtf_subject(elems):
+    wtf_subject = []
+    authority = elems[0].get('authority')
+    for subject in elems:
         tmp = {}
-        tmp.setdefault('id', mesh.text)
-        tmp.setdefault('label', MESH_MAP.get(mesh))
-        wtf_mesh.append(tmp)
+        tmp.setdefault('id', subject[0].text)
+        tmp.setdefault('label', SUBJECT_MAPS.get(authority).get(subject[0].text))
+        wtf_subject.append(tmp)
 
-    return {'%s_subject' % authority: wtf_mesh}
+    return {'%s_subject' % authority: wtf_subject}
+
+def get_wtf_abstract(elems):
+    wtf_abstracts = []
+    for abstract in elems:
+        tmp = {}
+        tmp.setdefault('content', abstract.text)
+        tmp.setdefault('address', abstract.get('%shref' % XLINK))
+        tmp.setdefault('label', '')
+        tmp.setdefault('language', abstract.get('lang'))
+        if abstract.get('shareable') == 'no':
+            tmp.setdefault('shareable', False)
+        else:
+            tmp.setdefault('shareable', True)
+
+        wtf_abstracts.append(tmp)
+
+    return {'abstract': wtf_abstracts}
 
 try:
     CONVERTER_MAP = {
-        #"./m:abstract[@language]/@language": lambda elem : {'': elem.text},
-        #"./m:abstract[@shareable='no' and @lang]/@lang": lambda elem : {'': elem.text},
-        "./m:abstract[@shareable='no']": {
-            'wtf': lambda elems: {'abstract': {'content': elems[0].text, 'address': elems[0].get('%shref' % XLINK), 'label': '', 'shareable': False, 'language': elems[0].get('lang')}},
+        "./m:abstract": {
+            'wtf': get_wtf_abstract,
             'csl': lambda elems: {'abstract': elems[0].text},
             'solr': lambda elems: {'ro_abstract': elems[0].text},
-            'oai_dc': (oai_elements, 'abstract')
-        },
-        "./m:abstract[@xlink:href/@xlink:href]": {'wtf': lambda elems: {'abstract': {'content': elems[0].text, 'address': elems[0].get('%shref' % XLINK), 'label': '', 'shareable': True, 'language': elems[0].get('lang')}},'wtf': lambda elems: {'abstract': elems[0].text},
-            'csl': lambda elems: {'abstract': elems[0].text},
-            'solr': lambda elems: {'abstract': elems[0].text},
             'oai_dc': (oai_elements, 'abstract')
         },
         # "./m:accessCondition[@type='restriction on access']": lambda elem : {'': elem.text},
@@ -413,12 +424,12 @@ try:
         # "./m:relatedItem[@type='references']": lambda elem : {'': elem.text},
         # "./m:relatedItem[@type='series']": lambda elem : {'': elem.text},
         # "./m:subject": lambda elem : {'': elem.text},
-        "./m:subject/m:topic":  {
+        "./m:subject[not(@authority)]/m:topic":  {
             'wtf': lambda elems: {'keyword': [elem.text for elem in elems]}
         },
         # "./m:subject/m:topic[@lang]/@lang": lambda elem : {'': elem.text},
-        "./m:subject[@authority='mesh']/m:topic": {
-            'wtf': get_wtf_mesh,
+        "./m:subject[@authority='mesh']": {
+            'wtf': get_wtf_subject,
             'solr': lambda elems: {'mesh_terms': [elem.text for elem in elems]}
         },
         # "./m:subject[@authority='stw']": lambda elem : {'': elem.text},

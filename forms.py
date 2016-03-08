@@ -430,6 +430,7 @@ class CorporationForm(Form):
     name = StringField(lazy_gettext('Name'))
     role = SelectMultipleField(lazy_gettext('Role'), choices=[
         ('', lazy_gettext('Select a Role')),
+        ('ctb', lazy_gettext('Contributor')),
         ('edt', lazy_gettext('Editor')),
         ('his', lazy_gettext('Host institution')),
         ('dgg', lazy_gettext('Degree granting institution')),
@@ -496,7 +497,7 @@ class WorkForm(Form):
     WOSID = StringField(lazy_gettext('Web of Science ID'), widget=CustomTextInput(placeholder=(lazy_gettext('e.g. 000229082300022'))))
     language = FieldList(SelectField(lazy_gettext('Language'), validators=[Optional()], choices=LANGUAGES), min_entries=1)
     # issued = DateField(lazy_gettext('Publication Date'), validators=[Optional()])
-    issued = StringField(lazy_gettext('Date'), validators=[DataRequired(), Regexp('[12]\d{3}(?:-[01]\d)?(?:-[0123]\d)?')], widget=CustomTextInput(placeholder=lazy_gettext('YYYY-MM-DD')), description=lazy_gettext("If you don't know the month and/or day please use 01"))
+    issued = StringField(lazy_gettext('Date'), validators=[Optional(), Regexp('[12]\d{3}(?:-[01]\d)?(?:-[0123]\d)?')], widget=CustomTextInput(placeholder=lazy_gettext('YYYY-MM-DD')), description=lazy_gettext("If you don't know the month and/or day please use 01"))
     accessed = StringField(lazy_gettext('Last Seen'), validators=[Optional(), Regexp('[12]\d{3}(?:-[01]\d)?(?:-[0123]\d)?')], widget=CustomTextInput(placeholder=lazy_gettext('YYYY-MM-DD')), description=lazy_gettext("If you don't know the month and/or day please use 01"))
     additions = StringField(lazy_gettext('Additions'), validators=[Optional()])
     keyword = FieldList(StringField(lazy_gettext('Keyword'), validators=[Optional()]), min_entries=1)
@@ -764,7 +765,7 @@ class ContainerForm(PrintedWorkForm):
     open_access = FormField(OpenAccessForm)
     external = BooleanField(lazy_gettext('External'))
     is_part_of = FieldList(FormField(ContainerRelationForm), min_entries=1)
-    ISBN = FieldList(StringField(lazy_gettext('ISBN of the Collection'), validators=[Optional(), Isbn]), min_entries=1)
+    ISBN = FieldList(StringField(lazy_gettext('ISBN'), validators=[Optional(), Isbn]), min_entries=1)
 
     admin_only = ['external']
 
