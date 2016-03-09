@@ -85,6 +85,9 @@ SUBJECT_MAPS = {}
 with open('mesh_map.json') as mesh_map:
     SUBJECT_MAPS.setdefault('mesh', json.load(mesh_map))
 
+with open('stw_map.json') as mesh_map:
+    SUBJECT_MAPS.setdefault('stw', json.load(mesh_map))
+
 mc = etree.iterparse(secrets.MODS_TEST_FILE, tag='%smods' % MODS)
 
 def oai_elements(name, values):
@@ -201,6 +204,16 @@ def get_wtf_abstract(elems):
 
     return {'abstract': wtf_abstracts}
 
+def doi2index(elems):
+    doi = elems[0]
+    solr_doi = {}
+
+    solr_doi.setdefault('doi', doi)
+
+    # TODO: Handle all cases in which the DOI is the source for enrichment
+
+    return solr_doi
+
 try:
     CONVERTER_MAP = {
         "./m:abstract": {
@@ -248,7 +261,12 @@ try:
             'wtf': lambda elems: {'patent_number': elems[0].text},
             'solr': lambda elems: {'number': elems[0].text},
         },
-        # "./m:identifier[@type='doi']": lambda elem : {'': elem.text},
+        "./m:identifier[@type='doi']": {
+            'wtf': lambda elems: {'DOI': elems[0].text},
+            'csl': lambda elems: {'DOI': elems[0].text},
+            'solr': doi2index,
+            'oai_dc': (oai_elements, 'identifier')
+        },
         "./m:identifier[@type='isbn']": {
             'wtf': lambda elems: {'ISBN': [elem.text for elem in elems]},
             'csl': lambda elems: {'isbn': [elem.text for elem in elems]},
@@ -306,18 +324,6 @@ try:
             'wtf': get_wtf_names,
             'csl': get_csl_names,
         },
-        # #"./m:name/namePart": lambda elem : {'': elem.text},
-        # "./m:name/namePart[@type='family']": lambda elem : {'': elem.text},
-        # "./m:name/namePart[@type='given']": lambda elem : {'': elem.text},
-        # #"./m:name/role": lambda elem : {'': elem.text},
-        # "./m:name/role/roleTerm[@type='code' and @authorityURI='http://www.loc.gov/marc/relators/']": lambda elem : {'': elem.text},
-        # "./m:name[@type='corporate' and @displayLabel='Hochschule' and starts-with(@valueURI, 'http://d-nb.info/gnd/') and @authority='gnd']/@valueURI": lambda elem : {'': elem.text},
-        # "./m:name[@type='corporate' and @displayLabel='Hochschule']": lambda elem : {'': elem.text},
-        # "./m:name[@type='corporate' and @displayLabel='Institution' and starts-with(@valueURI, 'http://d-nb.info/gnd/') and @authority='gnd']/@valueURI": lambda elem : {'': elem.text},
-        # "./m:name[@type='corporate' and @displayLabel='Institution']": lambda elem : {'': elem.text},
-        # "./m:name[@type='corporate']": lambda elem : {'': elem.text},
-        # "./m:name[@type='personal' and starts-with(@valueURI, 'http://d-nb.info/gnd/') and @authority='gnd']/@valueURI": lambda elem : {'GND': elem},
-        # "./m:name[@type='personal']": lambda elem : {'': elem.text},
         # "./m:note": lambda elem : {'': elem.text},
         # u"./m:note[@displayLabel='Ansprüche']": lambda elem : {'': elem.text},
         # "./m:note[@displayLabel='Art der Schrift']": lambda elem : {'': elem.text},
@@ -328,12 +334,10 @@ try:
         # u"./m:note[@displayLabel='Titelzusätze']": lambda elem : {'': elem.text},
         # "./m:note[@displayLabel='Veranstaltungsdatum']": lambda elem : {'': elem.text},
         # "./m:note[@type='publication status']": lambda elem : {'': elem.text},
-        # "./m:originInfo": lambda elem : {'': elem.text},
         # "./m:originInfo/dateIssued[@encoding='iso8601']": lambda elem : {'': elem.text},
         # "./m:originInfo/dateIssued[@point='start' and @encoding='iso8601']": lambda elem : {'': elem.text},
         # "./m:originInfo/dateOther[@encoding='iso8601']": lambda elem : {'': elem.text},
         # "./m:originInfo/edition": lambda elem : {'': elem.text},
-        # "./m:originInfo/place": lambda elem : {'': elem.text},
         "./m:originInfo/m:place/m:placeTerm[@type='text']": {
             'wtf': lambda elems: {'publisher_place': elems[0].text},
             'csl': lambda elems: {'publisher_place': elems[0].text},
@@ -348,14 +352,18 @@ try:
         },
 
         # "./m:originInfo[@displayLabel='embargoEnd']": lambda elem : {'': elem.text},
-        # "./m:physicalDescription": lambda elem : {'': elem.text},
-        # "./m:physicalDescription/extent": lambda elem : {'': elem.text},
+        "./m:physicalDescription/extent": {
+            'wtf': lambda elems: {'number_of_pages': elems[0].text},
+            'csl': lambda elems: {'number-of-pages': elems[0].text},
+        },
         # "./m:physicalDescription/form": lambda elem : {'': elem.text},
-        # "./m:physicalDescription/internetMediaType": lambda elem : {'': elem.text},
-        # "./m:physicalDescription/note[@displayLabel='Betriebssystem']": lambda elem : {'': elem.text},
-        # "./m:physicalDescription/note[@displayLabel='Technische Details']": lambda elem : {'': elem.text},
-        # "./m:physicalDescription/note[@displayLabel='Version']": lambda elem : {'': elem.text},
-        # "./m:recordInfo": lambda elem : {'': elem.text},
+        "./m:physicalDescription/internetMediaType": {
+            'wtf': lambda elems: {'mime_type': elems[0].text},
+        },
+        "./m:physicalDescription/note": {
+            'wtf': lambda elems: {'note': elems[0].text},
+            'solr': lambda elems: {'note': elems[0].text},
+        },
         "./m:recordInfo/m:recordChangeDate[@encoding='iso8601']": {
             'wtf': lambda elems: {'changed': elems[0].text},
             'solr': lambda elems: {'changed': '%sT00:00:00Z' % elems[0].text},
@@ -423,16 +431,21 @@ try:
         # "./m:relatedItem[@type='preceding']": lambda elem : {'': elem.text},
         # "./m:relatedItem[@type='references']": lambda elem : {'': elem.text},
         # "./m:relatedItem[@type='series']": lambda elem : {'': elem.text},
-        # "./m:subject": lambda elem : {'': elem.text},
         "./m:subject[not(@authority)]/m:topic":  {
-            'wtf': lambda elems: {'keyword': [elem.text for elem in elems]}
+            'wtf': lambda elems: {'keyword': [elem.text for elem in elems]},
+            'solr': lambda elems: {'subject': [elem.text for elem in elems]},
+            'oai_dc': (oai_elements, 'subject')
         },
-        # "./m:subject/m:topic[@lang]/@lang": lambda elem : {'': elem.text},
         "./m:subject[@authority='mesh']": {
             'wtf': get_wtf_subject,
-            'solr': lambda elems: {'mesh_terms': [elem.text for elem in elems]}
+            'solr': lambda elems: {'mesh_terms': [SUBJECT_MAPS.get('mesh').get(elem.text) for elem in elems]},
+            'oai_dc': (oai_elements, 'subject')
         },
-        # "./m:subject[@authority='stw']": lambda elem : {'': elem.text},
+        "./m:subject[@authority='stw']": {
+            'wtf': get_wtf_subject,
+            'solr': lambda elems: {'stwterm_de': [SUBJECT_MAPS.get('stw').get(elem.text) for elem in elems]},
+            'oai_dc': (oai_elements, 'subject')
+        },
         # "./m:subject[@authority='thesoz']": lambda elem : {'': elem.text},
         "./m:tableOfContents": {
             'wtf': get_wtf_tocs,
@@ -516,7 +529,7 @@ for event, record in mc:
                 raise
         try:
             data = CONVERTER_MAP.get(xpath_expr).get('csl')(elems)
-            if list(data.values())[0]:
+            if len(list(data.values())) > 0:
                 csl.update(data)
         except TypeError:
             pass
@@ -524,7 +537,7 @@ for event, record in mc:
             pass
         try:
             data = CONVERTER_MAP.get(xpath_expr).get('solr')(elems)
-            if list(data.values())[0]:
+            if len(list(data.values())) > 0:
                 solr.update(data)
         except TypeError:
             pass

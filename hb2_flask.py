@@ -456,10 +456,6 @@ def search():
         query = '*:*'
 
     filterquery = request.values.getlist('filter')
-    # if len(filterquery) > 1:
-    #     filters = '&amp;filter='.join(filterquery)
-    # elif filterquery:
-    #     filters = '&amp:filter=%s' % filterquery[0]#.get('filter')
     sorting = request.args.get('sort', '')
     if sorting == 'relevance':
         sorting = ''
@@ -475,7 +471,6 @@ def search():
         flash(lazy_gettext('Your Search Found no Results'))
         return redirect(url_for('homepage'))
     else:
-        logging.error(search_solr.facets)
         pagination = Pagination(page=page, total=num_found, found=num_found, bs_version=3, search=True, record_name=lazy_gettext('titles'), search_msg=lazy_gettext('Showing {start} to {end} of {found} {record_name}'))
         mystart = 1 + (pagination.page - 1) * pagination.per_page
         #myend = mystart + pagination.per_page - 1
