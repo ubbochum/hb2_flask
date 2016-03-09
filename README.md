@@ -4,6 +4,18 @@ The Research Bibliography Platform is a joint project between the University Lib
 Dortmund. It is comprised of a web application for submitting, editing and searching bibliographic metadata about
 publications produced by the UAR universities and a linked data platform for structured querying of the data.
 
+## Host Your Own Version
+To host your own instance of the platform, you should first clone this repository.
+
+Make a new virtual environment in a Python 3 installation (if you need to maintain several Python versions next to each
+other, we recommend installing [pyenv](https://github.com/yyuu/pyenv)).
+
+Install the dependencies into this environment with ```pip install -r requirements.txt```.
+
+Edit the contents of ```secrets.py``` and save it as ```site_secrets.py```.
+
+You can then run the web app with ```python hb2_flask.py```
+
 ## License
 
 The MIT License

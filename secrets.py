@@ -22,10 +22,46 @@
 
 key = ''
 
+contact_mail = 'bibliographie-ub@rub.de'
+
+orcid_sandbox_client_id = ''
+orcid_sandbox_client_secret = ''
+
+MODS_TEST_FILE = ''
+
 SOLR_HOST = '127.0.0.1'
 SOLR_PORT = '8983'
 SOLR_CORE = 'hb2'
-SOLR_FACETS = ['fperson', 'fdate', 'language']
+SOLR_EXPORT_FIELD = 'wtf_json'
+SOLR_ROWS = '20'
+SOLR_FACETS = {
+    'pubtype':
+        {
+            'type': 'terms',
+            'field': 'pubtype'
+        },
+    # 'subtype':
+    #     {
+    #         'type': 'terms',
+    #         'field': 'subtype'
+    #     },
+    'language':
+        {
+            'type': 'terms',
+            'field': 'language'
+        },
+    'fperson':
+        {
+            'type': 'terms',
+            'field': 'fperson'
+        },
+    'fdate':
+        {
+            'type': 'terms',
+            'field': 'fdate',
+            'sort': 'index desc'
+        },
+}
 
 TRAC_URL = ''
 TRAC_USER = ''
