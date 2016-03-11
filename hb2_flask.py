@@ -83,7 +83,7 @@ babel = Babel(app)
 humanize_filter = Humanize(app)
 
 bootstrap = Bootstrap(app)
-app.config['BOOTSTRAP_SERVE_LOCAL'] = True
+app.config['BOOTSTRAP_SERVE_LOCAL'] = secrets.BOOTSTRAP_SERVE_LOCAL
 
 csrf = CsrfProtect(app)
 
