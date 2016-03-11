@@ -6,8 +6,8 @@
                         class="fa fa-eye"></i> {{ _('Views') }} <span class="caret"></span></button>
                 <ul class="dropdown-menu">
                     <li><a href="{{ url_for('persons') }}"><i class="fa fa-users"></i> {{ _('Persons') }}</a></li>
-                    <li><a href="/organisations"><i class="fa fa-university"></i> {{ _('Organisations') }}</a></li>
-                    <li class="disabled"><a href="/containers"><i class="octicon octicon-package"></i> {{ _('Containers') }}</a></li>
+                    <li><a href="{{ url_for('orgas') }}"><i class="fa fa-university"></i> {{ _('Organisations') }}</a></li>
+                    <li class="disabled"><a href="{{ url_for('containers') }}"><i class="octicon octicon-package"></i> {{ _('Containers') }}</a></li>
                     <li role="separator" class="divider"></li>
                     <li><a href="{{ url_for('duplicates') }}"><i class="fa fa-clone"></i> {{ _('Duplicates') }}</a></li>
                 </ul>
@@ -16,17 +16,17 @@
                 <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown"><i
                         class="fa fa-plus"></i> {{ _('Register') }} <span class="caret"></span></button>
                 <ul class="dropdown-menu">
-                    <li class="disabled"><a href="/create/from_identifiers" disabled="disabled"><i
+                    <li class="disabled"><a href="{{ url_for('new_by_identifiers') }}" disabled="disabled"><i
                             class="fa fa-barcode"></i> {{ _('IDs') }}</a></li>
-                    <li class="disabled"><a href="/create/publication" disabled="disabled"><i
+                    <li class="disabled"><a href="{{ url_for('new_by_form') }}" disabled="disabled"><i
                             class="fa fa-keyboard-o"></i> {{ _("Manually") }}</a></li>
                     <li><a href="{{ url_for('file_upload') }}"><i class="fa fa-cloud-upload"></i> {{ _('Upload') }}</a>
                     </li>
-                    <li class="disabled"><a href="/create/from_search" disabled="disabled"><i
+                    <li class="disabled"><a href="{{ url_for('new_by_search') }}" disabled="disabled"><i
                             class="fa fa-search-plus"></i> {{ _('Search') }}</a></li>
                 </ul>
             </div>
-            <a href="/consolidate/persons" type="button" class="btn btn-default"><i class="fa fa-users"></i> {{ _('Consolidate Persons') }}</a>
+            <a href="{{ url_for('consolidate_persons') }}" type="button" class="btn btn-default"><i class="fa fa-users"></i> {{ _('Consolidate Persons') }}</a>
         </div>
         {% if header != 'Superadmin Board' %}<div class="pull-right">
             <a href="{{ url_for('superadmin') }}" type="button" class="btn btn-danger"><i class="fa fa-bomb"></i> {{ _('Super Admin') }}</a><br/><i class="fa fa-warning"></i> {{ _('Proceed with Caution!') }}

@@ -1,4 +1,4 @@
-<a href="/retrieve/{{ record.pubtype }}/{{ record.id }}">{{ record.title }}</a><br/>
+<a href="{{ url_for('show_record', pubtype=record.pubtype, record_id=record.id) }}">{{ record.title }}</a><br/>
 {% if record.person %}
     {% for author in record.person %}{{ author }}{% if not loop.last %}; {% endif %}{% endfor %}
     {% else %}

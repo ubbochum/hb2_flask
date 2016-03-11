@@ -6,12 +6,12 @@
     <p>{% include 'admin_nav.html' %}</p>
         <div class="row">
             <div class="col-sm-3">
-                {{ drill_down.facets(facet_data.fperson, 'fperson', heading='Person', target='dashboard') }}
-                {{ drill_down.facets(facet_data.pubtype, 'pubtype', heading='Publication Type', target='dashboard') }}
-                {{ drill_down.facets(facet_data.editorial_status, 'editorial_status', heading='Editorial Status', target='dashboard') }}
-                {{ drill_down.facets(facet_data.publication_status, 'publication_status', heading='Publication Status', target='dashboard') }}
+                {{ drill_down.facets(facet_data.fperson, 'fperson', heading='Person', target=target) }}
+                {{ drill_down.facets(facet_data.pubtype, 'pubtype', heading='Publication Type', target=target) }}
+                {{ drill_down.facets(facet_data.editorial_status, 'editorial_status', heading='Editorial Status', target=target) }}
+                {{ drill_down.facets(facet_data.publication_status, 'publication_status', heading='Publication Status', target=target) }}
 {#                {{ drill_down.facets(facet_data.owner, 'owner', heading='Owner') }}#}
-                {{ drill_down.facets(facet_data.deskman, 'deskman', heading='Deskman', target='dashboard') }}
+                {{ drill_down.facets(facet_data.deskman, 'deskman', heading='Deskman', target=target) }}
             </div>
             <div class="col-sm-9">
                 {{ pagination.info }}

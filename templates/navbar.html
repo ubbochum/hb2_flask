@@ -1,7 +1,7 @@
 {% import 'bootstrap/utils.html' as utils %}
 <nav role="navigation" class="collapse navbar-collapse navbar navbar-inverse">
     <ul class="nav navbar-nav">
-        <li{% if header == 'Home' %} class="active"{% endif %}><a href="/"><i class="fa fa-home"></i> {{ _('Home') }}</a></li>
+        <li{% if header == 'Home' %} class="active"{% endif %}><a href="{{ url_for('homepage') }}"><i class="fa fa-home"></i> {{ _('Home') }}</a></li>
         <li class="divider"></li>
         {% if current_user.role == 'admin' %}
         <li{% if header == 'Dashboard' %} class="active"{% endif %}><a href="{{ url_for('dashboard') }}"><i class="fa fa-list"></i> {{ _('Dashboard') }}</a></li>
@@ -27,7 +27,7 @@
 
     </ul>
     <div class="navbar-right{% if header == query %} search_form_active{% endif %}">
-        <form class="navbar-form" role="search" action="/search" method="get">
+        <form class="navbar-form" role="search" action="{{ url_for('search') }}" method="get">
             <div class="form-group">
                 <div class="input-group">
                     <span class="input-group-addon"><i class="fa fa-search"></i></span>

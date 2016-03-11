@@ -64,7 +64,28 @@ logging.basicConfig (level=logging.INFO,
     datefmt='%a, %d %b %Y %H:%M:%S',
 )
 
+class ReverseProxied(object):
+    def __init__(self, app):
+        self.app = app
+
+    def __call__(self, environ, start_response):
+        script_name = environ.get('HTTP_X_SCRIPT_NAME', '')
+        if script_name:
+            environ['SCRIPT_NAME'] = script_name
+            path_info = environ['PATH_INFO']
+            if path_info.startswith(script_name):
+                environ['PATH_INFO'] = path_info[len(script_name):]
+
+        scheme = environ.get('HTTP_X_SCHEME', '')
+        if scheme:
+            environ['wsgi.url_scheme'] = scheme
+        return self.app(environ, start_response)
+
 app = Flask(__name__)
+
+if secrets.DIFFERENT_PROXY_PATH:
+    app.wsgi_app = ReverseProxied(app.wsgi_app)
+
 app.debug = True
 #app.testing = True
 app.secret_key = secrets.key
@@ -475,7 +496,10 @@ def search():
         mystart = 1 + (pagination.page - 1) * pagination.per_page
         #myend = mystart + pagination.per_page - 1
         logging.info(query)
-        return render_template('resultlist.html', records=search_solr.results, pagination=pagination, facet_data=search_solr.facets, header=lazy_gettext('Resultlist'), site=theme(request.access_route), offset=mystart - 1, query=query, filterquery=filterquery)
+        return render_template('resultlist.html', records=search_solr.results, pagination=pagination,
+                               facet_data=search_solr.facets, header=lazy_gettext('Resultlist'), target='search',
+                               site=theme(request.access_route), offset=mystart - 1, query=query,
+                               filterquery=filterquery)
 
 @csrf.exempt
 @app.route('/apparent_duplicate', methods=['GET', 'POST'])
@@ -775,6 +799,10 @@ def file_upload():
         flash(lazy_gettext('Thank you for uploading your data! We will now edit them and make them available as soon as possible.'))
     return render_template('file_upload.html', header=lazy_gettext('Dashboard'), site=theme(request.access_route), form=form)
 
+@app.route('/containers')
+def containers():
+    return 'poop'
+
 @app.route('/organisations')
 def orgas():
     page = int(request.args.get('page', 1))
@@ -945,6 +973,17 @@ def new_person():
 @login_required
 def new_by_form():
     return render_template('pubtype_list.html', header=lazy_gettext('New Record by Publication Type'), site=theme(request.access_route))
+
+@app.route('/create/from_identifiers')
+@login_required
+def new_by_identifiers():
+    return ('Not implemented yet...')
+
+@app.route('/create/from_search')
+@login_required
+def new_by_search():
+    return ('Not implemented yet...')
+
 
 @app.route('/create/<pubtype>', methods=['GET', 'POST'])
 @login_required

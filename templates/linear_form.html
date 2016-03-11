@@ -76,7 +76,7 @@
             $.getJSON('/dedup/' + idtype + '/' + encodeURIComponent(thenode.val()), function(data){
                 $('#' + idtype + '_dedup_note').remove();
                 if(data.duplicate == true){
-                    thenode.closest('div[id$="_container"]').append('<div id="' + idtype + '_dedup_note" class="col-sm-4"><div class="alert alert-danger"><i class="fa fa-exclamation-triangle"></i> {{ _("This Title Already Exists!") }} <a href="/search?q=' + idtype + ':' + thenode.val() + '">{{ _("Here") }}</a></div></div>')
+                    thenode.closest('div[id$="_container"]').append('<div id="' + idtype + '_dedup_note" class="col-sm-4"><div class="alert alert-danger"><i class="fa fa-exclamation-triangle"></i> {{ _("This Title Already Exists!") }} <a href="{{ request.script_root }}/search?q=' + idtype + ':' + thenode.val() + '">{{ _("Here") }}</a></div></div>')
                 }
                 else{
                     thenode.closest('div[id$="_container"]').append('<div id="' + idtype + '_dedup_note" class="col-sm-4"><div class="alert alert-success"><i class="fa fa-check"></i> {{ _("This Title Does Not Exist Yet!") }}</div></div>')

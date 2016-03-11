@@ -4,7 +4,7 @@
         <ul class="list-group">
         {% for bucket in facet.buckets %}
             <li class="list-group-item">
-                <a href="/{{ target }}?q={{ query|urlencode }}&amp;filter={{ category }}:%22{{ bucket.val|urlencode }}%22{% if filterquery %}{% for fq in filterquery %}&amp;filter={{ fq }}{% endfor %}{% endif %}{% if mysort %}&amp;sort={{ mysort }}{% endif %}"
+                <a href="{{ request.script_root }}/{{ target }}?q={{ query|urlencode }}&amp;filter={{ category }}:%22{{ bucket.val|urlencode }}%22{% if filterquery %}{% for fq in filterquery %}&amp;filter={{ fq }}{% endfor %}{% endif %}{% if mysort %}&amp;sort={{ mysort }}{% endif %}"
                    title="{{ bucket.val|safe }}">{{ bucket.val|safe }}
                 </a><span class="badge">{{ bucket.count }}</span>
             </li>
@@ -16,11 +16,11 @@
 {% macro simple_filter(category='', heading='', target='search') %}
     <h4>{{ _('%(title)s', title=heading) }}</h4>
     <ul>
-        <li><a href="/{{ target }}?q={{ query|urlencode }}{% if filterquery %}{% for fq in filterquery %}&amp;filter={{ fq }}{% endfor %}{% endif %}{% if mysort %}&amp;sort={{ mysort }}{% endif %}"
+        <li><a href="{{ request.script_root }}/{{ target }}?q={{ query|urlencode }}{% if filterquery %}{% for fq in filterquery %}&amp;filter={{ fq }}{% endfor %}{% endif %}{% if mysort %}&amp;sort={{ mysort }}{% endif %}"
                        title="{{ cat|safe }}">{{ _('All') }}</a></li>
-        <li><a href="/{{ target }}?q={{ query|urlencode }}&amp;filter={{ category }}:[%22%22%20TO%20*]{% if filterquery %}{% for fq in filterquery %}&amp;filter={{ fq }}{% endfor %}{% endif %}{% if mysort %}&amp;sort={{ mysort }}{% endif %}"
+        <li><a href="{{ request.script_root }}/{{ target }}?q={{ query|urlencode }}&amp;filter={{ category }}:[%22%22%20TO%20*]{% if filterquery %}{% for fq in filterquery %}&amp;filter={{ fq }}{% endfor %}{% endif %}{% if mysort %}&amp;sort={{ mysort }}{% endif %}"
                        title="{{ cat|safe }}">{{ _('Yes') }}</a></li>
-       <li><a href="/{{ target }}?q={{ query|urlencode }}&amp;filter=-{{ category }}:[%22%22%20TO%20*]{% if filterquery %}{% for fq in filterquery %}&amp;filter={{ fq }}{% endfor %}{% endif %}{% if mysort %}&amp;sort={{ mysort }}{% endif %}"
+       <li><a href="{{ request.script_root }}/{{ target }}?q={{ query|urlencode }}&amp;filter=-{{ category }}:[%22%22%20TO%20*]{% if filterquery %}{% for fq in filterquery %}&amp;filter={{ fq }}{% endfor %}{% endif %}{% if mysort %}&amp;sort={{ mysort }}{% endif %}"
                        title="{{ cat|safe }}">{{ _('No') }}</a></li>
     </ul>
 {% endmacro %}
