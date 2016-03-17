@@ -101,14 +101,14 @@
                 //$('#pubtype select').val('{{ pubtype }}');
                 $('#pubtype option[value="{{ pubtype }}"]').prop('selected', true);
                 $.post('/create/{{ pubtype }}', $('#theform').serialize(), function(){
-                    window.location.href = '/update/' + pubtype + '/' + $('#id').val();
+                    window.location.href = '{{ request.script_root }}/update/' + pubtype + '/' + $('#id').val();
                 }).fail(function(e){
                     console.log(e);
                 });
             });
         {% elif action == 'update' %}
             $(document).on('change', '#pubtype', function(event){
-                window.location.href = '/update/' + $(this).val() + '/' + $('#id').val();
+                window.location.href = '{{ request.script_root }}/update/' + $(this).val() + '/' + $('#id').val();
             });
         {% endif %}
     </script>

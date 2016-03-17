@@ -143,7 +143,7 @@
                 //$('#pubtype select').val('{{ pubtype }}');
                 $('#pubtype option[value="{{ pubtype }}"]').prop('selected', true);
                 $.post('/create/{{ pubtype }}', $('#theform').serialize(), function(){
-                    window.location.href = '/update/' + pubtype + '/' + $('.row').attr('id');
+                    window.location.href = '{{ request.script_root }}/update/' + pubtype + '/' + $('.row').attr('id');
                 }).fail(function(e){
                     console.log(e);
                 });
@@ -152,7 +152,7 @@
             console.log($('.row').attr('id'));
             var socket = io.connect('https://hb2.ub.rub.de/socketio/hb2');
             $(document).on('change', '#pubtype', function(event){
-                window.location.href = '/update/' + $(this).val() + '/' + $('.row').attr('id');
+                window.location.href = '{{ request.script_root }}/update/' + $(this).val() + '/' + $('.row').attr('id');
             });
             $(document).on('submit', '#theform', function(event){
                 socket.emit('unlock', {data: $('.row').attr('id')});
