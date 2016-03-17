@@ -567,14 +567,15 @@ def _record2solr_doc(form, action):
             for trans_tit in form.data.get(field):
                 solr_data.setdefault('parallel_title', trans_tit.strip())
         if field == 'issued':
-            solr_data.setdefault('date', form.data.get(field).strip())
-            solr_data.setdefault('fdate', form.data.get(field)[0:4].strip())
-            if len(form.data.get(field).strip()) == 4:
-                solr_data.setdefault('date_boost', '%s-01-01T00:00:00Z' % form.data.get(field).strip())
-            elif len(form.data.get(field).strip()) == 7:
-                solr_data.setdefault('date_boost', '%s-01T00:00:00Z' % form.data.get(field).strip())
-            else:
-                solr_data.setdefault('date_boost', '%sT00:00:00Z' % form.data.get(field).strip())
+            if form.data.get(field):
+                solr_data.setdefault('date', form.data.get(field).strip())
+                solr_data.setdefault('fdate', form.data.get(field)[0:4].strip())
+                if len(form.data.get(field).strip()) == 4:
+                    solr_data.setdefault('date_boost', '%s-01-01T00:00:00Z' % form.data.get(field).strip())
+                elif len(form.data.get(field).strip()) == 7:
+                    solr_data.setdefault('date_boost', '%s-01T00:00:00Z' % form.data.get(field).strip())
+                else:
+                    solr_data.setdefault('date_boost', '%sT00:00:00Z' % form.data.get(field).strip())
         if field == 'publisher':
             solr_data.setdefault('publisher', form.data.get(field).strip())
         if field == 'language':

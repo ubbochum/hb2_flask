@@ -12,7 +12,7 @@
             {{ form.errors }}
         {% endif %}
         <p style="margin-left: 3%;">{{ _('Fields marked with <span style="color: orangered;">*</span> are required.') }}</p>
-        <form id="theform" class="form form-horizontal" method="post" role="form" action="/{{ action }}/{{ pubtype }}{% if action == 'update' %}/{{ form.id.data }}{% endif %}" enctype="multipart/form-data">
+        <form id="theform" class="form form-horizontal" method="post" role="form" action="{{ request.script_root }}/{{ action }}/{{ pubtype }}{% if action == 'update' %}/{{ form.id.data }}{% endif %}" enctype="multipart/form-data">
             {{ form.csrf_token }}
             <div class="tab-container"><div class="col-xs-3">
                 {% for groups in form.groups() %}
