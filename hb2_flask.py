@@ -36,7 +36,7 @@ import wtforms_json
 import orcid
 import time
 from flask import Flask, render_template, redirect, request, jsonify, flash, url_for, Markup, g, send_file
-from flask.ext.babel import Babel, lazy_gettext
+from flask.ext.babel import Babel, lazy_gettext, gettext
 from flask.ext.bootstrap import Bootstrap
 from flask.ext.paginate import Pagination
 from flask_humanize import Humanize
@@ -371,7 +371,7 @@ def homepage():
         num_found = index_solr.count()
         records = index_solr.results
         if num_found == 0:
-            flash(lazy_gettext("You haven't registered any records with us yet. Please do so now..."), 'danger')
+            flash(gettext("You haven't registered any records with us yet. Please do so now..."), 'danger')
         else:
             pagination = Pagination(page=page, total=num_found, found=num_found, bs_version=3, search=True,
                                     record_name=lazy_gettext('titles'),
@@ -419,7 +419,7 @@ def duplicates():
     logging.info(duplicates_solr.response)
     num_found = duplicates_solr.count()
     if num_found == 0:
-        flash(lazy_gettext('There are currently no Duplicates!'))
+        flash(gettext('There are currently no Duplicates!'))
         return redirect(url_for('dashboard'))
     pagination = Pagination(page=page, total=num_found, found=num_found, bs_version=3, search=True,
                             record_name=lazy_gettext('duplicate groups'),
@@ -442,7 +442,7 @@ def persons():
     num_found = persons_solr.count()
 
     if num_found == 0:
-        flash(lazy_gettext('There Are No Persons Yet!'))
+        flash(gettext('There Are No Persons Yet!'))
         return render_template('persons.html', header=lazy_gettext('Persons'), site=theme(request.access_route),
                                facet_data=persons_solr.facets, results=persons_solr.results,
                                offset=mystart - 1, query=query, filterquery=filterquery,
@@ -489,7 +489,7 @@ def search():
     if num_found == 1:
         return redirect(url_for('show_record', record_id=search_solr.results[0].get('id'), pubtype=search_solr.results[0].get('pubtype')))
     elif num_found == 0:
-        flash(lazy_gettext('Your Search Found no Results'))
+        flash(gettext('Your Search Found no Results'))
         return redirect(url_for('homepage'))
     else:
         pagination = Pagination(page=page, total=num_found, found=num_found, bs_version=3, search=True, record_name=lazy_gettext('titles'), search_msg=lazy_gettext('Showing {start} to {end} of {found} {record_name}'))
@@ -625,6 +625,109 @@ def _record2solr_doc(form, action):
             solr_data.setdefault('doi', form.data.get(field).strip())
         if field == 'WOSID':
             solr_data.setdefault('isi_id', form.data.get(field).strip())
+        if field == 'is_part_of' and len(form.data.get(field)) > 0:
+            ipo_ids = []
+            ipo_solr = ''
+            try:
+                for ipo in form.data.get(field):
+                    if ipo:
+                        # logging.info(ipo)
+                        if 'is_part_of' in ipo:
+                            # logging.info('POOP')
+                            if ipo.get('is_part_of') != '':
+                                ipo_ids.append(ipo.get('is_part_of'))
+                        else:
+                            # logging.info('PEEP')
+                            ipo_ids.append(ipo)
+                query = ''
+                if len(ipo_ids) > 0:
+                    query = '{!terms f=id}%s' % ','.join(ipo_ids)
+                if len(ipo_ids) == 1:
+                    query = 'id:%s' % ipo_ids[0]
+                if len(ipo_ids) > 0:
+                    ipo_solr = Solr(query=query, facet='false', fields=['wtf_json'])
+                    ipo_solr.request()
+                    if len(ipo_solr.results) == 0:
+                        flash(gettext(
+                            'Not all IDs from relation "is part of" could be found! Ref: %s' % form.data.get('id')),
+                              'warning')
+                    for idx, doc in enumerate(ipo_solr.results):
+                        myjson = json.loads(doc.get('wtf_json'))
+                        # solr_data.setdefault('is_part_of', []).append('<a href="/retrieve/%s/%s">%s</a>' % (myjson.get('pubtype'), myjson.get('id'), myjson.get('title')))
+                        solr_data.setdefault('is_part_of', []).append(json.dumps({'pubtype': myjson.get('pubtype'),
+                                                                                  'id': myjson.get('id'),
+                                                                                  'title': myjson.get('title'),
+                                                                                  'page_first': form.data.get(field)[
+                                                                                      idx].get('page_first', ''),
+                                                                                  'page_last': form.data.get(field)[
+                                                                                      idx].get('page_last', ''),
+                                                                                  'volume': form.data.get(field)[
+                                                                                      idx].get('volume', ''),
+                                                                                  'issue': form.data.get(field)[
+                                                                                      idx].get('issue', '')}))
+            except AttributeError as e:
+                logging.error(e)
+        if field == 'has_part' and len(form.data.get(field)) > 0:
+            # for myhp in form.data.get(field):
+            # logging.info('HP ' + myhp)
+            hp_ids = []
+            hp_solr = ''
+            try:
+                for hp in form.data.get(field):
+                    if hp.get('has_part') != '':
+                        hp_ids.append(hp.get('has_part'))
+                query = ''
+                if len(hp_ids) > 0:
+                    query = '{!terms f=id}%s' % ','.join(hp_ids)
+                if len(hp_ids) == 1:
+                    query = 'id:%s' % hp_ids[0]
+                if len(hp_ids) > 0:
+                    hp_solr = Solr(query=query, facet='false', fields=['wtf_json'])
+                    hp_solr.request()
+                    if len(hp_solr.results) == 0:
+                        flash(
+                            gettext(
+                                'Not all IDs from relation "has part" could be found! Ref: %s' % form.data.get('id')),
+                            'warning')
+                    for doc in hp_solr.results:
+                        myjson = json.loads(doc.get('wtf_json'))
+                        # solr_data.setdefault('has_part', []).append('<a href="/retrieve/%s/%s">%s</a>' % (myjson.get('pubtype'), myjson.get('id'), myjson.get('title')))
+                        solr_data.setdefault('has_part', []).append(json.dumps({'pubtype': myjson.get('pubtype'),
+                                                                                'id': myjson.get('id'),
+                                                                                'title': myjson.get('title'),}))
+            except AttributeError as e:
+                logging.error(e)
+        if field == 'other_version' and len(form.data.get(field)) > 0:
+            # for myov in form.data.get(field):
+            # logging.info('OV ' + myov)
+            ov_ids = []
+            ov_solr = ''
+            try:
+                for version in form.data.get(field):
+                    if version.get('other_version') != '':
+                        ov_ids.append(version.get('other_version'))
+                query = ''
+                if len(ov_ids) > 0:
+                    query = '{!terms f=id}%s' % ','.join(ov_ids)
+                if len(ov_ids) == 1:
+                    query = 'id:%s' % ov_ids[0]
+                if len(ov_ids) > 0:
+                    ov_solr = Solr(query=query, facet='false', fields=['wtf_json'])
+                    ov_solr.request()
+                    if len(ov_solr.results) == 0:
+                        flash(
+                            gettext('Not all IDs from relation "other version" could be found! Ref: %s' % form.data.get(
+                                'id')),
+                            'warning')
+                    for doc in ov_solr.results:
+                        # logging.info(json.loads(doc.get('wtf_json')))
+                        myjson = json.loads(doc.get('wtf_json'))
+                        # solr_data.setdefault('other_version', []).append('<a href="/retrieve/%s/%s">%s</a>' % (myjson.get('pubtype'), myjson.get('id'), myjson.get('title')))
+                        solr_data.setdefault('other_version', []).append(json.dumps({'pubtype': myjson.get('pubtype'),
+                                                                                     'id': myjson.get('id'),
+                                                                                     'title': myjson.get('title'),}))
+            except AttributeError as e:
+                logging.error(e)
 
     return solr_data
 
@@ -687,7 +790,7 @@ def dashboard():
     num_found = dashboard_solr.count()
     pagination = ''
     if num_found == 0:
-        flash(lazy_gettext('There Are No Records Yet!'), 'danger')
+        flash(gettext('There Are No Records Yet!'), 'danger')
     else:
         pagination = Pagination(page=page, total=num_found, found=num_found, bs_version=3, search=True,
                                 record_name=lazy_gettext('titles'),
@@ -707,17 +810,17 @@ def make_admin(user_id=''):
     if user_id:
         ma_solr = Solr(core='hb2_users', data=[{'id': user_id, 'role': {'set': 'admin'}}])
         ma_solr.update()
-        flash(lazy_gettext('%s upgraded to admin!' % user_id), 'success')
+        flash(gettext('%s upgraded to admin!' % user_id), 'success')
         return redirect(url_for('index'))
     else:
-        flash(lazy_gettext('You did not supply an ID!'), 'danger')
+        flash(gettext('You did not supply an ID!'), 'danger')
         return redirect(url_for('superadmin'))
 
 @app.route('/superadmin', methods=['GET'])
 @login_required
 def superadmin():
     if current_user.role != 'admin':
-        flash(lazy_gettext('For Admins ONLY!!!'))
+        flash(gettext('For Admins ONLY!!!'))
         return redirect(url_for('homepage'))
     # Get locked records that were last changed more than one hour ago...
     page = int(request.args.get('page', 1))
@@ -797,7 +900,7 @@ def file_upload():
             ticket = trac.ticket.create('Datendatei: %s' % form.file.data.filename, admin_record, attrs, True)
             attachment = trac.ticket.putAttachment(str(ticket), form.file.data.filename, 'Datei zur Dateneingabe', form.file.data.stream.read(), True)
             #return redirect('http://bibliographie-trac.ub.rub.de/ticket/' + str(ticket))
-        flash(lazy_gettext('Thank you for uploading your data! We will now edit them and make them available as soon as possible.'))
+        flash(gettext('Thank you for uploading your data! We will now edit them and make them available as soon as possible.'))
     return render_template('file_upload.html', header=lazy_gettext('Dashboard'), site=theme(request.access_route), form=form)
 
 @app.route('/containers')
@@ -818,7 +921,7 @@ def orgas():
     num_found = orgas_solr.count()
 
     if num_found == 0:
-        flash(lazy_gettext('There Are No Organisations Yet!'))
+        flash(gettext('There Are No Organisations Yet!'))
         return render_template('orgas.html', header=lazy_gettext('Organisations'), site=theme(request.access_route),
                                facet_data=orgas_solr.facets, results=orgas_solr.results,
                                offset=mystart - 1, query=query, filterquery=filterquery, now=datetime.datetime.now())
@@ -1061,6 +1164,10 @@ def show_record(pubtype, record_id=''):
     show_record_solr = Solr( query='id:%s' % record_id)
     show_record_solr.request()
 
+    is_part_of = show_record_solr.results[0].get('is_part_of')
+    has_part = show_record_solr.results[0].get('has_part')
+    other_version = show_record_solr.results[0].get('other_version')
+
     thedata = json.loads(show_record_solr.results[0].get('wtf_json'))
     locked = show_record_solr.results[0].get('locked')
     form = PUBTYPE2FORM.get(pubtype).from_json(thedata)
@@ -1068,7 +1175,8 @@ def show_record(pubtype, record_id=''):
     return render_template('record.html', record=form, header=form.data.get('title'), site=theme(request.access_route),
                            action='retrieve', record_id=record_id, del_redirect='dashboard', pubtype=pubtype,
                            role_map=ROLE_MAP, lang_map=LANGUAGE_MAP, pubtype_map=PUBTYPE2TEXT, subtype_map=SUBTYPE2TEXT,
-                           locked=locked)
+                           locked=locked, is_part_of=is_part_of, has_part=has_part, other_version=other_version
+    )
 
 @app.route('/retrieve/person/<person_id>')
 def show_person(person_id=''):
@@ -1423,7 +1531,7 @@ def login():
 
                 return redirect(next or url_for('homepage'))
             else:
-                flash(lazy_gettext("Username and Password Don't Match"), 'danger')
+                flash(gettext("Username and Password Don't Match"), 'danger')
                 return redirect('login')
         elif request.form.get('wayf') == 'dortmund':
             #010188
@@ -1456,7 +1564,7 @@ def login():
                 login_user(user)
                 return redirect(next or url_for('homepage'))
             else:
-                flash(lazy_gettext("Username and Password Don't Match"), 'danger')
+                flash(gettext("Username and Password Don't Match"), 'danger')
                 return redirect('login')
 
     form = LoginForm()
@@ -1547,9 +1655,11 @@ def import_solr_dump(filename=''):
         if form.validate_on_submit():
             thedata = json.loads(form.file.data.stream.read())
 
-    pool = Pool(4)
-    solr_data.append(pool.map(_import_data, thedata))
-    import_solr = Solr(core='hb2', data=solr_data[0])
+    #pool = Pool(4)
+    #solr_data.append(pool.map(_import_data, thedata))
+    for mydata in thedata:
+        solr_data.append(_import_data(mydata))
+    import_solr = Solr(core='hb2', data=solr_data)
     import_solr.update()
 
     flash('%s records imported!' % len(thedata), 'success')

@@ -8,10 +8,8 @@
 {% if multifield[0] %}
     {% if multifield[0].type == 'FormField' %}
     <div id="{{ multifield[0].name }}_container" class="multi_enclosure">
-    <h3>
-        <div class="col-sm-2 control-label">{{ multifield[0].name|capitalize|rem_form_count|replace('_', ' ') }}</div>
-        <div class="col-sm-6" style="margin: 0 0 12px -10px;;"><a class="btn btn-sm btn-default add" href="#"><i class="fa fa-plus"></i> {{_('Add another')}}</a></div>
-    </h3>
+    <div class="col-sm-2 control-label">{{ multifield[0].name|capitalize|rem_form_count|replace('_', ' ') }}</div>
+    <div class="col-sm-6" style="margin: 0 0 12px -10px;;"><a class="btn btn-sm btn-default add" href="#"><i class="fa fa-plus"></i> {{_('Add another')}}</a></div>
     <div class="col-sm-4">&nbsp;</div>
     <div class="clearfix"></div>
     {% for enclosure in multifield %}
@@ -25,7 +23,7 @@
                         {% if subfield.type != 'BooleanField' %}
                             <div class="col-sm-6"><span class="subfield_label">{{ subfield.label }}</span><br/>{{ subfield(class='form-control') }}</div>
                         {% else %}
-                            <div class="col-sm-6"><div class="checkbox"><label>{{ subfield(class='checkbox') }} {{ subfield.label }}</label></div></div>
+                            <div class="col-sm-6"><div class="checkbox"><label><input type="checkbox" id="{{ subfield.name }}">{{ subfield.label }}</label></div></div>
                         {% endif %}
                         {% if subfield.description %}<div class="clearfix"></div><div class="col-sm-offset-2"><p class="help-block" style="margin-top: 8px;margin-left:15px;">{{ subfield.description }}</p></div>{% endif %}
                         <div class="col-sm-4">&nbsp;</div>
@@ -38,7 +36,7 @@
                         {% if subfield.type != 'BooleanField' %}
                             <div class="col-sm-6"><span class="subfield_label">{{ subfield.label }}</span><br/>{{ subfield(class='form-control') }}</div>
                         {% else %}
-                            <div class="col-sm-6"><div class="checkbox"><label>{{ subfield(class='checkbox') }} {{ subfield.label }}</label></div></div>
+                            <div class="col-sm-6"><div class="checkbox"><label><input type="checkbox" id="{{ subfield.name }}">{{ subfield.label }}</label></div></div>
                         {% endif %}
                         {% if subfield.description %}<div class="clearfix"></div><div class="col-sm-offset-2"><p class="help-block" style="margin-top: 8px;margin-left:15px;">{{ subfield.description }}</p></div>{% endif %}
                         <div class="col-sm-4">&nbsp;</div>

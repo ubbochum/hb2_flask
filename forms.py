@@ -518,11 +518,11 @@ class WorkForm(Form):
     # created = HiddenField(lazy_gettext('Record Creation Date'))
     # changed = HiddenField(lazy_gettext('Record Change Date'))
 
-    id = StringField(lazy_gettext('UUID'), validators=[UUID(), Optional()], widget=CustomTextInput(readonly='readonly', admin_only='admin_only'))
+    id = StringField(lazy_gettext('UUID'), validators=[UUID(), Optional()], widget=CustomTextInput(readonly='readonly'))
     affiliation_context = FieldList(StringField(lazy_gettext('Affiliation Context'), validators=[Optional()], widget=CustomTextInput(
         placeholder=lazy_gettext('The subject area this publication belongs to'))), min_entries=1)
-    created = StringField(lazy_gettext('Record Creation Date'), widget=CustomTextInput(readonly='readonly', admin_only='admin_only'))
-    changed = StringField(lazy_gettext('Record Change Date'), widget=CustomTextInput(readonly='readonly', admin_only='admin_only'))
+    created = StringField(lazy_gettext('Record Creation Date'), widget=CustomTextInput(readonly='readonly'))
+    changed = StringField(lazy_gettext('Record Change Date'), widget=CustomTextInput(readonly='readonly'))
     publication_status = SelectField(lazy_gettext('Publication Status'), validators=[DataRequired()], choices=[
         ('', lazy_gettext('Select a Publication Status')),
         ('published', lazy_gettext('Published'))
@@ -596,7 +596,7 @@ class SeriesForm(SerialForm):
                        self.license, self.license_text
                        ],
              'label': lazy_gettext('Basic')},
-            {'group': [self.ISSN, self.ZDBID, self.uri, self.DOI, self.PMID, self.WOSID], 'label': lazy_gettext('ID')},
+            {'group': [self.ISSN, self.ZDBID, self.uri, self.DOI, self.PMID, self.WOSID], 'label': lazy_gettext('IDs')},
             {'group': [self.person], 'label': lazy_gettext('Person')},
             {'group': [self.corporation], 'label': lazy_gettext('Corporation')},
             {'group': [self.is_part_of], 'label': lazy_gettext('Part of')},
@@ -620,7 +620,7 @@ class JournalForm(SerialForm):
                        self.issued, self.publisher, self.publisher_place, self.frequency, self.language, self.number_of_pages, self.medium, self.accessed, self.additions, self.note, self.license, self.license_text
                        ],
              'label': lazy_gettext('Basic')},
-            {'group': [self.ISSN, self.ZDBID, self.uri, self.DOI, self.PMID, self.WOSID], 'label': lazy_gettext('ID')},
+            {'group': [self.ISSN, self.ZDBID, self.uri, self.DOI, self.PMID, self.WOSID], 'label': lazy_gettext('IDs')},
             {'group': [self.person], 'label': lazy_gettext('Person')},
             {'group': [self.corporation], 'label': lazy_gettext('Corporation')},
             {'group': [self.is_part_of],
@@ -681,7 +681,7 @@ class ArticleJournalForm(ArticleForm):
                        self.issued, self.language, self.number_of_pages, self.medium, self.accessed, self.additions, self.note, self.license, self.license_text
                        ],
              'label': lazy_gettext('Basic')},
-            {'group': [self.uri, self.DOI, self.PMID, self.WOSID], 'label': lazy_gettext('ID')},
+            {'group': [self.uri, self.DOI, self.PMID, self.WOSID], 'label': lazy_gettext('IDs')},
             {'group': [self.person], 'label': lazy_gettext('Person')},
             {'group': [self.corporation], 'label': lazy_gettext('Corporation')},
             {'group': [self.parent_title, self.parent_subtitle, self.is_part_of],
@@ -716,7 +716,7 @@ class ArticleNewspaperForm(ArticleForm):
                        self.additions, self.note, self.license, self.license_text
                        ],
              'label': lazy_gettext('Basic')},
-            {'group': [self.uri, self.DOI, self.PMID, self.WOSID], 'label': lazy_gettext('ID')},
+            {'group': [self.uri, self.DOI, self.PMID, self.WOSID], 'label': lazy_gettext('IDs')},
             {'group': [self.person], 'label': lazy_gettext('Person')},
             {'group': [self.corporation], 'label': lazy_gettext('Corporation')},
             {'group': [self.parent_title, self.parent_subtitle, self.is_part_of],
@@ -743,7 +743,7 @@ class SpecialIssueForm(JournalForm):
                        self.issued, self.publisher, self.publisher_place, self.frequency, self.language, self.number_of_pages, self.medium, self.accessed, self.additions, self.note, self.license, self.license_text
                        ],
              'label': lazy_gettext('Basic')},
-            {'group': [self.ISSN, self.ZDBID, self.uri, self.DOI, self.PMID, self.WOSID], 'label': lazy_gettext('ID')},
+            {'group': [self.ISSN, self.ZDBID, self.uri, self.DOI, self.PMID, self.WOSID], 'label': lazy_gettext('IDs')},
             {'group': [self.person], 'label': lazy_gettext('Person')},
             {'group': [self.corporation], 'label': lazy_gettext('Corporation')},
             {'group': [self.is_part_of],
@@ -786,7 +786,7 @@ class CollectionForm(ContainerForm):
                        self.issued, self.edition, self.number_of_volumes, self.publisher, self.publisher_place, self.language, self.number_of_pages, self.medium, self.accessed, self.additions, self.note, self.license, self.license_text
                        ],
              'label': lazy_gettext('Basic')},
-            {'group': [self.uri, self.DOI, self.PMID, self.WOSID, self.ISBN, self.hbz_id], 'label': lazy_gettext('ID')},
+            {'group': [self.uri, self.DOI, self.PMID, self.WOSID, self.ISBN, self.hbz_id], 'label': lazy_gettext('IDs')},
             {'group': [self.person], 'label': lazy_gettext('Person')},
             {'group': [self.corporation], 'label': lazy_gettext('Corporation')},
             {'group': [self.is_part_of],
@@ -816,7 +816,7 @@ class ConferenceForm(CollectionForm):
                        self.issued, self.edition, self.number_of_volumes, self.publisher, self.publisher_place, self.language, self.number_of_pages, self.medium, self.accessed, self.additions, self.note, self.license, self.license_text
                        ],
              'label': lazy_gettext('Basic')},
-            {'group': [self.uri, self.DOI, self.PMID, self.WOSID, self.ISBN, self.hbz_id], 'label': lazy_gettext('ID')},
+            {'group': [self.uri, self.DOI, self.PMID, self.WOSID, self.ISBN, self.hbz_id], 'label': lazy_gettext('IDs')},
             {'group': [self.person], 'label': lazy_gettext('Person')},
             {'group': [self.corporation], 'label': lazy_gettext('Corporation')},
             {'group': [self.event_name, self.startdate_conference, self.enddate_conference, self.place], 'label': lazy_gettext('Event')},
@@ -847,7 +847,7 @@ class EditionForm(CollectionForm):
                        self.issued, self.edition, self.number_of_volumes, self.publisher, self.publisher_place, self.language, self.number_of_pages, self.medium, self.accessed, self.additions, self.note, self.license, self.license_text
                        ],
              'label': lazy_gettext('Basic')},
-            {'group': [self.uri, self.DOI, self.PMID, self.WOSID, self.ISBN, self.hbz_id], 'label': lazy_gettext('ID')},
+            {'group': [self.uri, self.DOI, self.PMID, self.WOSID, self.ISBN, self.hbz_id], 'label': lazy_gettext('IDs')},
             {'group': [self.person], 'label': lazy_gettext('Person')},
             {'group': [self.corporation], 'label': lazy_gettext('Corporation')},
             {'group': [self.is_part_of],
@@ -874,7 +874,7 @@ class LegalCommentaryForm(CollectionForm):
                        self.issued, self.edition, self.number_of_volumes, self.publisher, self.publisher_place, self.language, self.number_of_pages, self.medium, self.accessed, self.additions, self.note, self.license, self.license_text
                        ],
              'label': lazy_gettext('Basic')},
-            {'group': [self.uri, self.DOI, self.PMID, self.WOSID, self.ISBN, self.hbz_id], 'label': lazy_gettext('ID')},
+            {'group': [self.uri, self.DOI, self.PMID, self.WOSID, self.ISBN, self.hbz_id], 'label': lazy_gettext('IDs')},
             {'group': [self.person], 'label': lazy_gettext('Person')},
             {'group': [self.corporation], 'label': lazy_gettext('Corporation')},
             {'group': [self.is_part_of],
@@ -926,7 +926,7 @@ class ChapterForm(WorkForm):
                        self.issued, self.language, self.number_of_pages, self.medium, self.accessed, self.additions, self.note, self.license, self.license_text
                        ],
              'label': lazy_gettext('Basic')},
-            {'group': [self.uri, self.DOI, self.PMID, self.WOSID], 'label': lazy_gettext('ID')},
+            {'group': [self.uri, self.DOI, self.PMID, self.WOSID], 'label': lazy_gettext('IDs')},
             {'group': [self.person], 'label': lazy_gettext('Person')},
             {'group': [self.corporation], 'label': lazy_gettext('Corporation')},
             {'group': [self.is_part_of, self.parent_title, self.parent_subtitle],
@@ -953,7 +953,7 @@ class ChapterInLegalCommentaryForm(ChapterForm):
                        self.issued, self.date_updated, self.language, self.number_of_pages, self.medium, self.accessed, self.additions, self.note, self.license, self.license_text
                        ],
              'label': lazy_gettext('Basic')},
-            {'group': [self.uri, self.DOI, self.PMID, self.WOSID], 'label': lazy_gettext('ID')},
+            {'group': [self.uri, self.DOI, self.PMID, self.WOSID], 'label': lazy_gettext('IDs')},
             {'group': [self.person], 'label': lazy_gettext('Person')},
             {'group': [self.corporation], 'label': lazy_gettext('Corporation')},
             {'group': [self.is_part_of, self.parent_title, self.parent_subtitle],
@@ -983,7 +983,7 @@ class ChapterInMonographForm(ChapterForm):
                        self.issued, self.language, self.number_of_pages, self.medium, self.accessed, self.additions, self.note, self.license, self.license_text
                        ],
              'label': lazy_gettext('Basic')},
-            {'group': [self.uri, self.DOI, self.PMID, self.WOSID], 'label': lazy_gettext('ID')},
+            {'group': [self.uri, self.DOI, self.PMID, self.WOSID], 'label': lazy_gettext('IDs')},
             {'group': [self.person], 'label': lazy_gettext('Person')},
             {'group': [self.corporation], 'label': lazy_gettext('Corporation')},
             {'group': [self.is_part_of, self.parent_title, self.parent_subtitle],
@@ -1009,7 +1009,7 @@ class AudioBookForm(PrintedWorkForm):
                        self.issued, self.edition, self.publisher, self.publisher_place, self.language, self.number_of_pages, self.medium, self.accessed, self.additions, self.note, self.license, self.license_text
                        ],
              'label': lazy_gettext('Basic')},
-            {'group': [self.uri, self.DOI, self.PMID, self.WOSID, self.ISBN], 'label': lazy_gettext('ID')},
+            {'group': [self.uri, self.DOI, self.PMID, self.WOSID, self.ISBN], 'label': lazy_gettext('IDs')},
             {'group': [self.person], 'label': lazy_gettext('Person')},
             {'group': [self.corporation], 'label': lazy_gettext('Corporation')},
             {'group': [self.is_part_of],
@@ -1042,7 +1042,7 @@ class AudioVideoDocumentForm(PrintedWorkForm):
                        self.issued, self.edition, self.publisher, self.publisher_place, self.language, self.number_of_pages, self.medium, self.accessed, self.additions, self.note, self.license, self.license_text
                        ],
              'label': lazy_gettext('Basic')},
-            {'group': [self.uri, self.DOI, self.PMID, self.WOSID, self.ISBN], 'label': lazy_gettext('ID')},
+            {'group': [self.uri, self.DOI, self.PMID, self.WOSID, self.ISBN], 'label': lazy_gettext('IDs')},
             {'group': [self.person], 'label': lazy_gettext('Person')},
             {'group': [self.corporation], 'label': lazy_gettext('Corporation')},
             {'group': [self.is_part_of],
@@ -1084,7 +1084,7 @@ class InternetDocumentForm(WorkForm):
                        self.issued, self.place, self.language, self.number_of_pages, self.number, self.medium, self.accessed, self.last_update, self.additions, self.note, self.license, self.license_text
                        ],
              'label': lazy_gettext('Basic')},
-            {'group': [self.uri, self.DOI, self.PMID, self.WOSID], 'label': lazy_gettext('ID')},
+            {'group': [self.uri, self.DOI, self.PMID, self.WOSID], 'label': lazy_gettext('IDs')},
             {'group': [self.person], 'label': lazy_gettext('Person')},
             {'group': [self.corporation], 'label': lazy_gettext('Corporation')},
             {'group': [self.is_part_of],
@@ -1122,7 +1122,7 @@ class LectureForm(WorkForm):
                        self.issued, self.place, self.language, self.number_of_pages, self.medium, self.accessed, self.additions, self.note, self.license, self.license_text
                        ],
              'label': lazy_gettext('Basic')},
-            {'group': [self.uri, self.DOI, self.PMID, self.WOSID], 'label': lazy_gettext('ID')},
+            {'group': [self.uri, self.DOI, self.PMID, self.WOSID], 'label': lazy_gettext('IDs')},
             {'group': [self.person], 'label': lazy_gettext('Person')},
             {'group': [self.corporation], 'label': lazy_gettext('Corporation')},
             {'group': [self.event_name, self.startdate_conference, self.enddate_conference, self.place], 'label': lazy_gettext('Event')},
@@ -1171,7 +1171,7 @@ class MonographForm(PrintedWorkForm):
                        self.issued, self.edition, self.number_of_volumes, self.publisher, self.publisher_place, self.language, self.number_of_pages, self.medium, self.accessed, self.additions, self.note, self.license, self.license_text
                        ],
              'label': lazy_gettext('Basic')},
-            {'group': [self.uri, self.DOI, self.PMID, self.WOSID, self.ISBN, self.hbz_id], 'label': lazy_gettext('ID')},
+            {'group': [self.uri, self.DOI, self.PMID, self.WOSID, self.ISBN, self.hbz_id], 'label': lazy_gettext('IDs')},
             {'group': [self.person], 'label': lazy_gettext('Person')},
             {'group': [self.corporation], 'label': lazy_gettext('Corporation')},
             {'group': [self.is_part_of],
@@ -1216,7 +1216,7 @@ class OtherForm(WorkForm):
                        self.issued, self.edition, self.place, self.language, self.number_of_pages, self.number, self.medium, self.accessed, self.additions, self.note, self.license, self.license_text
                        ],
              'label': lazy_gettext('Basic')},
-            {'group': [self.uri, self.DOI, self.PMID, self.WOSID], 'label': lazy_gettext('ID')},
+            {'group': [self.uri, self.DOI, self.PMID, self.WOSID], 'label': lazy_gettext('IDs')},
             {'group': [self.person], 'label': lazy_gettext('Person')},
             {'group': [self.corporation], 'label': lazy_gettext('Corporation')},
             {'group': [self.is_part_of],
@@ -1257,7 +1257,7 @@ class PatentForm(WorkForm):
                        ],
              'label': lazy_gettext('Basic')},
             {'group': [self.claims, self.applicant, self.date_application, self.place_of_application, self.application_number, self.place, self.bibliographic_ipc, self.priority_date], 'label': lazy_gettext('Specific')},
-            {'group': [self.uri, self.DOI, self.PMID, self.WOSID], 'label': lazy_gettext('ID')},
+            {'group': [self.uri, self.DOI, self.PMID, self.WOSID], 'label': lazy_gettext('IDs')},
             {'group': [self.person], 'label': lazy_gettext('Person')},
             {'group': [self.corporation], 'label': lazy_gettext('Corporation')},
             {'group': [self.is_part_of],
@@ -1284,7 +1284,7 @@ class PressReleaseForm(WorkForm):
                        self.issued, self.place, self.language, self.number_of_pages, self.medium, self.accessed, self.additions, self.note, self.license, self.license_text
                        ],
              'label': lazy_gettext('Basic')},
-            {'group': [self.uri, self.DOI, self.PMID, self.WOSID], 'label': lazy_gettext('ID')},
+            {'group': [self.uri, self.DOI, self.PMID, self.WOSID], 'label': lazy_gettext('IDs')},
             {'group': [self.person], 'label': lazy_gettext('Person')},
             {'group': [self.corporation], 'label': lazy_gettext('Corporation')},
             {'group': [self.is_part_of],
@@ -1314,7 +1314,7 @@ class RadioTVProgramForm(WorkForm):
                        self.issued, self.language, self.number_of_pages, self.medium, self.accessed, self.additions, self.note, self.license, self.license_text
                        ],
              'label': lazy_gettext('Basic')},
-            {'group': [self.uri, self.DOI, self.PMID, self.WOSID], 'label': lazy_gettext('ID')},
+            {'group': [self.uri, self.DOI, self.PMID, self.WOSID], 'label': lazy_gettext('IDs')},
             {'group': [self.person], 'label': lazy_gettext('Person')},
             {'group': [self.corporation], 'label': lazy_gettext('Corporation')},
             {'group': [self.is_part_of],
@@ -1346,7 +1346,7 @@ class SoftwareForm(PrintedWorkForm):
                        self.issued, self.edition, self.publisher, self.publisher_place, self.language, self.number_of_pages, self.operating_system, self.medium, self.accessed, self.additions, self.note, self.license, self.license_text
                        ],
              'label': lazy_gettext('Basic')},
-            {'group': [self.uri, self.DOI, self.PMID, self.WOSID], 'label': lazy_gettext('ID')},
+            {'group': [self.uri, self.DOI, self.PMID, self.WOSID], 'label': lazy_gettext('IDs')},
             {'group': [self.person], 'label': lazy_gettext('Person')},
             {'group': [self.corporation], 'label': lazy_gettext('Corporation')},
             {'group': [self.is_part_of],
@@ -1385,7 +1385,7 @@ class StandardForm(PrintedWorkForm):
                        ],
              'label': lazy_gettext('Basic')},
             {'group': [self.number_revision, self.type_of_standard, self.ICS_notation], 'label': lazy_gettext('Specific')},
-            {'group': [self.uri, self.DOI, self.PMID, self.WOSID, self.ISBN], 'label': lazy_gettext('ID')},
+            {'group': [self.uri, self.DOI, self.PMID, self.WOSID, self.ISBN], 'label': lazy_gettext('IDs')},
             {'group': [self.person], 'label': lazy_gettext('Person')},
             {'group': [self.corporation], 'label': lazy_gettext('Corporation')},
             {'group': [self.is_part_of],
@@ -1430,7 +1430,7 @@ class ThesisForm(WorkForm):
                        self.issued, self.place, self.language, self.number_of_pages, self.medium, self.accessed, self.additions, self.note, self.license, self.license_text
                        ],
              'label': lazy_gettext('Basic')},
-            {'group': [self.uri, self.DOI, self.PMID, self.WOSID], 'label': lazy_gettext('ID')},
+            {'group': [self.uri, self.DOI, self.PMID, self.WOSID], 'label': lazy_gettext('IDs')},
             {'group': [self.person], 'label': lazy_gettext('Person')},
             {'group': [self.corporation], 'label': lazy_gettext('Corporation')},
             {'group': [self.is_part_of],

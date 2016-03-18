@@ -1,5 +1,5 @@
 {% import 'bootstrap/utils.html' as utils %}
-<nav role="navigation" class="collapse navbar-collapse navbar navbar-inverse">
+<nav class="collapse navbar-collapse navbar navbar-inverse">
     <ul class="nav navbar-nav">
         <li{% if header == 'Home' %} class="active"{% endif %}><a href="{{ url_for('homepage') }}"><i class="fa fa-home"></i> {{ _('Home') }}</a></li>
         <li class="divider"></li>
@@ -10,13 +10,6 @@
         <li class="dropdown{% if header == 'New Record' %} active{% endif %}">
             <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><i class="fa fa-plus"></i> {{ _('New') }}</a>
             <ul class="dropdown-menu">
-                {#<li><a href="{{ url_for('new_record', pubtype='ArticleJournal') }}">{{ _('Journal Article') }}</a></li>
-                <li><a href="{{ url_for('new_record', pubtype='Monograph') }}">{{ _('Book') }}</a></li>
-                <li><a href="{{ url_for('new_record', pubtype='Chapter') }}">{{ _('Chapter') }}</a></li>
-                <li><a href="{{ url_for('new_record', pubtype='ChapterInMonograph') }}">{{ _('Chapter in Monograph') }}</a></li>
-                <li><a href="{{ url_for('new_record', pubtype='ChapterInLegalCommentary') }}">{{ _('Chapter in Legal Commentary') }}</a></li>
-                <li><a href="{{ url_for('new_record', pubtype='Conference') }}">{{ _('Conference') }}</a></li>
-                <li><a href="{{ url_for('new_record', pubtype='Patent') }}">{{ _('Patent') }}</a></li>#}
                 <li><a href="{{ url_for('new_by_form') }}">{{ _('Publication') }}</a></li>
                 <li class="divider"></li>
                 <li><a href="{{ url_for('new_person') }}">{{ _('Person') }}</a></li>
@@ -24,7 +17,6 @@
             </ul>
         </li>
         <li class="divider"></li>
-
     </ul>
     <div class="navbar-right{% if header == query %} search_form_active{% endif %}">
         <form class="navbar-form" role="search" action="{{ url_for('search') }}" method="get">
