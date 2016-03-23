@@ -66,7 +66,7 @@
                 </dd>
                 <hr/>
             {% endif %}
-           {% if record.data.person.0.name %}
+            {% if record.data.person.0.name %}
                 <dt>
                     {% trans count=record.data.person|length %}
                     Person
@@ -76,7 +76,7 @@
                 </dt>
                 <dd>
                     {% for person in record.data.person %}
-                        {{ person.name }}<br/>
+                        {{ person.name }}{% if person.gnd %} | <a href="http://d-nb.info/gnd/{{ person.gnd }}">{{ _('GND') }}</a>{% endif %}{% if person.orcid %} | <a href="http://orcid.org/{{ person.orcid }}">{{ _('ORCID') }}</a>{% endif %}{% if person.viaf %} | <a href="http://viaf.org/{{ person.viaf }}">{{ _('VIAF') }}</a>{% endif %}{% if person.isni %} | <a href="http://isni.org/isni/{{ person.isni|replace(' ', '') }}">{{ _('ISNI') }}</a>{% endif %}<br/>
                         {% for role in person.role %}
                             {{ role_map.get(role) }}{% if not loop.last %}, {% endif %}
                         {% endfor %}
@@ -94,10 +94,11 @@
                 </dt>
                 <dd>
                     {% for corporation in record.data.corporation %}
-                        {{ corporation.name }}{% if corporation.gnd %} | <a href=" 	http://d-nb.info/gnd/{{ corporation.gnd }}">{{ _('GND') }}</a>{% endif %}{% if corporation.viaf %} | <a href="http://viaf.org/{{ corporation.viaf }}">{{ _('VIAF') }}</a>{% endif %}{% if corporation.isni %} | <a href="http://isni.org/isni/{{ corporation.isni|replace(' ', '') }}">{{ _('ISNI') }}</a>{% endif %}<br/>
+                        {{ corporation.name }}{% if corporation.gnd %} | <a href="http://d-nb.info/gnd/{{ corporation.gnd }}">{{ _('GND') }}</a>{% endif %}{% if corporation.viaf %} | <a href="http://viaf.org/{{ corporation.viaf }}">{{ _('VIAF') }}</a>{% endif %}{% if corporation.isni %} | <a href="http://isni.org/isni/{{ corporation.isni|replace(' ', '') }}">{{ _('ISNI') }}</a>{% endif %}<br/>
                         {% for role in corporation.role %}
                             {{ role_map.get(role) }}{% if not loop.last %}, {% endif %}
                         {% endfor %}
+                        <hr/>
                     {% endfor %}
                 </dd>
                 <hr/>
@@ -349,15 +350,22 @@
                 </dd>
             {% endif %}
             {% if record.data.abstract %}
-                <dt>{{ _('Description') }}</dt>
-                <dd>{{ record.data.abstract }}</dd>
+                {% if record.data.abstract.0.shareable %}
+                    <dt>{{ _('Description') }}</dt>
+                    <dd>
+                        <a href="{{ record.data.abstract.0.address }}">{{ record.data.abstract.0.address }}</a><br/>
+                        {{ _('Language') }}: {{ record.data.abstract.0.language }}<br/>
+                        {{ record.data.abstract.0.content }}
+                    </dd>
+                {% endif %}
             {% endif %}
             {% if record.data.table_of_contents %}
                 <dt>
                     {{ _('Table of Contents') }}
                 </dt>
                 <dd>
-                    <a href="{{ record.data.table_of_contents }}">{{ record.data.table_of_contents }}</a>
+                    <a href="{{ record.data.table_of_contents.0.uri }}">{{ record.data.table_of_contents.0.uri }}</a><br/>
+                    {{ record.data.table_of_contents.0.toc }}
                 </dd>
             {% endif %}
             {% if record.data.note %}
@@ -366,6 +374,88 @@
                 </dt>
                 <dd>
                     {{ record.data.note }}
+                </dd>
+            {% endif %}
+            {% if record.data.license %}
+                <dt>
+                    {{ _('License') }}
+                </dt>
+                <dd>
+                    {{ record.data.license }}
+                </dd>
+            {% endif %}
+            {% if record.data.license_text %}
+                <dt>
+                    {{ _('License text') }}
+                </dt>
+                <dd>
+                    {{ record.data.license_text }}
+                </dd>
+            {% endif %}
+            {% if record.data.medium %}
+                <dt>
+                    {{ _('Medium') }}
+                </dt>
+                <dd>
+                    {{ record.data.medium }}
+                </dd>
+            {% endif %}
+            {% if record.data.swd_subject.0.label %}
+                <dt>
+                    {% trans count=record.data.swd_subject|length %}
+                    SWD-Subject
+                    {% pluralize %}
+                    SWD-Subjects
+                    {% endtrans %}
+                </dt>
+                <dd>
+                    {% for subject in record.data.swd_subject %}
+                        {% if subject.uri %}<a href="{{ subject.uri }}">{{ subject.label }}</a>{% else %}{{ subject.label }}{% endif %}{% if not loop.last %}, {% endif %}
+                    {% endfor %}
+                </dd>
+            {% endif %}
+            {% if record.data.ddc_subject.0.label %}
+                <dt>DDC</dt>
+                <dd>
+                    {% for subject in record.data.ddc_subject %}
+                        {% if subject.uri %}<a href="{{ subject.uri }}">{{ subject.label }}</a>{% else %}{{ subject.label }}{% endif %}{% if not loop.last %}, {% endif %}
+                    {% endfor %}
+                </dd>
+            {% endif %}
+            {% if record.data.mesh_subject.0.label %}
+                <dt>MESH</dt>
+                <dd>
+                    {% for subject in record.data.mesh_subject %}
+                        {% if subject.uri %}<a href="{{ subject.uri }}">{{ subject.label }}</a>{% else %}{{ subject.label }}{% endif %}{% if not loop.last %}, {% endif %}
+                    {% endfor %}
+                </dd>
+            {% endif %}
+            {% if record.data.stw_subject.0.label %}
+                <dt>
+                    {% trans count=record.data.stw_subject|length %}
+                    STW-Subject
+                    {% pluralize %}
+                    STW-Subjects
+                    {% endtrans %}
+                </dt>
+                <dd>
+                    {% for subject in record.data.stw_subject %}
+                        {% if subject.uri %}<a href="{{ subject.uri }}">{{ subject.label }}</a>{% else %}{{ subject.label }}{% endif %}{% if not loop.last %}, {% endif %}
+                    {% endfor %}
+                </dd>
+            {% endif %}
+            {% if record.data.lcsh_subject.0.label %}
+                <dt>
+                    {% trans count=record.data.lcsh_subject|length %}
+                    LCSH-Subject
+                    {% pluralize %}
+                    LCSH-Subjects
+                    {% endtrans %}
+                </dt>
+                <dd>
+                    {% for subject in record.data.lcsh_subject %}
+                        {% if subject.uri %}<a href="{{ subject.uri }}">{{ subject.label }}</a>{% else %}{{ subject.label }}{% endif %}{% if not loop.last %}, {% endif %}
+                    {% endfor %}
                 </dd>
             {% endif %}
             {% if record.data.keyword.0.label %}
