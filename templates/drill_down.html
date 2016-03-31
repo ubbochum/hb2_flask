@@ -10,6 +10,19 @@
             </li>
         {% endfor %}
         </ul>
+    {% else %}
+        {% if facet %}
+            <h4>{{ _('%(title)s', title=heading) }}</h4>
+            <ul class="list-group">
+            {% for key in facet.0.keys() %}
+                <li class="list-group-item">
+                    <a href="{{ request.script_root }}/{{ target }}?q={{ query|urlencode }}&amp;filter={{ category }}:%22{{ key|urlencode }}%22{% if filterquery %}{% for fq in filterquery %}&amp;filter={{ fq }}{% endfor %}{% endif %}{% if mysort %}&amp;sort={{ mysort }}{% endif %}"
+                       title="{{ key|safe }}">{{ key }}
+                    </a><span class="badge">{{ facet.0.get(key) }}</span>
+                </li>
+            {% endfor %}
+            </ul>
+        {% endif %}
     {% endif %}
 {% endmacro %}
 

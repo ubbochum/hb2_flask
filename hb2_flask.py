@@ -435,8 +435,9 @@ def persons():
     query = '*:*'
     filterquery = request.values.getlist('filter')
 
-    persons_solr = Solr(query=query, start=(page - 1) * 10, core='person',
-                        json_facet={'affiliation': {'type': 'term', 'field': 'affiliation'}}, fquery=filterquery)
+    #persons_solr = Solr(query=query, start=(page - 1) * 10, core='person',
+    #                    json_facet={'affiliation': {'type': 'term', 'field': 'affiliation'}}, fquery=filterquery)
+    persons_solr = Solr(query=query, start=(page - 1) * 10, core='person', fquery=filterquery, facet='true', facet_fields=['affiliation'])
     persons_solr.request()
 
     num_found = persons_solr.count()
@@ -914,8 +915,9 @@ def orgas():
     query = '*:*'
     filterquery = request.values.getlist('filter')
 
-    orgas_solr = Solr(query=query, start=(page - 1) * 10, core='organisation',
-                      json_facet={'destatis_id': {'type': 'term', 'field': 'destatis_id'}}, fquery=filterquery)
+    #orgas_solr = Solr(query=query, start=(page - 1) * 10, core='organisation',
+    #                  json_facet={'destatis_id': {'type': 'term', 'field': 'destatis_id'}}, fquery=filterquery)
+    orgas_solr = Solr(query=query, start=(page - 1) * 10, core='organisation', fquery=filterquery, facet='true', facet_fields=['destatis_id'])
     orgas_solr.request()
 
     num_found = orgas_solr.count()
@@ -939,7 +941,7 @@ def _orga2solr(form):
     tmp.setdefault('wtf_json', wtf_json)
     for field in form.data:
         if field == 'orga_id':
-            tmp.setdefault('id', form.data.get(field))
+            tmp.setdefault('orga_id', form.data.get(field))
         elif field == 'alt_label':
             for alt_label in form.data.get(field):
                 tmp.setdefault('alt_label', []).append(alt_label.data.strip())
@@ -956,6 +958,7 @@ def _orga2solr(form):
         else:
             if form.data.get(field):
                 tmp.setdefault(field, form.data.get(field))
+    #logging.info(tmp)
     orga_solr = Solr(core='organisation', data=[tmp])
     orga_solr.update()
 
@@ -965,6 +968,7 @@ def new_orga():
     form = OrgaAdminForm()
 
     if form.validate_on_submit():
+        #logging.info(form.data)
         _orga2solr(form)
         return redirect(url_for('orgas'))
     form.id.data = uuid.uuid4()
@@ -1189,7 +1193,7 @@ def show_person(person_id=''):
     thedata = json.loads(show_person_solr.results[0].get('wtf_json'))
     form = PersonAdminForm.from_json(thedata)
 
-    return render_template('record.html', record=form, header=form.data.get('name'), site=theme(request.access_route),
+    return render_template('person.html', record=form, header=form.data.get('name'), site=theme(request.access_route),
                            action='retrieve', record_id=person_id, pubtype='person', del_redirect='persons')
 
 @app.route('/retrieve/organisation/<orga_id>')
@@ -1200,7 +1204,7 @@ def show_orga(orga_id=''):
     thedata = json.loads(show_orga_solr.results[0].get('wtf_json'))
     form = OrgaAdminForm.from_json(thedata)
 
-    return render_template('record.html', record=form, header=form.data.get('pref_label'),
+    return render_template('orga.html', record=form, header=form.data.get('pref_label'),
                            site=theme(request.access_route), action='retrieve', record_id=orga_id,
                            pubtype='organisation', del_redirect='organisations')
 

@@ -347,7 +347,8 @@ class PersonAdminForm(Form):
     viaf = StringField(lazy_gettext('VIAF'), validators=[Optional()], description=Markup(lazy_gettext('<a href="http://www.viaf.org" target="_blank">Find in VIAF</a>')))
     isni = StringField(lazy_gettext('ISNI'), validators=[Optional()], description=Markup(lazy_gettext('<a href="http://www.isni.org" target="_blank">Find in ISNI</a>')))
     researcher_id = StringField(lazy_gettext('Researcher ID'), validators=[Optional()], description=Markup(lazy_gettext('<a href="http://www.researcherid.com/ViewProfileSearch.action" target="_blank">Find in Researcher ID</a>')))
-    scopus_id = StringField(lazy_gettext('Scopus Author ID'), validators=[Optional()], description=Markup(lazy_gettext('<a href="https://www.scopus.com/search/form/authorFreeLookup.uri" target="_blank">Find in Scopus Author ID</a>')))
+    #scopus_id = StringField(lazy_gettext('Scopus Author ID'), validators=[Optional()], description=Markup(lazy_gettext('<a href="https://www.scopus.com/search/form/authorFreeLookup.uri" target="_blank">Find in Scopus Author ID</a>')))
+    scopus_id = FieldList(StringField(lazy_gettext('Scopus Author ID'), validators=[Optional()], description=Markup(lazy_gettext('<a href="https://www.scopus.com/search/form/authorFreeLookup.uri" target="_blank">Find in Scopus Author ID</a>'))), validators=[Optional()], min_entries=1)
     arxiv_id = StringField(lazy_gettext('ArXiv Author ID'), validators=[Optional()], description=Markup(lazy_gettext('<a href="http://arxiv.org/find" target="_blank">Find in ArXiv Author ID</a>')))
     research_interest = FieldList(StringField(lazy_gettext('Research Interest')), validators=[Optional()], min_entries=1)
 
@@ -408,7 +409,8 @@ class OrgaAdminForm(Form):
     #alt_label = FieldList(StringField(lazy_gettext('Alternative Label')), min_entries=1)
     #account = StringField(lazy_gettext('Account'))
     id = StringField(lazy_gettext('Organisation ID'), description=lazy_gettext('An Organisation ID such as GND, ISNI, Ringgold or a URI'), validators=[DataRequired()])
-    account = FieldList(FormField(AccountForm), min_entries=1)
+    # Die folgende Zeile erzeugt btgl. des Solr-Schemas nicht konsistente Daten!
+    #account = FieldList(FormField(AccountForm), min_entries=1)
     parent_id = StringField(lazy_gettext('Parent ID'))
     parent_label = StringField(lazy_gettext('Parent Label'))
     start_date = StringField(lazy_gettext('Start Date'))

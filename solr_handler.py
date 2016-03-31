@@ -113,6 +113,8 @@ class Solr(object):
         fuzzy_tilde = ''
         if self.fuzzy == 'true':
             fuzzy_tilde = '~'
+        #logging.info(self.facet)
+        #logging.info(self.facet_fields)
         if self.facet == 'true': # Old-style facetting...
             facets = '&facet.field='.join(self.facet_fields)
             params = '%s?q=%s%s&wt=%s&start=%s&rows=%s&facet.limit=%s&facet.mincount=%s&facet.offset=%s&facet.field=%s&json.nl=%s&facet=%s&facet.sort=%s&omitHeader=%s&defType=%s&facet.threads=-1' % (
@@ -198,6 +200,7 @@ class Solr(object):
 
         self.request_url = '%s%s' % (url, params)
         #logging.fatal(iri_to_uri(self.request_url))
+        logging.info(self.request_url)
         if self.compress == True:
             import urllib2
             import StringIO
@@ -236,6 +239,7 @@ class Solr(object):
                 pass
         if self.facet == 'true':
             self.facets = self.response.get('facet_counts').get('facet_fields')
+            #logging.info(self.facets)
         if len(self.facet_tree) > 0:
             self.tree = self.response.get('facet_counts').get('facet_pivot')
         if self.json_facet:
@@ -288,6 +292,7 @@ class Solr(object):
 
     def update(self):
         url = 'http://%s:%s/%s/%s/update/?commit=true&versions=true' % (self.host, self.port, self.application, self.core)
+        #logging.info(json.dumps(self.data))
         resp = requests.post(url, headers={'Content-type': 'application/json'}, data=json.dumps(self.data))
         return resp
 
