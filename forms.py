@@ -206,8 +206,8 @@ class PersonForm(Form):
     # ])
     name = StringField(lazy_gettext('Name'), validators=[Optional()], widget=CustomTextInput(placeholder=lazy_gettext('Name, Given name')))
     #former_name = StringField(lazy_gettext('Former Name'), validators=[Optional()], widget=CustomTextInput(placeholder=lazy_gettext('Family name, given name')), description=lazy_gettext('If you have more than one former name, please separate them by semicolon.'))
-    gnd = StringField(lazy_gettext('GND'), validators=[Optional(), Regexp('(1|10)\d{7}[0-9X]|[47]\d{6}-\d|[1-9]\d{0,7}-[0-9X]|3\d{7}[0-9X]')])
-    orcid = StringField(lazy_gettext('ORCID'), validators=[Optional()])
+    gnd = StringField(lazy_gettext('GND'), validators=[Optional(), Regexp('(1|10)\d{7}[0-9X]|[47]\d{6}-\d|[1-9]\d{0,7}-[0-9X]|3\d{7}[0-9X]')], description=Markup(lazy_gettext('<a href="https://portal.d-nb.de/opac.htm?method=showOptions#top" target="_blank">Find in GND</a>')))
+    orcid = StringField(lazy_gettext('ORCID'), validators=[Optional()], description=Markup(lazy_gettext('<a href="https://orcid.org/orcid-search/search" target="_blank">Find in ORCID</a>')))
     role = SelectMultipleField(lazy_gettext('Role'))
     corresponding_author = BooleanField(lazy_gettext('Corresponding Author'), validators=[Optional()], description=lazy_gettext('The person handling the publication process'))
 
