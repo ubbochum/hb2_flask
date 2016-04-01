@@ -29,7 +29,7 @@
                     <tr>
                         <th scope="row">{{ loop.index + offset }}</th>
                         <td>{{ record.id }}</td>
-                        <td><a href="{{ url_for('show_orga', orga_id=record.id) }}">{{ record.pref_label }}</a>{% if record.parent_id %}<br/><b>{{ _('Parent') }}:</b> <a href="{{ url_for('show_orga', record_id=record.parent_id) }}">{{ record.parent_label }}</a>{% endif %}</td>
+                        <td><a href="{{ url_for('show_orga', orga_id=record.id) }}">{{ record.pref_label }}</a>{% if record.parent_id %}<br/><b>{{ _('Parent') }}:</b> <a href="{{ url_for('show_orga', orga_id=record.parent_id) }}">{{ record.parent_label }}</a>{% endif %}</td>
                         <td>{{ record.account }}</td>
                         <td>{{ (now - record.created|mk_time())|humanize() }}</td>
                         <td>{{ (now - record.changed|mk_time())|humanize() }}</td>
