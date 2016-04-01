@@ -733,6 +733,7 @@ def _record2solr_doc(form, action):
     return solr_data
 
 def _record2solr(form, action=''):
+    #logging.info(form)
     record_solr = Solr(core='hb2', data=[_record2solr_doc(form, action=action)])
     record_solr.update()
 
@@ -1098,9 +1099,11 @@ def new_by_search():
 def new_record(pubtype='ArticleJournal'):
     form = PUBTYPE2FORM.get(pubtype)()
 
+    #logging.info(form)
+
     if request.is_xhr:
-        logging.info(request.form)
-        form.formdata = request.form
+        form.data = request.form
+        #logging.info(request.form.person)
         # Do we have any data already?
         if not form.title.data:
             solr_data = {}
@@ -1140,6 +1143,8 @@ def new_record(pubtype='ArticleJournal'):
         form.pubtype.choices = USER_PUBTYPES
 
     if form.validate_on_submit():
+        #logging.info(form)
+        #logging.info(form.person.name)
         if form.errors:
             flash_errors(form)
             return render_template('tabbed_form.html', form=form, header=lazy_gettext('New Record'),
@@ -1155,11 +1160,11 @@ def new_record(pubtype='ArticleJournal'):
     form.owner[0].data = current_user.email
     form.pubtype.data = pubtype
 
-    for person in form.person:
-        if current_user.role == 'admin':
-            person.role.choices = ADMIN_ROLES
-        else:
-            person.role.choices = USER_ROLES
+    #for person in form.person:
+    #    if current_user.role == 'admin':
+    #        person.role.choices = ADMIN_ROLES
+    #    else:
+    #        person.role.choices = USER_ROLES
 
     return render_template('tabbed_form.html', form=form, header=lazy_gettext('New Record'), site=theme(request.access_route), pubtype=pubtype, action='create', record_id=form.id.data)
 
@@ -1290,9 +1295,13 @@ def edit_record(record_id='', pubtype=''):
     thedata = json.loads(edit_record_solr.results[0].get('wtf_json'))
 
     if request.method == 'POST':
+        #logging.info('POST')
         form = PUBTYPE2FORM.get(pubtype)()
+        #logging.info(form.data)
     elif request.method == 'GET':
+        #logging.info('GET')
         form = PUBTYPE2FORM.get(pubtype).from_json(thedata)
+        #logging.info(form.data)
 
     if current_user.role == 'admin':
         form.pubtype.choices = ADMIN_PUBTYPES
@@ -1308,7 +1317,9 @@ def edit_record(record_id='', pubtype=''):
             person.role.choices = ADMIN_ROLES
         else:
             person.role.choices = USER_ROLES
+
     if form.validate_on_submit():
+
         if form.errors:
             flash_errors(form)
             return render_template('tabbed_form.html', form=form,

@@ -200,7 +200,7 @@ class Solr(object):
 
         self.request_url = '%s%s' % (url, params)
         #logging.fatal(iri_to_uri(self.request_url))
-        logging.info(self.request_url)
+        #logging.info(self.request_url)
         if self.compress == True:
             import urllib2
             import StringIO

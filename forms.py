@@ -215,8 +215,8 @@ class PersonForm(Form):
 
 class OpenAccessForm(Form):
     project_identifier = StringField(lazy_gettext('Project Identifier'), validators=[URL(), Optional()], widget=CustomTextInput(placeholder=lazy_gettext('e.g. http://purl.org/info:eu-repo/grantAgreement/EC/FP7/12345P')))
-    project_type = SelectField('Project Type', choices=PROJECT_TYPES, validators=[Optional()])
-    publication_version = SelectField('Publication Version', choices=[
+    project_type = SelectField(lazy_gettext('Project Type'), choices=PROJECT_TYPES, validators=[Optional()])
+    publication_version = SelectField(lazy_gettext('Publication Version'), choices=[
         ('', lazy_gettext('Select a Publication Version')),
         ('accepted', lazy_gettext('Accepted')),
         ('draft', lazy_gettext('Draft')),
@@ -238,7 +238,7 @@ class OpenAccessForm(Form):
         ('open', lazy_gettext('Open Access')),
     ])
     embargo_end_date = StringField(lazy_gettext('Embargo End Date'), validators=[Optional(), Regexp('[12]\d{3}-[01]\d-[0123]\d')], widget=CustomTextInput(placeholder=lazy_gettext('YYYY-MM-DD')), description=lazy_gettext("If you don't know the month and/or day please use 01"))
-    mime_type = SelectField('MIME-type', choices=[
+    mime_type = SelectField(lazy_gettext('MIME-type'), choices=[
         ('pdf', lazy_gettext('application/pdf')),
         ('msword', lazy_gettext('application/msword')),
         ('x-latex', lazy_gettext('application/x-latex')),

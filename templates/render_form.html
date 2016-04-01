@@ -23,7 +23,7 @@
                         {% if subfield.type != 'BooleanField' %}
                             <div class="col-sm-6"><span class="subfield_label">{{ subfield.label }}</span><br/>{{ subfield(class='form-control') }}</div>
                         {% else %}
-                            <div class="col-sm-6"><div class="checkbox"><input type="checkbox" id="{{ subfield.name }}">{{ subfield.label }}</div></div>
+                            <div class="col-sm-6"><div class="checkbox">{{ subfield }}<span class="subfield_label">{{ subfield.label }}</span></div></div>
                         {% endif %}
                         {% if subfield.description %}<div class="clearfix"></div><div class="col-sm-offset-2"><p class="help-block" style="margin-top: 8px;margin-left:15px;">{{ subfield.description }}</p></div>{% endif %}
                         <div class="col-sm-4">&nbsp;</div>
@@ -36,7 +36,7 @@
                         {% if subfield.type != 'BooleanField' %}
                             <div class="col-sm-6"><span class="subfield_label">{{ subfield.label }}</span><br/>{{ subfield(class='form-control') }}</div>
                         {% else %}
-                            <div class="col-sm-6"><div class="checkbox"><input type="checkbox" id="{{ subfield.name }}">{{ subfield.label }}</div></div>
+                            <div class="col-sm-6"><div class="checkbox">{{ subfield }}<span class="subfield_label">{{ subfield.label }}</span></div></div>
                         {% endif %}
                         {% if subfield.description %}<div class="clearfix"></div><div class="col-sm-offset-2"><p class="help-block" style="margin-top: 8px;margin-left:15px;">{{ subfield.description }}</p></div>{% endif %}
                         <div class="col-sm-4">&nbsp;</div>

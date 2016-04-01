@@ -80,6 +80,8 @@
                         {% for role in person.role %}
                             {{ role_map.get(role) }}{% if not loop.last %}, {% endif %}
                         {% endfor %}
+                        <br/>
+                        {% if person.corresponding_author %}Corresponding {{ role_map.get('aut') }}{% endif %}
                         <hr/>
                     {% endfor %}
                 </dd>
