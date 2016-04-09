@@ -191,8 +191,8 @@ class URIForm(Form):
     label = StringField(lazy_gettext('Label'), validators=[Optional()])
 
 class TableOfContentsForm(Form):
-    uri = StringField('URI', validators=[URL(), Optional()], widget=CustomTextInput(placeholder=lazy_gettext('e.g. http://d-nb.info/1035670232/04')))
-    toc = TextAreaField(lazy_gettext('Table of Contents'), validators=[Optional()])
+    uri = StringField('URI to Table of Contents', validators=[URL(), Optional()], widget=CustomTextInput(placeholder=lazy_gettext('e.g. http://d-nb.info/1035670232/04')))
+    toc = TextAreaField(lazy_gettext('Table of Contents in textform'), validators=[Optional()])
 
 class AbstractForm(URIForm):
     content = TextAreaField(lazy_gettext('Abstract'), validators=[Optional()])
@@ -441,7 +441,7 @@ class CorporationForm(Form):
         ('brd', lazy_gettext('Broadcaster')),
     ])
 
-    gnd = StringField(lazy_gettext('GND'), validators=[Optional(), Regexp('(1|10)\d{7}[0-9X]|[47]\d{6}-\d|[1-9]\d{0,7}-[0-9X]|3\d{7}[0-9X]')])
+    gnd = StringField(lazy_gettext('GND'), validators=[Optional(), Regexp('(1|10)\d{7}[0-9X]|[47]\d{6}-\d|[1-9]\d{0,7}-[0-9X]|3\d{7}[0-9X]')], description=Markup(lazy_gettext('<a href="https://portal.d-nb.de/opac.htm?method=showOptions#top" target="_blank">Find in GND</a>')))
     viaf = StringField(lazy_gettext('VIAF'), validators=[Optional()])
     isni = StringField(lazy_gettext('ISNI'), validators=[Optional()])
 
@@ -452,6 +452,7 @@ class HasPartForm(Form):
 
 class IsPartOfForm(Form):
     is_part_of = StringField(lazy_gettext('Is Part of'))
+    volume = StringField(lazy_gettext('Volume'))
 
 class OtherVersionForm(Form):
     other_version = StringField(lazy_gettext('Other Version'))
@@ -764,6 +765,7 @@ class SpecialIssueForm(JournalForm):
 class ContainerForm(PrintedWorkForm):
     number_of_volumes = StringField(lazy_gettext('Number of Volumes'), validators=[Optional()])
     hbz_id = StringField(lazy_gettext('HBZ-ID'), validators=[Optional()])
+    #hbz_id = FieldList(StringField(lazy_gettext('HBZ-ID'), validators=[Optional(), Isbn]), min_entries=1)
     open_access = FormField(OpenAccessForm)
     external = BooleanField(lazy_gettext('External'))
     is_part_of = FieldList(FormField(ContainerRelationForm), min_entries=1)
@@ -1158,6 +1160,7 @@ class MonographForm(PrintedWorkForm):
     ], default='published')
     ISBN = FieldList(StringField(lazy_gettext('ISBN'), validators=[Optional(), Isbn]), min_entries=1)
     hbz_id = StringField(lazy_gettext('HBZ-ID'), validators=[Optional()])
+    #hbz_id = FieldList(StringField(lazy_gettext('HBZ-ID'), validators=[Optional(), Isbn]), min_entries=1)
     number_of_volumes = StringField('Number of Volumes', validators=[Optional()])
     open_access = FormField(OpenAccessForm)
     other_version = FieldList(FormField(OtherVersionForm), min_entries=1)

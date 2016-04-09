@@ -11,7 +11,7 @@
         {% endfor %}
         </ul>
     {% else %}
-        {% if facet %}
+        {% if facet.0 %}
             <h4>{{ _('%(title)s', title=heading) }}</h4>
             <ul class="list-group">
             {% for key in facet.0.keys() %}
