@@ -66,7 +66,7 @@
                 </dd>
                 <hr/>
             {% endif %}
-            {% if record.data.person.0.name %}
+            {% if record.data.person.0.name or record.data.person.1.name %}
                 <dt>
                     {% trans count=record.data.person|length %}
                     Person

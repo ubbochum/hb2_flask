@@ -1150,7 +1150,10 @@ def new_record(pubtype='ArticleJournal'):
             return render_template('tabbed_form.html', form=form, header=lazy_gettext('New Record'),
                                    site=theme(request.access_route), action='create', pubtype=pubtype)
         _record2solr(form, action='create')
-        return redirect(url_for('dashboard'))
+        #return redirect(url_for('dashboard'))
+        #logging.info(form.data)
+        #logging.info(form.data.get('id').strip())
+        return show_record(pubtype, form.data.get('id').strip())
 
     if request.args.get('subtype'):
         form.subtype.data = request.args.get('subtype')
@@ -1328,7 +1331,9 @@ def edit_record(record_id='', pubtype=''):
         _record2solr(form, action='update')
         unlock_record_solr = Solr(core='hb2', data=[{'id': record_id, 'locked': {'set': 'false'}}])
         unlock_record_solr.update()
-        return redirect(url_for('dashboard'))
+        #return redirect(url_for('dashboard'))
+        return show_record(pubtype, form.data.get('id').strip())
+
 
     form.changed.data = datetime.datetime.now()
     form.deskman.data = current_user.email
