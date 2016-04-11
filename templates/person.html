@@ -135,7 +135,7 @@
         <div class="col-sm-2">
             <div class="btn-group" role="group" aria-label="action-group">
                 <a href="{{ url_for('edit_record', record_id=record.data.id, pubtype='person') }}" class="btn btn-default"><i class="fa fa-pencil"></i> {{ _('Edit') }}</a>
-                <a href="#" data-href="{{ url_for('delete_record', record_id=record.data.id) }}" class="btn btn-danger" data-toggle="modal" data-target="#confirm-delete"><i class="fa fa-trash"></i> {{ _('Delete') }}</a>
+                <a href="#" data-href="{{ url_for('delete_person', person_id=record.data.id) }}" class="btn btn-danger" data-toggle="modal" data-target="#confirm-delete"><i class="fa fa-trash"></i> {{ _('Delete') }}</a>
                 {#<label for="apparent_dup">{{ _('Apparent Duplicate') }}</label>
                 <input type="checkbox" id="apparent_dup" name="apparent_dup">#}
             </div>
@@ -147,7 +147,7 @@
     <script>
         function page_redirect(){
             setTimeout(function(){
-                            document.location = '/dashboard';
+                            document.location = '{{ del_redirect }}';
                         }, 1000);
         }
         $('#confirm-delete').on('show.bs.modal', function(event) {

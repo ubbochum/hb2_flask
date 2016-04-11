@@ -171,7 +171,7 @@ PROJECT_TYPES = [
 ]
 
 def Isbn(form, field):
-    theisbn = pyisbn.Isbn(field.data)
+    theisbn = pyisbn.Isbn(field.data.strip())
     if theisbn.validate() == False:
         raise ValidationError(lazy_gettext('Not a valid ISBN!'))
     

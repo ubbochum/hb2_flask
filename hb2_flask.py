@@ -539,7 +539,7 @@ def _record2solr_doc(form, action):
         if form.data.get('editorial_status') == 'new':
             form.editorial_status.data = 'in_process'
     solr_data = {}
-    wtf = json.dumps(form.data)
+    wtf = json.dumps(form.data).replace(' "', '"')
     solr_data.setdefault('wtf_json', wtf)
     for field in form.data:
         #logging.info('%s => %s' % (field, form.data.get(field)))
@@ -1185,7 +1185,7 @@ def show_record(pubtype, record_id=''):
     form = PUBTYPE2FORM.get(pubtype).from_json(thedata)
 
     return render_template('record.html', record=form, header=form.data.get('title'), site=theme(request.access_route),
-                           action='retrieve', record_id=record_id, del_redirect='dashboard', pubtype=pubtype,
+                           action='retrieve', record_id=record_id, del_redirect=url_for('dashboard'), pubtype=pubtype,
                            role_map=ROLE_MAP, lang_map=LANGUAGE_MAP, pubtype_map=PUBTYPE2TEXT, subtype_map=SUBTYPE2TEXT,
                            locked=locked, is_part_of=is_part_of, has_part=has_part, other_version=other_version
     )
@@ -1202,7 +1202,7 @@ def show_person(person_id=''):
     form = PersonAdminForm.from_json(thedata)
 
     return render_template('person.html', record=form, header=form.data.get('name'), site=theme(request.access_route),
-                           action='retrieve', record_id=person_id, pubtype='person', del_redirect='persons')
+                           action='retrieve', record_id=person_id, pubtype='person', del_redirect=url_for('persons'))
 
 @app.route('/retrieve/organisation/<orga_id>')
 def show_orga(orga_id=''):
@@ -1214,7 +1214,7 @@ def show_orga(orga_id=''):
 
     return render_template('orga.html', record=form, header=form.data.get('pref_label'),
                            site=theme(request.access_route), action='retrieve', record_id=orga_id,
-                           pubtype='organisation', del_redirect='organisations')
+                           pubtype='organisation', del_redirect=url_for('orgas'))
 
 @app.route('/update/organisation/<orga_id>', methods=['GET', 'POST'])
 @login_required
