@@ -1420,6 +1420,7 @@ class ThesisForm(WorkForm):
         ('first_state_examination', lazy_gettext('1st State Examination')),
         ('second_state_examination', lazy_gettext('2nd State Examination')),
     ])
+    hbz_id = StringField(lazy_gettext('HBZ-ID'), validators=[Optional()])
     issued = StringField(lazy_gettext('Day of the Oral Exam'), validators=[DataRequired(), Regexp('[12]\d{3}-[01]\d-[0123]\d')], widget=CustomTextInput(placeholder=lazy_gettext('YYYY-MM-DD')), description=lazy_gettext("If you don't know the month and/or day please use 01"))
     place = StringField(lazy_gettext('Location of Academic Institution'), validators=[Optional()], widget=CustomTextInput(placeholder=lazy_gettext('Where the thesis was submitted')))
     open_access = FormField(OpenAccessForm)
@@ -1435,7 +1436,7 @@ class ThesisForm(WorkForm):
                        self.issued, self.place, self.language, self.number_of_pages, self.medium, self.accessed, self.additions, self.note, self.license, self.license_text
                        ],
              'label': lazy_gettext('Basic')},
-            {'group': [self.uri, self.DOI, self.PMID, self.WOSID], 'label': lazy_gettext('IDs')},
+            {'group': [self.uri, self.DOI, self.PMID, self.WOSID, self.hbz_id], 'label': lazy_gettext('IDs')},
             {'group': [self.person], 'label': lazy_gettext('Person')},
             {'group': [self.corporation], 'label': lazy_gettext('Corporation')},
             {'group': [self.is_part_of],
