@@ -85,8 +85,8 @@ SUBJECT_MAPS = {}
 with open('mesh_map.json') as mesh_map:
     SUBJECT_MAPS.setdefault('mesh', json.load(mesh_map))
 
-with open('stw_map.json') as mesh_map:
-    SUBJECT_MAPS.setdefault('stw', json.load(mesh_map))
+with open('mesh_map.json') as stw_map:
+    SUBJECT_MAPS.setdefault('stw', json.load(stw_map))
 
 mc = etree.iterparse(secrets.MODS_TEST_FILE, tag='%smods' % MODS)
 
@@ -559,4 +559,5 @@ for event, record in mc:
     #logging.info('OAI_DC %s' % etree.tostring(oai_dc))
     #logging.info('CSL %s' % csl)
     #logging.info('SOLR %s' % solr)
+    pprint.pprint(solr)
     #logging.info('####################################################################################################')
