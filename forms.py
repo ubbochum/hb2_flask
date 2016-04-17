@@ -280,7 +280,8 @@ class ProjectForm(SEDForm):
     project_type = SelectField('Project Type', choices=PROJECT_TYPES, validators=[Optional()])
 
 class AffiliationForm(SEDForm):
-    organisation_id = StringField(lazy_gettext('GND'), validators=[Optional(), Regexp('(1|10)\d{7}[0-9X]|[47]\d{6}-\d|[1-9]\d{0,7}-[0-9X]|3\d{7}[0-9X]')])
+    #organisation_id = StringField(lazy_gettext('GND'), validators=[Optional(), Regexp('(1|10)\d{7}[0-9X]|[47]\d{6}-\d|[1-9]\d{0,7}-[0-9X]|3\d{7}[0-9X]')])
+    organisation_id = StringField(lazy_gettext('GND'), validators=[Optional(), Regexp('(1|10)\d{7}[0-9X]|[47]\d{6}-\d|[1-9]\d{0,7}-[0-9X]|3\d{7}[0-9X]')], description=Markup(lazy_gettext('<a href="https://portal.d-nb.de/opac.htm?method=showOptions#top" target="_blank">Find in GND</a>')))
 
 class ThesisProfileForm(Form):
     title = StringField(lazy_gettext('Title'), validators=[Optional()])
@@ -295,7 +296,8 @@ class ThesisProfileForm(Form):
 
 
 class URLProfileForm(Form):
-    url = FieldList(StringField(lazy_gettext('URL'), validators=[URL(), Optional()]), min_entries=1)
+    #url = FieldList(StringField(lazy_gettext('URL'), validators=[URL(), Optional()]), min_entries=1)
+    url = StringField(lazy_gettext('URL'), validators=[URL(), Optional()])
     label = SelectField(lazy_gettext('Label'), choices=[
         ('', lazy_gettext('Select a Label for the URL')),
         ('hp', lazy_gettext('Homepage')),
@@ -329,10 +331,10 @@ class PersonAdminForm(Form):
     email = StringField(lazy_gettext('E-Mail'), validators=[Optional()],
                         widget=CustomTextInput(placeholder=lazy_gettext('Your e-mail address')))
     account = FieldList(StringField(lazy_gettext('Account'), validators=[Optional(), Length(min=7, max=7)], widget=CustomTextInput(placeholder=lazy_gettext('Your 7-digit account number'))))
-    dwid = StringField(lazy_gettext('Datawarehouse ID'), validators=[Optional()])
+    dwid = StringField(lazy_gettext('Verwaltungs-ID'), validators=[Optional()])
     affiliation = FieldList(FormField(AffiliationForm), min_entries=1)
     url = FieldList(FormField(URLProfileForm), min_entries=1)
-    thesis = FieldList(FormField(ThesisProfileForm), min_entries=1)
+    # entfernt nach Diskussion mit Datenschutzbeauftragten: thesis = FieldList(FormField(ThesisProfileForm), min_entries=1)
     #image = FileField(lazy_gettext('Image'))
 
     membership = FieldList(FormField(MembershipForm), validators=[Optional()], min_entries=1)
@@ -347,8 +349,7 @@ class PersonAdminForm(Form):
     viaf = StringField(lazy_gettext('VIAF'), validators=[Optional()], description=Markup(lazy_gettext('<a href="http://www.viaf.org" target="_blank">Find in VIAF</a>')))
     isni = StringField(lazy_gettext('ISNI'), validators=[Optional()], description=Markup(lazy_gettext('<a href="http://www.isni.org" target="_blank">Find in ISNI</a>')))
     researcher_id = StringField(lazy_gettext('Researcher ID'), validators=[Optional()], description=Markup(lazy_gettext('<a href="http://www.researcherid.com/ViewProfileSearch.action" target="_blank">Find in Researcher ID</a>')))
-    #scopus_id = StringField(lazy_gettext('Scopus Author ID'), validators=[Optional()], description=Markup(lazy_gettext('<a href="https://www.scopus.com/search/form/authorFreeLookup.uri" target="_blank">Find in Scopus Author ID</a>')))
-    scopus_id = FieldList(StringField(lazy_gettext('Scopus Author ID'), validators=[Optional()], description=Markup(lazy_gettext('<a href="https://www.scopus.com/search/form/authorFreeLookup.uri" target="_blank">Find in Scopus Author ID</a>'))), validators=[Optional()], min_entries=1)
+    scopus_id = StringField(lazy_gettext('Scopus Author ID'), validators=[Optional()], description=Markup(lazy_gettext('<a href="https://www.scopus.com/search/form/authorFreeLookup.uri" target="_blank">Find in Scopus Author ID</a>')))
     arxiv_id = StringField(lazy_gettext('ArXiv Author ID'), validators=[Optional()], description=Markup(lazy_gettext('<a href="http://arxiv.org/find" target="_blank">Find in ArXiv Author ID</a>')))
     research_interest = FieldList(StringField(lazy_gettext('Research Interest')), validators=[Optional()], min_entries=1)
 
@@ -388,13 +389,13 @@ class PersonAdminForm(Form):
             {'group': [self.salutation, self.name, self.former_name, self.account, self.email, self.dwid, self.status, self.research_interest, self.url], 'label': lazy_gettext('Basic')},
             {'group': [self.gnd, self.orcid, self.viaf, self.isni, self.researcher_id, self.scopus_id, self.arxiv_id], 'label': lazy_gettext('IDs')},
             {'group': [self.affiliation], 'label': lazy_gettext('Affiliation')},
-            {'group': [self.cv], 'label': lazy_gettext('CV')},
-            {'group': [self.thesis], 'label': lazy_gettext('Thesis')},
-            {'group': [self.membership], 'label': lazy_gettext('Membership')},
-            {'group': [self.award], 'label': lazy_gettext('Award')},
-            {'group': [self.project], 'label': lazy_gettext('Project')},
-            {'group': [self.reviewer], 'label': lazy_gettext('Reviewer')},
             {'group': [self.editor], 'label': lazy_gettext('Editor')},
+            {'group': [self.cv], 'label': lazy_gettext('CV') + ' (P)'},
+            #{'group': [self.thesis], 'label': lazy_gettext('Thesis')},
+            {'group': [self.membership], 'label': lazy_gettext('Membership') + ' (P)'},
+            {'group': [self.award], 'label': lazy_gettext('Award') + ' (P)'},
+            {'group': [self.project], 'label': lazy_gettext('Project') + ' (P)'},
+            {'group': [self.reviewer], 'label': lazy_gettext('Reviewer') + ' (P)'},
             {'group': [self.id, self.created, self.changed, self.owner, self.deskman], 'label': lazy_gettext('Administrative')},
         ]
 
