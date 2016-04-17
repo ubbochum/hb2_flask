@@ -3,7 +3,7 @@
         <div class="form-group">
         {% if current_user.role != 'admin' %}
             {% if subfield.name|last_split not in form.admin_only %}
-                <div class="col-sm-2 control-label">{{ subfield.label|replace('|', ' ') }}</div>
+                <div class="col-sm-2 control-label">{{ subfield.label }}</div>
                 {% if subfield.type != 'BooleanField' %}
                     <div class="col-sm-6">{{ subfield(class='form-control') }}</div>
                 {% else %}
@@ -14,7 +14,7 @@
             {% endif %}
         {% else %}
             {% if subfield.name not in form.user_only %}
-                <div class="col-sm-2 control-label">{{ subfield.label|replace('|', ' ') }}</div>
+                <div class="col-sm-2 control-label">{{ subfield.label }}</div>
                 {% if subfield.type != 'BooleanField' %}
                     <div class="col-sm-6">{{ subfield(class='form-control') }}</div>
                 {% else %}

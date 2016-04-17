@@ -230,7 +230,7 @@ class OpenAccessForm(Form):
     ])
     fee = BooleanField(lazy_gettext('Author Pays'))
     #license_condition = StringField(lazy_gettext('License Condition'), validators=[URL(), Optional()], widget=CustomTextInput(placeholder=lazy_gettext('e.g. https://creativecommons.org/licenses/by/4.0/')))
-    access_level = SelectField('Access Level', choices=[
+    access_level = SelectField(lazy_gettext('Access Level'), choices=[
         ('', lazy_gettext('Select an Access Level')),
         ('closed', lazy_gettext('Closed Access')),
         ('embargoed', lazy_gettext('Embargoed Access')),
