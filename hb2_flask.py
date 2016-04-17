@@ -851,7 +851,11 @@ def unlock(record_id=''):
         unlock_solr = Solr(core='hb2', data=[{'id': record_id, 'locked': {'set': 'false'}}])
         unlock_solr.update()
 
-    return redirect(url_for('superadmin'))
+    redirect_url='superadmin'
+    if get_redirect_target():
+        redirect_url = get_redirect_target()
+
+    return redirect(url_for(redirect_url))
 
 
 @app.route('/create/from_file', methods=['GET', 'POST'])
