@@ -24,6 +24,8 @@ key = ''
 
 contact_mail = ''
 
+APP_PORT = 5005
+
 BOOTSTRAP_SERVE_LOCAL = False
 
 # To make the app run on a different path than root, set this to True and change your web server configuration accordingly.

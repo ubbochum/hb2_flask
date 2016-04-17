@@ -1711,4 +1711,4 @@ def show_related_item(relation='', record_ids=''):
 #     app.run()
 
 if __name__ == '__main__':
-    socketio.run(app, port=5005)
+    socketio.run(app, port=secrets.APP_PORT)
