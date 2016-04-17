@@ -44,7 +44,7 @@
             <div class="col-sm-4">
                 <h4><img src="{{ url_for('static', filename='site/bochum/img/1_circle.svg') }}" width="20%"> {{ _('Register Publications') }}</h4>
                 <p>{{ _('Send us your list of publications in whatsoever form, we will edit it into beautiful metadata.') }}</p>
-                <p><a class="btn btn-primary" href="{{ url_for('login', next='/create/from_file') }}"><i class="fa fa-sign-in"></i> {{ _('Sign In') }}</a></p>
+                <p><a class="btn btn-primary" href="{{ url_for('login', next='create/from_file') }}"><i class="fa fa-sign-in"></i> {{ _('Sign In') }}</a></p>
             </div>
             <div class="col-sm-4">
                 <h4><img src="{{ url_for('static', filename='site/bochum/img/2_circle.svg') }}" width="20%"><span style="color: #BDBDBD"> {{ _('Integrate with ORCID') }}</span></h4>

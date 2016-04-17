@@ -1596,7 +1596,7 @@ def login():
 @login_required
 def logout():
     logout_user()
-    return redirect('/')
+    return redirect('homepage')
 
 ORCID_RE = re.compile('\d{4}-\d{4}-\d{4}-\d{4}')
 
