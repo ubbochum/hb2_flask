@@ -202,6 +202,7 @@ ROLE_MAP = {
     'pmn': lazy_gettext('Production Manager'),
     'pro': lazy_gettext('Producer'),
     'prg': lazy_gettext('Programmer'),
+    'pta': lazy_gettext('Patent applicant'),
     'red': lazy_gettext('Redaktor'),
     'std': lazy_gettext('Set Designer'),
     'sng': lazy_gettext('Singer'),

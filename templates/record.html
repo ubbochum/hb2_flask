@@ -215,6 +215,55 @@
                     {{ record.data.additions }}
                 </dd>
             {% endif %}
+            {% if record.data.patent_number %}
+                <dt>
+                    {{ _('Patent number') }}
+                </dt>
+                <dd>
+                    {{ record.data.patent_number }}
+                </dd>
+            {% endif %}
+            {% if record.data.application_number %}
+                <dt>
+                    {{ _('Application number') }}
+                </dt>
+                <dd>
+                    {{ record.data.application_number }}
+                </dd>
+            {% endif %}
+            {% if record.data.date_application %}
+                <dt>
+                    {{ _('Date of application') }}
+                </dt>
+                <dd>
+                    {{ record.data.date_application }}
+                </dd>
+            {% endif %}
+            {% if record.data.place_of_application %}
+                <dt>
+                    {{ _('Place of application') }}
+                </dt>
+                <dd>
+                    {{ record.data.place_of_application }}
+                </dd>
+            {% endif %}
+            {% if record.data.priority_date %}
+                <dt>
+                    {% trans count=record.data.priority_date|length %}
+                    Priority date
+                    {% pluralize %}
+                    Priority dates
+                    {% endtrans %}
+                </dt>
+                <dd>
+                    {% for date in record.data.priority_date %}
+                        {{ date }}{% if not loop.last %}, {% endif %}
+                    {% endfor %}
+                </dd>
+            {% endif %}
+            {% if record.data.application_number %}
+                <hr/>
+            {% endif %}
             {% if is_part_of %}
                 <dt>{{ _('Is Part Of') }}</dt>
                 <dd>
@@ -474,7 +523,7 @@
                     {% endfor %}
                 </dd>
             {% endif %}
-            {% if record.data.keyword_geographic.0.label %}
+            {% if record.data.keyword_geographic %}
                 <dt>
                     {% trans count=record.data.keyword_geographic|length %}
                     Geographic Keyword
@@ -484,7 +533,7 @@
                 </dt>
                 <dd>
                     {% for geographic in record.data.keyword_geographic %}
-                        {% if geographic.uri %}<a href="{{ geographic.uri }}">{{ geographic.label }}</a>{% else %}{{ geographic.label }}{% endif %}{% if not loop.last %}, {% endif %}
+                        {% if geographic.uri %}<a href="{{ geographic.uri }}">{{ geographic.label }}</a>{% else %}{{ geographic }}{% endif %}{% if not loop.last %}, {% endif %}
                     {% endfor %}
                 </dd>
             {% endif %}
