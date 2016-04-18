@@ -81,6 +81,25 @@ FREQUENCY_MAP = {
     'Triennial': 'triennial',
 }
 
+OLD_PUBTYPES_MAP = {
+    'JournalArticle': 'ArticleJournal',
+    'Contribution': 'Chapter',
+    'BookEdited': 'Collection',
+    'ConferenceProceedings': 'Conference',
+    'Edition': 'Edition',
+    'InternetDocument': 'InternetDocument',
+    'Journal': 'Journal',
+    'Lecture': 'Lecture',
+    'LegalCommentary': 'LegalCommentary',
+    'Book': 'Monograph',
+    'Newspaper': 'Newspaper',
+    'Other': 'Other',
+    'Patent': 'Patent',
+    'Series': 'Series',
+    'Standard': 'Standard',
+    'Thesis': 'Thesis',
+}
+
 SUBJECT_MAPS = {}
 with open('mesh_map.json') as mesh_map:
     SUBJECT_MAPS.setdefault('mesh', json.load(mesh_map))
@@ -166,6 +185,44 @@ def get_csl_names(elems):
 
     return {'author': csl_names}
 
+def get_solr_persons(elems):
+    solr_persons = []
+    solr_fpersons = []
+    solr_spell = []
+    for name in get_names(elems):
+        solr_persons.append( name.get('realname') )
+        solr_fpersons.append( name.get('realname') )
+        solr_spell.append( name.get('realname') )
+
+    return {'person': solr_persons, 'fperson': solr_fpersons, 'spell': solr_spell}
+
+def get_solr_corporates(elems):
+    solr_corporates = []
+    solr_fcorporates = []
+    for name in get_names(elems):
+        solr_corporates.append( name.get('realname') )
+        solr_fcorporates.append( name.get('realname') )
+
+    return {'institution': solr_corporates, 'fcorporation': solr_fcorporates}
+
+def get_solr_issued(elems):
+    date = '';
+    fdate = None;
+    date_boost = '';
+    for issued in elems:
+        date = issued.text.replace('[','').replace(']','').strip()
+        if len(date.strip()) == 4:
+            fdate = int(date)
+            date_boost = '%s-01-01T00:00:00Z' % date
+        elif len(date.strip()) == 7:
+            fdate = int(date[0:4])
+            date_boost = '%s-01T00:00:00Z' % date
+        else:
+            fdate = int(date[0:4])
+            date_boost = '%sT00:00:00Z' % date
+
+    return {'date': date, 'fdate': fdate, 'date_boost': date_boost}
+
 def get_wtf_tocs(elems):
     wtf_tocs = []
     for toc in elems:
@@ -175,6 +232,107 @@ def get_wtf_tocs(elems):
         wtf_tocs.append(tmp)
 
     return {'table_of_contents': wtf_tocs}
+
+def get_wtf_hosts(elems):
+    wtf_hosts = []
+    for host in elems:
+        tmp = {}
+        for item in host:
+            if item.tag == '%srecordInfo' % MODS:
+                for info in item:
+                    if info.tag == '%srecordIdentifier' % MODS:
+                        tmp.setdefault('is_part_of', info.text)
+            if item.tag == '%spart' % MODS:
+                for part in item:
+                    if part.tag == '%sdetail' % MODS:
+                        if part.get('type') == 'volume':
+                            for number in part:
+                                tmp.setdefault('volume', number.text)
+                        if part.get('type') == 'issue':
+                            for number in part:
+                                tmp.setdefault('issue', number.text)
+                    if part.tag == '%sextent' % MODS:
+                        for extent in part:
+                            if extent.tag == '%slist' % MODS:
+                                tmp.setdefault('page_first', str(extent.text).split("–")[0])
+                                tmp.setdefault('page_last', str(extent.text).split("–")[1])
+        #logging.info(tmp)
+
+        wtf_hosts.append(tmp)
+
+    return {'is_part_of': wtf_hosts}
+
+def get_solr_hosts(elems):
+    solr_hosts = []
+    for host in elems:
+        tmp = {}
+        for item in host:
+            if item.tag == '%stitleInfo' % MODS:
+                for title in item:
+                    if title.tag == '%stitle' % MODS:
+                        tmp.setdefault('title', title.text)
+            if item.tag == '%sgenre' % MODS:
+                if item.get('authority') == 'local':
+                    tmp.setdefault('pubtype', OLD_PUBTYPES_MAP.get(item.text))
+            if item.tag == '%srecordInfo' % MODS:
+                for info in item:
+                    if info.tag == '%srecordIdentifier' % MODS:
+                        tmp.setdefault('is_part_of', info.text)
+            if item.tag == '%spart' % MODS:
+                for part in item:
+                    if part.tag == '%sdetail' % MODS:
+                        if part.get('type') == 'volume':
+                            for number in part:
+                                tmp.setdefault('volume', number.text)
+                        if part.get('type') == 'issue':
+                            for number in part:
+                                tmp.setdefault('issue', number.text)
+                    if part.tag == '%sextent' % MODS:
+                        for extent in part:
+                            if extent.tag == '%slist' % MODS:
+                                tmp.setdefault('page_first', str(extent.text).split("–")[0])
+                                tmp.setdefault('page_last', str(extent.text).split("–")[1])
+        if not tmp.get('pubtype'):
+            tmp.setdefault('pubtype', 'Journal')
+        #logging.info(tmp)
+
+        solr_hosts.append(tmp)
+
+    return {'is_part_of': solr_hosts}
+
+def get_solr_series(elems):
+    solr_series = []
+    for host in elems:
+        tmp = {}
+        for item in host:
+            if item.tag == '%stitleInfo' % MODS:
+                for title in item:
+                    if title.tag == '%stitle' % MODS:
+                        tmp.setdefault('title', title.text)
+            if item.tag == '%srecordInfo' % MODS:
+                for info in item:
+                    if info.tag == '%srecordIdentifier' % MODS:
+                        tmp.setdefault('is_part_of', info.text)
+            if item.tag == '%spart' % MODS:
+                for part in item:
+                    if part.tag == '%sdetail' % MODS:
+                        if part.get('type') == 'volume':
+                            for number in part:
+                                tmp.setdefault('volume', number.text)
+                        if part.get('type') == 'issue':
+                            for number in part:
+                                tmp.setdefault('issue', number.text)
+                    if part.tag == '%sextent' % MODS:
+                        for extent in part:
+                            if extent.tag == '%slist' % MODS:
+                                tmp.setdefault('page_first', str(extent.text).split("–")[0])
+                                tmp.setdefault('page_last', str(extent.text).split("–")[1])
+        tmp.setdefault('pubtype', 'Series')
+        logging.info(tmp)
+
+        solr_series.append(tmp)
+
+    return {'is_part_of': solr_series}
 
 def get_wtf_subject(elems):
     wtf_subject = []
@@ -205,7 +363,7 @@ def get_wtf_abstract(elems):
     return {'abstract': wtf_abstracts}
 
 def doi2index(elems):
-    doi = elems[0]
+    doi = elems[0].text
     solr_doi = {}
 
     solr_doi.setdefault('doi', doi)
@@ -229,7 +387,9 @@ try:
             'solr': lambda elems: {'number': elems[0].text},
         },
         # "./m:extension": lambda elem : {'': elem.text},
-        # "./m:extension/dcterms:bibliographicCitation": lambda elem : {'': elem.text},
+        "./m:extension/dcterms:bibliographicCitation": {
+            'solr': lambda elem : {'bibliographicCitation': elem[0].text},
+        },
         "./m:frequency[@authority='marcfrequency']": {'wtf': lambda elems: {'frequency': FREQUENCY_MAP.get(elems[0].text)}},
         # "./m:genre": lambda elem : {'': elem.text},
         "./m:genre[@authority='dct' and @valueURI='http://purl.org/dc/dcmitype/Collection']": {'oai_dc': (oai_valueURI, 'type')},
@@ -237,7 +397,10 @@ try:
         "./m:genre[@authority='dct' and @valueURI='http://purl.org/dc/dcmitype/Software']": {'oai_dc': (oai_valueURI, 'type')},
         "./m:genre[@authority='dct' and @valueURI='http://purl.org/dc/dcmitype/Sound']": {'oai_dc': (oai_valueURI, 'type')},
         "./m:genre[@authority='dct' and @valueURI='http://purl.org/dc/dcmitype/Text']": {'oai_dc': (oai_valueURI, 'type')},
-        # "./m:genre[@authority='local']": lambda elem : {'': elem.text},
+        "./m:genre[@authority='local']": {
+            'wtf': lambda elem : {'pubtype': OLD_PUBTYPES_MAP.get(elem[0].text)},
+            'solr': lambda elem : {'pubtype': OLD_PUBTYPES_MAP.get(elem[0].text)}
+        },
         # "./m:genre[@authority='marcgt']": lambda elem : {'': elem.text},
         "./m:genre[@valueURI='http://purl.org/info:eu-repo/semantics/article']": {'oai_dc': (oai_valueURI, 'type')},
         "./m:genre[@valueURI='http://purl.org/info:eu-repo/semantics/bachelorThesis']": {'oai_dc': (oai_valueURI, 'type')},
@@ -324,6 +487,12 @@ try:
             'wtf': get_wtf_names,
             'csl': get_csl_names,
         },
+        "./m:name[@type='personal']": {
+            'solr': get_solr_persons
+        },
+        "./m:name[@type='corporate']": {
+            'solr': get_solr_corporates
+        },
         # "./m:note": lambda elem : {'': elem.text},
         # u"./m:note[@displayLabel='Ansprüche']": lambda elem : {'': elem.text},
         # "./m:note[@displayLabel='Art der Schrift']": lambda elem : {'': elem.text},
@@ -334,10 +503,18 @@ try:
         # u"./m:note[@displayLabel='Titelzusätze']": lambda elem : {'': elem.text},
         # "./m:note[@displayLabel='Veranstaltungsdatum']": lambda elem : {'': elem.text},
         # "./m:note[@type='publication status']": lambda elem : {'': elem.text},
-        # "./m:originInfo/dateIssued[@encoding='iso8601']": lambda elem : {'': elem.text},
-        # "./m:originInfo/dateIssued[@point='start' and @encoding='iso8601']": lambda elem : {'': elem.text},
-        # "./m:originInfo/dateOther[@encoding='iso8601']": lambda elem : {'': elem.text},
-        # "./m:originInfo/edition": lambda elem : {'': elem.text},
+        "./m:originInfo/m:dateIssued[@encoding='iso8601']": {
+            'wtf': lambda elem : {'issued': elem[0].text},
+            'solr': get_solr_issued
+        },
+        "./m:originInfo/m:dateIssued[@point='start' and @encoding='iso8601']": {
+            'wtf': lambda elem : {'issued': elem[0].text},
+            'solr': get_solr_issued
+        },
+        # "./m:originInfo/m:dateOther[@encoding='iso8601']": lambda elem : {'': elem.text},
+        "./m:originInfo/m:edition": {
+            'wtf': lambda elem : {'edition': elem[0].text}
+        },
         "./m:originInfo/m:place/m:placeTerm[@type='text']": {
             'wtf': lambda elems: {'publisher_place': elems[0].text},
             'csl': lambda elems: {'publisher_place': elems[0].text},
@@ -425,12 +602,18 @@ try:
         # "./m:relatedItem/titleInfo/title": lambda elem : {'': elem.text},
         # "./m:relatedItem/titleInfo[@type='abbreviated']": lambda elem : {'': elem.text},
         # "./m:relatedItem/titleInfo[@type='translated']": lambda elem : {'': elem.text},
-        # "./m:relatedItem[@type='host']": lambda elem : {'': elem.text},
+        "./m:relatedItem[@type='host']": {
+            'wtf': get_wtf_hosts,
+            'solr': get_solr_hosts,
+        },
         # "./m:relatedItem[@type='isReferencedBy']": lambda elem : {'': elem.text},
         # "./m:relatedItem[@type='otherVersion']": lambda elem : {'': elem.text},
         # "./m:relatedItem[@type='preceding']": lambda elem : {'': elem.text},
         # "./m:relatedItem[@type='references']": lambda elem : {'': elem.text},
-        # "./m:relatedItem[@type='series']": lambda elem : {'': elem.text},
+        "./m:relatedItem[@type='series']": {
+            'wtf': get_wtf_hosts,
+            'solr': get_solr_series,
+        },
         "./m:subject[not(@authority)]/m:topic":  {
             'wtf': lambda elems: {'keyword': [elem.text for elem in elems]},
             'solr': lambda elems: {'subject': [elem.text for elem in elems]},
@@ -456,7 +639,7 @@ try:
             'wtf': lambda elems: {'title': elems[0].text},
             'csl': lambda elems: {'title': elems[0].text} if not record.xpath("./m:titleInfo/m:subTitle", namespaces=NSMAP) else
                                 {'title': '%s : %s' % (elems[0].text, record.xpath("./m:titleInfo/m:subTitle", namespaces=NSMAP)[0].text)},
-            'solr': lambda elems: {'title': elems[0].text, 'exacttitle': elems[0].text, 'sorttitle': elems[0].text},
+            'solr': lambda elems: {'title': elems[0].text, 'exacttitle': elems[0].text, 'sorttitle': elems[0].text, 'spell': elems[0].text},
             'oai_dc': (oai_elements, 'title') # TODO: Elegant solution for dealing with subtitles...
         },
         "./m:titleInfo/m:subTitle": {
@@ -554,8 +737,10 @@ for event, record in mc:
             logging.info(record.xpath("./m:recordInfo/m:recordIdentifier", namespaces=NSMAP)[0].text)
             raise
 
+    solr.setdefault('wtf_json', wtf)
+    #solr.setdefault('dc', oai_dc)
     #logging.info('WTF %s' % wtf)
-    pprint.pprint(wtf)
+    #pprint.pprint(oai_dc)
     #logging.info('OAI_DC %s' % etree.tostring(oai_dc))
     #logging.info('CSL %s' % csl)
     #logging.info('SOLR %s' % solr)
