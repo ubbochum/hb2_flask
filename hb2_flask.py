@@ -1345,7 +1345,7 @@ def edit_record(record_id='', pubtype=''):
 
     return render_template('tabbed_form.html', form=form, header=lazy_gettext('Edit: %(title)s',
                                                                          title=form.data.get('title')),
-                           site=theme(request.access_route), action='update', pubtype=pubtype, record_id=record_id)
+                           locked=True, site=theme(request.access_route), action='update', pubtype=pubtype, record_id=record_id)
 
 @app.route('/delete/<record_id>')
 def delete_record(record_id=''):

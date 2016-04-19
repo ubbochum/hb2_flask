@@ -1,6 +1,10 @@
 <div class="form-group">
     <div class="col-xs-offset-9 col-xs-3">
+        {% if locked %}
         <a href="{{ url_for('unlock', record_id=record_id, next='dashboard') }}" class="btn btn-danger">{{ _('Cancel') }}</a>
+        {% else %}
+        <a href="{% if current_user.role == 'admin' %}../dashboard{% else %}/{% endif %}" class="btn btn-danger">{{ _('Cancel') }}</a>
+        {% endif %}
         <button type="submit" class="btn btn-primary submit" form="theform">{{ _('Submit') }}</button>
     </div>
 </div>
