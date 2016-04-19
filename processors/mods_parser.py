@@ -24,6 +24,7 @@
 #  THE SOFTWARE.
 
 from lxml import etree
+import uuid
 import logging
 import pprint
 import simplejson as json
@@ -264,6 +265,7 @@ def get_wtf_hosts(elems):
 
 def get_solr_hosts(elems):
     solr_hosts = []
+    id = ''
     for host in elems:
         tmp = {}
         for item in host:
@@ -278,6 +280,7 @@ def get_solr_hosts(elems):
                 for info in item:
                     if info.tag == '%srecordIdentifier' % MODS:
                         tmp.setdefault('is_part_of', info.text)
+                        id = info.text
             if item.tag == '%spart' % MODS:
                 for part in item:
                     if part.tag == '%sdetail' % MODS:
@@ -294,11 +297,67 @@ def get_solr_hosts(elems):
                                 tmp.setdefault('page_last', str(extent.text).split("–")[1])
         if not tmp.get('pubtype'):
             tmp.setdefault('pubtype', 'Journal')
+        if id == '':
+            id = str(uuid.uuid4())
+        if not tmp.get('id'):
+            tmp.setdefault('id', id)
+        get_solr_parents(elems, id)
         #logging.info(tmp)
 
         solr_hosts.append(tmp)
 
     return {'is_part_of': solr_hosts}
+
+def get_solr_parents(elems, id=''):
+
+    for host in elems:
+        tmp = {}
+        tmp_wtf = {}
+        for item in host:
+            if item.tag == '%stitleInfo' % MODS:
+                for title in item:
+                    if title.tag == '%stitle' % MODS:
+                        tmp.setdefault('title', title.text)
+                        tmp_wtf.setdefault('title', title.text)
+                    if title.tag == '%ssubTitle' % MODS:
+                        tmp_wtf.setdefault('subtitle', title.text)
+            if item.tag == '%sgenre' % MODS:
+                if item.get('authority') == 'local':
+                    tmp.setdefault('pubtype', OLD_PUBTYPES_MAP.get(item.text))
+                    tmp_wtf.setdefault('pubtype', OLD_PUBTYPES_MAP.get(item.text))
+            if item.tag == '%srecordInfo' % MODS:
+                for info in item:
+                    if info.tag == '%srecordIdentifier' % MODS:
+                        tmp.setdefault('id', info.text)
+                        tmp_wtf.setdefault('id', info.text)
+                    if info.tag == '%srecordCreationDate' % MODS:
+                        tmp.setdefault('recordCreationDate', info.text)
+                        tmp_wtf.setdefault('created', info.text)
+                    if info.tag == '%srecordChangeDate' % MODS:
+                        tmp.setdefault('recordChangeDate', info.text)
+                        tmp_wtf.setdefault('changed', info.text)
+            if item.tag == '%spart' % MODS:
+                for part in item:
+                    if part.tag == '%sdetail' % MODS:
+                        if part.get('type') == 'volume':
+                            for number in part:
+                                tmp.setdefault('volume', number.text)
+                        if part.get('type') == 'issue':
+                            for number in part:
+                                tmp.setdefault('issue', number.text)
+                    if part.tag == '%sextent' % MODS:
+                        for extent in part:
+                            if extent.tag == '%slist' % MODS:
+                                tmp.setdefault('page_first', str(extent.text).split("–")[0])
+                                tmp.setdefault('page_last', str(extent.text).split("–")[1])
+        if not tmp.get('pubtype'):
+            tmp.setdefault('pubtype', 'Journal')
+        tmp.setdefault('wtf_json', tmp_wtf)
+
+        # TODO ist tmp.id bereits in 'parents' enthalten?
+        #logging.info(tmp)
+
+        parents.append(tmp)
 
 def get_solr_series(elems):
     solr_series = []
@@ -328,7 +387,7 @@ def get_solr_series(elems):
                                 tmp.setdefault('page_first', str(extent.text).split("–")[0])
                                 tmp.setdefault('page_last', str(extent.text).split("–")[1])
         tmp.setdefault('pubtype', 'Series')
-        logging.info(tmp)
+        #logging.info(tmp)
 
         solr_series.append(tmp)
 
@@ -543,11 +602,11 @@ try:
         },
         "./m:recordInfo/m:recordChangeDate[@encoding='iso8601']": {
             'wtf': lambda elems: {'changed': elems[0].text},
-            'solr': lambda elems: {'changed': '%sT00:00:00Z' % elems[0].text},
+            'solr': lambda elems: {'recordChangeDate': '%sT00:00:00Z' % elems[0].text},
         },
         "./m:recordInfo/m:recordCreationDate[@encoding='iso8601']": {
             'wtf': lambda elems: {'created': elems[0].text},
-            'solr': lambda elems: {'created': '%sT00:00:00Z' % elems[0].text},
+            'solr': lambda elems: {'recordCreationDate': '%sT00:00:00Z' % elems[0].text},
         },
         "./m:recordInfo/m:recordIdentifier": {
             'wtf': lambda elems: {'id': elems[0].text},
@@ -605,6 +664,7 @@ try:
         "./m:relatedItem[@type='host']": {
             'wtf': get_wtf_hosts,
             'solr': get_solr_hosts,
+            'solr_parents': get_solr_parents,
         },
         # "./m:relatedItem[@type='isReferencedBy']": lambda elem : {'': elem.text},
         # "./m:relatedItem[@type='otherVersion']": lambda elem : {'': elem.text},
@@ -656,6 +716,8 @@ try:
     }
 except IndexError:
     pass
+
+parents = []
 
 for event, record in mc:
     wtf = {}
@@ -737,6 +799,7 @@ for event, record in mc:
             logging.info(record.xpath("./m:recordInfo/m:recordIdentifier", namespaces=NSMAP)[0].text)
             raise
 
+    solr.setdefault('editorial_status', 'imported')
     solr.setdefault('wtf_json', wtf)
     #solr.setdefault('dc', oai_dc)
     #logging.info('WTF %s' % wtf)
@@ -744,5 +807,7 @@ for event, record in mc:
     #logging.info('OAI_DC %s' % etree.tostring(oai_dc))
     #logging.info('CSL %s' % csl)
     #logging.info('SOLR %s' % solr)
-    pprint.pprint(solr)
-    #logging.info('####################################################################################################')
+    #pprint.pprint(solr)
+
+pprint.pprint(parents)
+#logging.info('####################################################################################################')
