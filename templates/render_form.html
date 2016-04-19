@@ -15,7 +15,13 @@
     {% for enclosure in multifield %}
     <div id="{{ enclosure.name }}_container" class="multi_enclosure">
     <div class="col-sm-2 control-label">{{ enclosure.name|capitalize|rem_form_count|replace('_', ' ') }}</div>
-    <div class="col-sm-6" style="margin: 0 0 12px -10px;;"><a class="btn btn-sm btn-default add" href="#"><i class="fa fa-plus"></i> {{_('Add another')}}</a></div>
+    <div class="col-sm-6" style="margin: 0 0 12px -10px;;">
+        {% if not loop.last %}
+            <a class="btn btn-sm btn-danger remove" href="#"><i class="fa fa-trash"></i> {{_('Remove this')}}</a>
+        {% else %}
+            <a class="btn btn-sm btn-default add" href="#"><i class="fa fa-plus"></i> {{_('Add another')}}</a>
+        {% endif %}
+    </div>
     <div class="col-sm-4">&nbsp;</div>
     <div class="clearfix"></div>
         {% for subfield in enclosure %}
