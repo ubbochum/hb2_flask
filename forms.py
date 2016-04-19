@@ -458,6 +458,10 @@ class IsPartOfForm(Form):
 class OtherVersionForm(Form):
     other_version = StringField(lazy_gettext('Other Version'))
 
+class OtherRelationForm(IsPartOfForm):
+    page_first = StringField(lazy_gettext('First Page'))
+    page_last = StringField(lazy_gettext('Last Page'))
+
 class ChapterRelationForm(IsPartOfForm):
     page_first = StringField(lazy_gettext('First Page'))
     page_last = StringField(lazy_gettext('Last Page'))
@@ -740,6 +744,7 @@ class SpecialIssueForm(JournalForm):
         ('', lazy_gettext('Select a Subtype')),
         ('festschrift', lazy_gettext('Festschrift')),
     ])
+    ISBN = FieldList(StringField(lazy_gettext('ISBN'), validators=[Optional(), Isbn]), min_entries=1)
 
     def groups(self):
         yield [
@@ -747,7 +752,7 @@ class SpecialIssueForm(JournalForm):
                        self.issued, self.publisher, self.publisher_place, self.frequency, self.language, self.number_of_pages, self.medium, self.accessed, self.additions, self.note, self.license, self.license_text
                        ],
              'label': lazy_gettext('Basic')},
-            {'group': [self.ISSN, self.ZDBID, self.uri, self.DOI, self.PMID, self.WOSID], 'label': lazy_gettext('IDs')},
+            {'group': [self.ISSN, self.ISBN, self.ZDBID, self.uri, self.DOI, self.PMID, self.WOSID], 'label': lazy_gettext('IDs')},
             {'group': [self.person], 'label': lazy_gettext('Person')},
             {'group': [self.corporation], 'label': lazy_gettext('Corporation')},
             {'group': [self.is_part_of],
@@ -1210,6 +1215,7 @@ class OtherForm(WorkForm):
     edition = StringField('Edition', validators=[Optional()])
     number = FieldList(StringField('Number', validators=[Optional()]), min_entries=1)
     has_part = FieldList(FormField(HasPartForm), min_entries=1)
+    is_part_of = FieldList(FormField(OtherRelationForm), min_entries=1)
     other_version = FieldList(FormField(OtherVersionForm), min_entries=1)
     key_publication = BooleanField(lazy_gettext('Key Publication'),
                                    description='A very important title to be included on a special publication list.')

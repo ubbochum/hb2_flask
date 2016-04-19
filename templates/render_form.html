@@ -7,12 +7,17 @@
 {% macro render_multi_field(multifield) %}
 {% if multifield[0] %}
     {% if multifield[0].type == 'FormField' %}
-    <div id="{{ multifield[0].name }}_container" class="multi_enclosure">
+    {#<div id="{{ multifield[0].name }}_container" class="multi_enclosure">
     <div class="col-sm-2 control-label">{{ multifield[0].name|capitalize|rem_form_count|replace('_', ' ') }}</div>
     <div class="col-sm-6" style="margin: 0 0 12px -10px;;"><a class="btn btn-sm btn-default add" href="#"><i class="fa fa-plus"></i> {{_('Add another')}}</a></div>
     <div class="col-sm-4">&nbsp;</div>
-    <div class="clearfix"></div>
+    <div class="clearfix"></div>#}
     {% for enclosure in multifield %}
+    <div id="{{ enclosure.name }}_container" class="multi_enclosure">
+    <div class="col-sm-2 control-label">{{ enclosure.name|capitalize|rem_form_count|replace('_', ' ') }}</div>
+    <div class="col-sm-6" style="margin: 0 0 12px -10px;;"><a class="btn btn-sm btn-default add" href="#"><i class="fa fa-plus"></i> {{_('Add another')}}</a></div>
+    <div class="col-sm-4">&nbsp;</div>
+    <div class="clearfix"></div>
         {% for subfield in enclosure %}
             {% if subfield.type != 'CSRFTokenField' %}
                 <div class="form-group">
@@ -48,8 +53,9 @@
         {#<div class="col-sm-offset-2" style="margin-top: 8px;">
             <span style="margin-left:15px;text-transform:uppercase;"><a class="btn btn-sm btn-default" href="#" data-field="{{ multifield[0].name }}"><i class="fa fa-plus"></i> {{_('Add another')}}</a></span>
         </div>#}
+        </div>
     {% endfor %}
-    </div>
+    {#</div>#}
     {% else %}
         {% for entry in multifield.entries %}<div class="form-group" id="{{ entry.name }}_container">
 {#            <div class="col-sm-2 control-label" id="{{ multifield.name }}">{{ multifield.label }}</div>#}
