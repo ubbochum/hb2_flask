@@ -1428,7 +1428,8 @@ class ThesisForm(WorkForm):
         ('second_state_examination', lazy_gettext('2nd State Examination')),
     ])
     hbz_id = StringField(lazy_gettext('HBZ-ID'), validators=[Optional()])
-    issued = StringField(lazy_gettext('Day of the Oral Exam'), validators=[DataRequired(), Regexp('[12]\d{3}-[01]\d-[0123]\d')], widget=CustomTextInput(placeholder=lazy_gettext('YYYY-MM-DD')), description=lazy_gettext("If you don't know the month and/or day please use 01"))
+    issued = StringField(lazy_gettext('Date issued'), validators=[Regexp('[12]\d{3}-[01]\d-[0123]\d')], widget=CustomTextInput(placeholder=lazy_gettext('YYYY-MM-DD')), description=lazy_gettext("If you don't know the month and/or day please use 01"))
+    day_of_oral_exam = StringField(lazy_gettext('Day of the Oral Exam'), validators=[Regexp('[12]\d{3}-[01]\d-[0123]\d')], widget=CustomTextInput(placeholder=lazy_gettext('YYYY-MM-DD')), description=lazy_gettext("If you don't know the month and/or day please use 01"))
     place = StringField(lazy_gettext('Location of Academic Institution'), validators=[Optional()], widget=CustomTextInput(placeholder=lazy_gettext('Where the thesis was submitted')))
     open_access = FormField(OpenAccessForm)
     has_part = FieldList(FormField(HasPartForm), min_entries=1)
@@ -1440,7 +1441,7 @@ class ThesisForm(WorkForm):
     def groups(self):
         yield [
             {'group': [self.pubtype, self.subtype, self.publication_status, self.title, self.subtitle, self.title_supplement, self.title_translated,
-                       self.issued, self.place, self.language, self.number_of_pages, self.medium, self.accessed, self.additions, self.note, self.license, self.license_text
+                       self.issued, self.day_of_oral_exam, self.place, self.language, self.number_of_pages, self.medium, self.accessed, self.additions, self.note, self.license, self.license_text
                        ],
              'label': lazy_gettext('Basic')},
             {'group': [self.uri, self.DOI, self.PMID, self.WOSID, self.hbz_id], 'label': lazy_gettext('IDs')},
