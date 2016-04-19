@@ -1,5 +1,6 @@
 {% extends 'site_base.html' %}
 {% import 'drill_down.html' as drill_down with context %}
+{% import 'remove_filters.html' as remove_filters with context %}
 {% block site_content %}
     {{ super() }}
     {% include 'confirm_delete_modal.html' %}
@@ -7,11 +8,12 @@
     {% if results|length > 0 %}<div class="row">
         <div class="col-sm-4" id="facets">
             {{ drill_down.facets(facet_data.affiliation, 'affiliation', heading='Affiliation', target='persons') }}
-{#                {{ drill_down.simple_filter('orcid', heading='ORCID', target='persons') }}#}
+            {{ drill_down.simple_filter('gnd', heading='GND', target='persons') }}
+            {{ drill_down.simple_filter('orcid', heading='ORCID', target='persons') }}
         </div>
         <div class="col-sm-8">
             {{ pagination.info }}
-            {% include 'remove_filters.html' %}
+            {{ remove_filters.remove_filter(target='persons') }}
             {{ pagination.links }}
             <table class="table table-bordered">
                 <thead>
@@ -28,7 +30,7 @@
                     <tr>
                         <th scope="row">{{ loop.index + offset }}</th>
                         <td>{% if record.id == record.gnd %}<a href="http://d-nb.info/gnd/{{ record.id }}">{{ record.id }}</a>{% elif record.id == record.orcid %}<a href="https://orcid.org/{{ record.id }}">{{ record.id }}</a>{% else %}{{ record.id }}{% endif %}</td>
-                        <td><a href="{% if record.gnd %}{{ url_for('show_person', person_id=record.gnd) }}{% else %}{{ url_for('show_person', person_id=record.id) }}{% endif %}">{{ record|get_name }}</a></td>
+                        <td><a href="{% if record.gnd %}{{ url_for('show_person', person_id=record.gnd) }}{% else %}{{ url_for('show_person', person_id=record.id) }}{% endif %}">{{ record|get_name }}</a>{% if record.gnd %}<br/> GND: {{ record.gnd }}{% endif %}{% if record.orcid %}<br/> ORCID: {{ record.orcid }}{% endif %}</td>
                         <td>{{ (now - record.created|mk_time())|humanize() }}</td>
                         <td>{{ (now - record.changed|mk_time())|humanize() }}</td>
                         <td class="dropdown">

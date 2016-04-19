@@ -1,5 +1,6 @@
 {% extends 'site_base.html' %}
 {% import 'drill_down.html' as drill_down with context %}
+{% import 'remove_filters.html' as remove_filters with context %}
 {% block site_content %}
     {{ super() }}
     <div class="row">
@@ -12,7 +13,8 @@
         </div>
         <div class="col-sm-8">
             {{ pagination.info }}
-            {% include 'remove_filters.html' %}
+{#            {% include 'remove_filters.html' %}#}
+            {{ remove_filters.remove_filter(target=target) }}
             {{ pagination.links }}
             {% include 'record_list.html' %}
             {{ pagination.links }}

@@ -923,7 +923,7 @@ def orgas():
 
     #orgas_solr = Solr(query=query, start=(page - 1) * 10, core='organisation',
     #                  json_facet={'destatis_id': {'type': 'term', 'field': 'destatis_id'}}, fquery=filterquery)
-    orgas_solr = Solr(query=query, start=(page - 1) * 10, core='organisation', fquery=filterquery, facet='true', facet_fields=['destatis_id'])
+    orgas_solr = Solr(query=query, start=(page - 1) * 10, core='organisation', fquery=filterquery, facet='true', facet_fields=['parent_label','destatis_id'])
     orgas_solr.request()
 
     num_found = orgas_solr.count()
