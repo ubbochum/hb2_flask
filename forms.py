@@ -553,7 +553,9 @@ class WorkForm(Form):
     #multiples = ('person', 'birth_date', 'death_date', 'keyword', 'person_uri', 'keyword_uri', 'role')
     #date_fields = ('issued', 'accessed', 'birth_date', 'death_date', 'created', 'changed')
 
-    admin_only = ['id', 'created', 'changed', 'owner', 'deskman','apparent_dup', 'gnd', 'orcid', 'viaf', 'isni', 'researcher_id', 'scopus_id', 'arxiv_id']
+    #admin_only = ['id', 'created', 'changed', 'owner', 'deskman','apparent_dup', 'gnd', 'orcid', 'viaf', 'isni', 'researcher_id', 'scopus_id', 'arxiv_id']
+    # TODO id, created und changed waren auch für user nötig, da sonst das Speichern unmöglich war
+    admin_only = ['owner', 'deskman','apparent_dup', 'gnd', 'orcid', 'viaf', 'isni', 'researcher_id', 'scopus_id', 'arxiv_id']
     #user_only = ['role']
 
 class PrintedWorkForm(WorkForm):

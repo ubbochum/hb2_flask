@@ -367,7 +367,7 @@ def homepage():
     mystart = 0
     if current_user.is_authenticated:
         #index_solr = Solr(start=(page - 1) * 10, fquery=['pndid:%s' % current_user.gndid], facet='false')
-        index_solr = Solr(start=(page - 1) * 10, query=current_user.email, facet='false')
+        index_solr = Solr(start=(page - 1) * 10, query='owner:"' + current_user.email + '"', facet='false')
         index_solr.request()
         num_found = index_solr.count()
         records = index_solr.results
@@ -1526,7 +1526,7 @@ def load_user(id):
 def login():
     if request.method == 'POST':
         user = User(request.form.get('username'))
-        user_info = user.get_user(request.form.get('username'))
+        #user_info = user.get_user(request.form.get('username'))
         next = get_redirect_target()
         if request.form.get('wayf') == 'bochum':
             authuser = requests.post('https://api.ub.rub.de/ldap/authenticate/',
@@ -1545,7 +1545,10 @@ def login():
                     tmp.setdefault('id', request.form.get('username').encode('ascii'))
                     tmp.setdefault('name', '%s %s' % (authuser.get('given_name'), authuser.get('last_name')))
                     tmp.setdefault('email', authuser.get('email'))
-                    tmp.setdefault('role', 'user')
+                    if user.role == '' or user.role == 'user':
+                        tmp.setdefault('role', 'user')
+                    else:
+                        tmp.setdefault('role', user.role)
                     tmp.setdefault('accesstoken', accesstoken)
                     user.name = '%s %s' % (authuser.get('given_name'), authuser.get('last_name'))
                     user.email = authuser.get('email')
@@ -1567,23 +1570,28 @@ def login():
                                          'grant_type': 'password',
                                      }, headers={'Accept': 'application/json', 'Content-type': 'application/json'}).json()
             #logging.info(authuser)
-            user_info = requests.get('https://api.ub.tu-dortmund.de/paia/core/%s' % authuser.get('patron'), headers={
-                'Accept': 'application/json',
-                'Authorization': '%s %s' % (authuser.get('token_type'), authuser.get('access_token'))
-            }).json()
-            #logging.info(user_info)
             if authuser.get('access_token'):
+                user_info = requests.get('https://api.ub.tu-dortmund.de/paia/core/%s' % authuser.get('patron'), headers={
+                    'Accept': 'application/json',
+                    'Authorization': '%s %s' % (authuser.get('token_type'), authuser.get('access_token'))
+                }).json()
+                #logging.info(user_info)
                 user_solr = Solr(core='hb2_users', query='accesstoken:%s' % authuser.get('access_token'), facet='false')
                 user_solr.request()
                 if user_solr.count() == 0:
                     tmp = {}
+                    tmp.setdefault('id', user_info.get('username'))
                     tmp.setdefault('name', user_info.get('name'))
                     tmp.setdefault('email', user_info.get('email'))
-                    tmp.setdefault('role', 'user')
+                    if user.role == '' or user.role == 'user':
+                        tmp.setdefault('role', 'user')
+                    else:
+                        tmp.setdefault('role', user.role)
                     tmp.setdefault('accesstoken', authuser.get('access_token'))
+                    #logging.info(tmp)
                     user.name = user_info.get('name')
                     user.email = user_info.get('email')
-                    user.accesstoken = authuser.get('accesstoken')
+                    user.accesstoken = authuser.get('access_token')
                     new_user_solr = Solr(core='hb2_users', data=[tmp], facet='false')
                     new_user_solr.update()
                 login_user(user)
