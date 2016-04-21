@@ -807,7 +807,7 @@ def dashboard():
     return render_template('dashboard.html', records=dashboard_solr.results, facet_data=dashboard_solr.facets,
                            header=lazy_gettext('Dashboard'), site=theme(request.access_route), offset=mystart - 1,
                            query=query, filterquery=filterquery, pagination=pagination, now=datetime.datetime.now(),
-                           target='dashboard', del_redirect='dashboard'
+                           target='dashboard', del_redirect='dashboard', numFound=num_found
                            )
 
 @app.route('/make_admin/<user_id>')
