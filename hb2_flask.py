@@ -132,6 +132,7 @@ PUBTYPE2TEXT = {
     'Lecture': lazy_gettext('Lecture'),
     'LegalCommentary': lazy_gettext('Legal Commentary'),
     'Monograph': lazy_gettext('Monograph'),
+    'MultivolumeWork': lazy_gettext('MultivolumeWork'),
     'Newspaper': lazy_gettext('Newspaper'),
     'Other': lazy_gettext('Other'),
     'Patent': lazy_gettext('Patent'),
@@ -178,6 +179,7 @@ ROLE_MAP = {
     'aft': lazy_gettext('Author of Afterword'),
     'arr': lazy_gettext('Arranger'),
     'aui': lazy_gettext('Author of Introduction'),
+    'brd': lazy_gettext('Sender'),
     'chr': lazy_gettext('Choreographer'),
     'cmp': lazy_gettext('Composer'),
     'ctb': lazy_gettext('Contributor'),
@@ -310,6 +312,7 @@ def _diff_struct(a, b):
 
 PUBTYPE2FORM = {
     'ArticleJournal': ArticleJournalForm,
+    'MultivolumeWork': MultivolumeWorkForm,
     'Monograph': MonographForm,
     'Patent': PatentForm,
     'Chapter': ChapterForm,

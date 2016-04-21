@@ -132,6 +132,7 @@ USER_PUBTYPES = [
     ('ArticleJournal', lazy_gettext('Article in Journal')),
     ('Chapter', lazy_gettext('Chapter in...')),
     ('Collection', lazy_gettext('Collection')),
+    ('MultivolumeWork', lazy_gettext('MultivolumeWork')),
     ('Monograph', lazy_gettext('Monograph')),
     ('Other', lazy_gettext('Other')),
     ('Patent', lazy_gettext('Patent')),
@@ -1201,6 +1202,56 @@ class MonographForm(PrintedWorkForm):
                        self.changed, self.owner, self.deskman],
              'label': lazy_gettext('Administrative')},
         ]
+
+class MultivolumeWorkForm(PrintedWorkForm):
+    subtype = SelectField(lazy_gettext('Subtype'), validators=[Optional()], choices=[
+        ('', lazy_gettext('Select a Subtype')),
+        ('dissertation', lazy_gettext('Dissertation')),
+        ('festschrift', lazy_gettext('Festschrift')),
+        ('habilitation', lazy_gettext('Habilitation')),
+        ('notated_music', lazy_gettext('Notated Music')),
+    ])
+    publication_status = SelectField(lazy_gettext('Publication Status'), validators=[DataRequired()], choices=[
+        ('', lazy_gettext('Select a Publication Status')),
+        ('forthcoming', lazy_gettext('Forthcoming')),
+        ('published', lazy_gettext('Published')),
+    ], default='published')
+    ISBN = FieldList(StringField(lazy_gettext('ISBN'), validators=[Optional(), Isbn]), min_entries=1)
+    hbz_id = StringField(lazy_gettext('HBZ-ID'), validators=[Optional()])
+    #hbz_id = FieldList(StringField(lazy_gettext('HBZ-ID'), validators=[Optional(), Isbn]), min_entries=1)
+    number_of_volumes = StringField('Number of Volumes', validators=[Optional()])
+    open_access = FormField(OpenAccessForm)
+    other_version = FieldList(FormField(OtherVersionForm), min_entries=1)
+    is_part_of = FieldList(FormField(MonographRelationForm), min_entries=1)
+    key_publication = BooleanField(lazy_gettext('Key Publication'),
+                                   description='A very important title to be included on a special publication list.')
+
+    user_only = ['key_publication']
+
+    def groups(self):
+        yield [
+            {'group': [self.pubtype, self.subtype, self.publication_status, self.title, self.subtitle, self.title_supplement, self.title_translated,
+                       self.issued, self.edition, self.number_of_volumes, self.publisher, self.publisher_place, self.language, self.number_of_pages, self.medium, self.accessed, self.additions, self.note, self.license, self.license_text
+                       ],
+             'label': lazy_gettext('Basic')},
+            {'group': [self.uri, self.DOI, self.PMID, self.WOSID, self.ISBN, self.hbz_id], 'label': lazy_gettext('IDs')},
+            {'group': [self.person], 'label': lazy_gettext('Person')},
+            {'group': [self.corporation], 'label': lazy_gettext('Corporation')},
+            {'group': [self.is_part_of],
+             'label': lazy_gettext('Part of')},
+            {'group': [self.has_part], 'label': lazy_gettext('Volume')},
+            {'group': [self.other_version], 'label': lazy_gettext('Other Version')},
+            {'group': [self.keyword, self.keyword_temporal, self.keyword_geographic, self.swd_subject, self.ddc_subject,
+                       self.mesh_subject, self.stw_subject, self.lcsh_subject, self.thesoz_subject
+                        ],
+             'label': lazy_gettext('Keyword')},
+            {'group': [self.abstract, self.table_of_contents], 'label': lazy_gettext('Content')},
+            {'group': [self.open_access], 'label': lazy_gettext('Open Access')},
+            {'group': [self.id, self.affiliation_context, self.apparent_dup, self.editorial_status, self.created,
+                       self.changed, self.owner, self.deskman],
+             'label': lazy_gettext('Administrative')},
+        ]
+
 
 class OtherForm(WorkForm):
     subtype = SelectField(lazy_gettext('Subtype'), validators=[Optional()], choices=[

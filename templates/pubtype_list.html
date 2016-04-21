@@ -58,6 +58,7 @@
     {% if current_user.role == 'admin' %}
         <div class="col-sm-4">
             <ul class="list-unstyled">
+                <li><a href="{{ url_for('new_record', pubtype='MultivolumeWork') }}">{{ _('MultivolumeWork') }}</a></li>
                 <li>
                     <a href="{{ url_for('new_record', pubtype='Other') }}">{{ _('Other') }}</a>
                     <ul>
