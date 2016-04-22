@@ -27,7 +27,7 @@
             <div class="col-sm-6">
                 <h4>&nbsp;</h4>
                 <h5>{{ _('Upload JSON File') }}</h5>
-                {{ wtf.quick_form(form, form_type='inline', action='/import/solr_dump/somefile') }}
+                {{ wtf.quick_form(form, form_type='inline', action='import/solr_dump/somefile') }}
             </div>
         </div>
         {% if locked_records %}
@@ -54,7 +54,7 @@
     <script>
         function page_reload(){
             setTimeout(function(){
-                        document.location = '/{{ del_redirect }}';
+                        document.location = '{{ del_redirect }}';
                         }, 1000);
         }
         $('#confirm-delete').on('show.bs.modal', function(event) {
