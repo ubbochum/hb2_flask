@@ -701,7 +701,11 @@ def _record2solr_doc(form, action):
                         # solr_data.setdefault('has_part', []).append('<a href="/retrieve/%s/%s">%s</a>' % (myjson.get('pubtype'), myjson.get('id'), myjson.get('title')))
                         solr_data.setdefault('has_part', []).append(json.dumps({'pubtype': myjson.get('pubtype'),
                                                                                 'id': myjson.get('id'),
-                                                                                'title': myjson.get('title'),}))
+                                                                                'title': myjson.get('title'),
+                                                                                'page_first': myjson.get('is_part_of')[0].get('page_first', ''),
+                                                                                'page_last': myjson.get('is_part_of')[0].get('page_last', ''),
+                                                                                'volume': myjson.get('is_part_of')[0].get('volume', ''),
+                                                                                'issue': myjson.get('is_part_of')[0].get('issue', '')}))
             except AttributeError as e:
                 logging.error(e)
         if field == 'other_version' and len(form.data.get(field)) > 0:

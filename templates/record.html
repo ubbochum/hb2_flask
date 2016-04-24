@@ -293,6 +293,13 @@
                     {% for part in has_part %}
                         {% with mypart = part|deserialize_json %}
                             <li>
+                                {% if mypart.volume %}
+                                    {{ _('Vol.') }} {{ mypart.volume }}{% if mypart.issue %}, {{ _('Issue') }} {{ mypart.issue }}{% endif %}
+                                {% endif %}
+                                {% if mypart.page_first and mypart.page_last %}
+                                    {% if mypart.volume %}| {% endif %}{{ _('p.') }} {{ mypart.page_first }}-{{ mypart.page_last }}
+                                {% endif %}
+                                {% if mypart.volume or (mypart.page_first and mypart.page_last) %}:{% endif %}
                                 <a href="{{ url_for('show_record', pubtype=mypart.pubtype, record_id=mypart.id) }}">{{ mypart.title }}</a>
                             </li>
                         {% endwith %}
