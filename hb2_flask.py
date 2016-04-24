@@ -573,14 +573,14 @@ def _record2solr_doc(form, action):
                 solr_data.setdefault('parallel_title', trans_tit.strip())
         if field == 'issued':
             if form.data.get(field):
-                solr_data.setdefault('date', form.data.get(field).strip())
-                solr_data.setdefault('fdate', form.data.get(field)[0:4].strip())
-                if len(form.data.get(field).strip()) == 4:
-                    solr_data.setdefault('date_boost', '%s-01-01T00:00:00Z' % form.data.get(field).strip())
-                elif len(form.data.get(field).strip()) == 7:
-                    solr_data.setdefault('date_boost', '%s-01T00:00:00Z' % form.data.get(field).strip())
+                solr_data.setdefault('date', form.data.get(field).replace('[','').replace(']','').strip())
+                solr_data.setdefault('fdate', form.data.get(field).replace('[','').replace(']','')[0:4].strip())
+                if len(form.data.get(field).replace('[','').replace(']','').strip()) == 4:
+                    solr_data.setdefault('date_boost', '%s-01-01T00:00:00Z' % form.data.get(field).replace('[','').replace(']','').strip())
+                elif len(form.data.get(field).replace('[','').replace(']','').strip()) == 7:
+                    solr_data.setdefault('date_boost', '%s-01T00:00:00Z' % form.data.get(field).replace('[','').replace(']','').strip())
                 else:
-                    solr_data.setdefault('date_boost', '%sT00:00:00Z' % form.data.get(field).strip())
+                    solr_data.setdefault('date_boost', '%sT00:00:00Z' % form.data.get(field).replace('[','').replace(']','').strip())
         if field == 'publisher':
             solr_data.setdefault('publisher', form.data.get(field).strip())
         if field == 'language':
@@ -662,6 +662,8 @@ def _record2solr_doc(form, action):
                         solr_data.setdefault('is_part_of', []).append(json.dumps({'pubtype': myjson.get('pubtype'),
                                                                                   'id': myjson.get('id'),
                                                                                   'title': myjson.get('title'),
+                                                                                  'issn': myjson.get('issn'),
+                                                                                  'isbn': myjson.get('isbn'),
                                                                                   'page_first': form.data.get(field)[
                                                                                       idx].get('page_first', ''),
                                                                                   'page_last': form.data.get(field)[
