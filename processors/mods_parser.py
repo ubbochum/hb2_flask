@@ -22,7 +22,7 @@
 #  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 #  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 #  THE SOFTWARE.
-
+import datetime
 from lxml import etree
 import uuid
 import logging
@@ -36,7 +36,7 @@ except ImportError:
 
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s %(levelname)-4s %(message)s',
-                    datefmt='%a, %d %b %Y %H:%M:%S',
+                    datefmt='%a, %d %b %Y %H:%M:%S.f%',
 )
 
 MODS_NAMESPACE = 'http://www.loc.gov/mods/v3'
@@ -84,21 +84,91 @@ FREQUENCY_MAP = {
 
 OLD_PUBTYPES_MAP = {
     'JournalArticle': 'ArticleJournal',
+    'JournalArticleAbstract': 'ArticleJournal#abstract',
+    'JournalArticleFestschrift': 'ArticleJournal#festschrift',
+    'JournalArticleInterview': 'ArticleJournal#interview',
+    'JournalArticleLexikonartikel': 'ArticleJournal#lexicon_article',
+    'JournalArticleMeetingAbstract': 'ArticleJournal#meeting_abstract',
+    'JournalArticlePoster': 'ArticleJournal#poster',
+    'JournalArticlePosterAbstract': 'ArticleJournal#poster_abstract',
+    'JournalArticlePredigt': 'ArticleJournal#sermon',
+    'JournalArticleRezension': 'ArticleJournal#review',
+    'JournalArticleVorwort': 'ArticleJournal#introduction',
     'Contribution': 'Chapter',
+    'ContributionAbstract': 'Chapter#abstract',
+    'ContributionFestschrift': 'Chapter#festschrift',
+    'ContributionInterview': 'Chapter#interview',
+    'ContributionLexikonartikel': 'Chapter#lexicon_article',
+    'ContributionMeetingAbstract': 'Chapter#meeting_abstract',
+    'ContributionPoster': 'Chapter#poster',
+    'ContributionPosterAbstract': 'Chapter#poster_abstract',
+    'ContributionPredigt': 'Chapter#sermon',
+    'ContributionRezension': 'Chapter#review',
+    'ContributionVorwort': 'Chapter#introduction',
+    'ContributionNachwort': 'Chapter#afterword',
     'BookEdited': 'Collection',
-    'ConferenceProceedings': 'Conference',
-    'Edition': 'Edition',
-    'InternetDocument': 'InternetDocument',
-    'Journal': 'Journal',
-    'Lecture': 'Lecture',
-    'LegalCommentary': 'LegalCommentary',
+    'BookEditedFestschrift': 'Collection#festschrift',
     'Book': 'Monograph',
-    'Newspaper': 'Newspaper',
-    'Other': 'Other',
+    'BookDissertation': 'Monograph#dissertation',
+    'BookFestschrift': 'Monograph#festschrift',
+    'BookHabilitation': 'Monograph#habilitation',
+    'BookMusikdruck': 'Monograph#notated_music',
+    'UnpublishedWork': 'Other#report',
+    'UnpublishedWorkLexikonartikel': 'Other#report#article_article',
+    'UnpublishedWorkFestschrift': 'Other#festschrift',
+    'UnpublishedWorkPredigt': 'Other#sermon',
+    'UnpublishedWorkVorlesungsskript': 'Other#lecture_notes',
+    'UnpublishedWorkPoster': 'Other#poster',
+    'UnpublishedWorkPosterAbstract': 'Other#poster_abstract',
     'Patent': 'Patent',
-    'Series': 'Series',
-    'Standard': 'Standard',
     'Thesis': 'Thesis',
+    'ThesisBachelorarbeit': 'Thesis#bachelor_thesis',
+    'ThesisDiplomarbeit': 'Thesis#diploma_thesis',
+    'ThesisDissertation': 'Thesis#dissertation',
+    'ThesisFestschrift': 'Thesis#festschrift',
+    'ThesisHabilitation': 'Thesis#habilitation',
+    'ThesisMagisterarbeit': 'Thesis#magisterarbeit',
+    'ThesisMasterarbeit': 'Thesis#masters_thesis',
+    'ThesisErsteStaatsexamensarbeit': 'Thesis#first_state_examination',
+    'ThesisZweiteStaatsexamensarbeit': 'Thesis#second_state_examination',
+    'NewspaperArticle': 'ArticleNewspaper',
+    'NewspaperArticleRezension': 'ArticleNewspaper#review',
+    'AudioBook': 'AudioBook',
+    'AudioOrVideoDocument': 'AudioOrVideoDocument',
+    'AudioOrVideoDocumentBilddatenbank': 'AudioOrVideoDocument#image_database',
+    'AudioOrVideoDocumentBühnenwerk': 'AudioOrVideoDocument#dramatic_work',
+    'AudioOrVideoDocumentInterview': 'AudioOrVideoDocument#interview',
+    'ContributionInLegalCommentary': 'ChapterInLegalCommentary',
+    'BookVorwort': 'ChapterInMonograph#foreword',
+    'BookNachwort': 'ChapterInMonograph#afterword',
+    'ConferenceProceedings': 'Conference',
+    'CollectedWorks': 'Edition',
+    'CollectedWorksFestschrift': 'Edition#festschrift',
+    'CollectedWorksMusikdruck': 'Edition#notated_music',
+    'InternetDocument': 'InternetDocument',
+    'InternetDocumentAbstract': 'InternetDocument#abstract',
+    'InternetDocumentHabilitation': 'Thesis#habilitation',
+    'InternetDocumentPredigt': 'InternetDocument#sermon',
+    'InternetDocumentInterview': 'InternetDocumentinterview',
+    'InternetDocumentLexikonartikel': 'InternetDocument#lexicon_article',
+    'InternetDocumentMeetingAbstract': 'InternetDocument#meeting_abstract',
+    'InternetDocumentPoster': 'InternetDocument#poster',
+    'InternetDocumentPosterAbstract': 'InternetDocument#poster_abstract',
+    'InternetDocumentRezension': 'InternetDocument#review',
+    'Journal': 'Journal',
+    'periodicalZeitschrift': 'Journal',
+    'Lecture': 'Lecture',
+    'LectureAbstract': 'Lecture#abstract',
+    'LectureMeetingAbstract': 'Lecture#meeting_abstract',
+    'LegalCommentary': 'LegalCommentary',
+    'PressRelease': 'PressRelease',
+    'Broadcast': 'RadioTVProgram',
+    'Broadcast#Interview': 'RadioTVProgram#interview',
+    'persiodicalSchriftenreihe': 'Series',
+    'ComputerProgram': 'Software',
+    'SpecialIssue': 'SpecialIssue',
+    'SpecialIssueFestschrift': 'SpecialIssue#festschrift',
+    'Standard': 'Standard',
 }
 
 SUBJECT_MAPS = {}
@@ -214,13 +284,13 @@ def get_solr_issued(elems):
         date = issued.text.replace('[','').replace(']','').strip()
         if len(date.strip()) == 4:
             fdate = int(date)
-            date_boost = '%s-01-01T00:00:00Z' % date
+            date_boost = '%s-01-01T00:00:00.000Z' % date
         elif len(date.strip()) == 7:
             fdate = int(date[0:4])
-            date_boost = '%s-01T00:00:00Z' % date
+            date_boost = '%s-01T00:00:00Z.000' % date
         else:
             fdate = int(date[0:4])
-            date_boost = '%sT00:00:00Z' % date
+            date_boost = '%sT00:00:00.000Z' % date
 
     return {'date': date, 'fdate': fdate, 'date_boost': date_boost}
 
@@ -243,124 +313,157 @@ def get_wtf_hosts(elems):
                 for info in item:
                     if info.tag == '%srecordIdentifier' % MODS:
                         tmp.setdefault('is_part_of', info.text)
+                        #logging.info(tmp)
+            if item.tag == '%sgenre' % MODS:
+                if item.get('authority') == 'local':
+                    tmp.setdefault('pubtype', OLD_PUBTYPES_MAP.get(item.text))
+                    #logging.info(tmp)
             if item.tag == '%spart' % MODS:
                 for part in item:
                     if part.tag == '%sdetail' % MODS:
                         if part.get('type') == 'volume':
                             for number in part:
                                 tmp.setdefault('volume', number.text)
+                                #logging.info(tmp)
                         if part.get('type') == 'issue':
                             for number in part:
                                 tmp.setdefault('issue', number.text)
+                                #logging.info(tmp)
                     if part.tag == '%sextent' % MODS:
                         for extent in part:
                             if extent.tag == '%slist' % MODS:
                                 tmp.setdefault('page_first', str(extent.text).split("–")[0])
-                                tmp.setdefault('page_last', str(extent.text).split("–")[1])
+                                if len(str(extent.text).split("–")) > 1:
+                                    tmp.setdefault('page_last', str(extent.text).split("–")[1])
+                                #logging.info(tmp)
+        #logging.info('---')
         #logging.info(tmp)
-
+        if not tmp.get('pubtype'):
+            tmp.setdefault('pubtype', 'Journal')
+        if not tmp.get('volume'):
+            tmp.setdefault('volume', '')
+        if not tmp.get('issue'):
+            tmp.setdefault('issue', '')
+        if not tmp.get('is_part_of'):
+            tmp.setdefault('is_part_of', str(uuid.uuid4()))
+        #logging.info('hosts')
+        #logging.info(tmp)
         wtf_hosts.append(tmp)
+
+        get_wtf_parents(elems, tmp.get('is_part_of'), 'Journal')
 
     return {'is_part_of': wtf_hosts}
 
-def get_solr_hosts(elems):
-    solr_hosts = []
-    id = ''
+def get_wtf_parents(elems, id='', default_pubtype=''):
     for host in elems:
         tmp = {}
-        for item in host:
-            if item.tag == '%stitleInfo' % MODS:
-                for title in item:
-                    if title.tag == '%stitle' % MODS:
-                        tmp.setdefault('title', title.text)
-            if item.tag == '%sgenre' % MODS:
-                if item.get('authority') == 'local':
-                    tmp.setdefault('pubtype', OLD_PUBTYPES_MAP.get(item.text))
-            if item.tag == '%srecordInfo' % MODS:
-                for info in item:
-                    if info.tag == '%srecordIdentifier' % MODS:
-                        tmp.setdefault('is_part_of', info.text)
-                        id = info.text
-            if item.tag == '%spart' % MODS:
-                for part in item:
-                    if part.tag == '%sdetail' % MODS:
-                        if part.get('type') == 'volume':
-                            for number in part:
-                                tmp.setdefault('volume', number.text)
-                        if part.get('type') == 'issue':
-                            for number in part:
-                                tmp.setdefault('issue', number.text)
-                    if part.tag == '%sextent' % MODS:
-                        for extent in part:
-                            if extent.tag == '%slist' % MODS:
-                                tmp.setdefault('page_first', str(extent.text).split("–")[0])
-                                tmp.setdefault('page_last', str(extent.text).split("–")[1])
-        if not tmp.get('pubtype'):
-            tmp.setdefault('pubtype', 'Journal')
-        if id == '':
-            id = str(uuid.uuid4())
-        if not tmp.get('id'):
-            tmp.setdefault('id', id)
-        get_solr_parents(elems, id)
+        tmp.setdefault('id', id)
+        tmp.setdefault('ISSN', [])
+        tmp.setdefault('ISBN', [])
         #logging.info(tmp)
-
-        solr_hosts.append(tmp)
-
-    return {'is_part_of': solr_hosts}
-
-def get_solr_parents(elems, id=''):
-
-    for host in elems:
-        tmp = {}
-        tmp_wtf = {}
+        pubtype = ''
+        subtype = ''
+        relateditem = None
         for item in host:
             if item.tag == '%stitleInfo' % MODS:
                 for title in item:
                     if title.tag == '%stitle' % MODS:
                         tmp.setdefault('title', title.text)
-                        tmp_wtf.setdefault('title', title.text)
+                        #logging.info(tmp)
                     if title.tag == '%ssubTitle' % MODS:
-                        tmp_wtf.setdefault('subtitle', title.text)
+                        tmp.setdefault('subtitle', title.text)
+                        #logging.info(tmp)
             if item.tag == '%sgenre' % MODS:
                 if item.get('authority') == 'local':
-                    tmp.setdefault('pubtype', OLD_PUBTYPES_MAP.get(item.text))
-                    tmp_wtf.setdefault('pubtype', OLD_PUBTYPES_MAP.get(item.text))
+                    pubtype = item.text.replace(' ','')
+                    #logging.info(pubtype)
+                if not item.get('authority'):
+                    subtype = item.text.replace(' ','')
+                    #logging.info(subtype)
+            if item.tag == '%sidentifier' % MODS:
+                if item.get('type') == 'issn':
+                    tmp.get('ISSN').append(item.text)
+                    #logging.info(tmp)
+                if item.get('type') == 'isbn':
+                    tmp.get('ISBN').append(item.text)
+                    #logging.info(tmp)
             if item.tag == '%srecordInfo' % MODS:
                 for info in item:
-                    if info.tag == '%srecordIdentifier' % MODS:
-                        tmp.setdefault('id', info.text)
-                        tmp_wtf.setdefault('id', info.text)
                     if info.tag == '%srecordCreationDate' % MODS:
-                        tmp.setdefault('recordCreationDate', info.text)
-                        tmp_wtf.setdefault('created', info.text)
+                        tmp.setdefault('created', info.text)
+                        #logging.info(tmp)
                     if info.tag == '%srecordChangeDate' % MODS:
-                        tmp.setdefault('recordChangeDate', info.text)
-                        tmp_wtf.setdefault('changed', info.text)
-            if item.tag == '%spart' % MODS:
-                for part in item:
-                    if part.tag == '%sdetail' % MODS:
-                        if part.get('type') == 'volume':
-                            for number in part:
-                                tmp.setdefault('volume', number.text)
-                        if part.get('type') == 'issue':
-                            for number in part:
-                                tmp.setdefault('issue', number.text)
-                    if part.tag == '%sextent' % MODS:
-                        for extent in part:
-                            if extent.tag == '%slist' % MODS:
-                                tmp.setdefault('page_first', str(extent.text).split("–")[0])
-                                tmp.setdefault('page_last', str(extent.text).split("–")[1])
-        if not tmp.get('pubtype'):
-            tmp.setdefault('pubtype', 'Journal')
-        tmp.setdefault('wtf_json', tmp_wtf)
+                        tmp.setdefault('changed', info.text)
+                        #logging.info(tmp)
+            if item.tag == '%srelatedItem' % MODS:
+                if item.get('type') == 'series':
+                    relateditem = host
+        old_pubtype = pubtype + subtype
+        #logging.info(old_pubtype)
+        if OLD_PUBTYPES_MAP.get(old_pubtype):
 
-        # TODO ist tmp.id bereits in 'parents' enthalten?
+            if len(OLD_PUBTYPES_MAP.get(old_pubtype).split('#')) > 1:
+                tmp.setdefault('pubtype', OLD_PUBTYPES_MAP.get(old_pubtype).split('#')[0])
+                tmp.setdefault('subtype', OLD_PUBTYPES_MAP.get(old_pubtype).split('#')[1])
+            else:
+                tmp.setdefault('pubtype', OLD_PUBTYPES_MAP.get(old_pubtype))
+        else:
+            tmp.setdefault('pubtype', default_pubtype)
+        if not tmp.get('created'):
+            tmp.setdefault('created', str(datetime.datetime.now()))
+        if not tmp.get('changed'):
+            tmp.setdefault('changed', str(datetime.datetime.now()))
+        tmp.setdefault('editorial_status', 'imported')
+        tmp.setdefault('owner', 'daten.ub@tu-dortmund.de')
+
+        tmp_parents = []
+        if relateditem is not None:
+            tmp_series = []
+            for series in relateditem:
+                if series.tag == '%srelatedItem' % MODS:
+                    tmp_s = {}
+                    tmp_p = {}
+                    for item in series:
+                        if item.tag == '%stitleInfo' % MODS:
+                            for title in item:
+                                if title.tag == '%stitle' % MODS:
+                                    tmp_p.setdefault('title', title.text)
+                        if item.tag == '%srecordInfo' % MODS:
+                            for info in item:
+                                if info.tag == '%srecordIdentifier' % MODS:
+                                    tmp_s.setdefault('is_part_of', info.text)
+                                    tmp_p.setdefault('id', info.text)
+                        if item.tag == '%spart' % MODS:
+                            for part in item:
+                                if part.tag == '%sdetail' % MODS:
+                                    if part.get('type') == 'volume':
+                                        for number in part:
+                                            tmp_s.setdefault('volume', number.text)
+                                    if part.get('type') == 'issue':
+                                        for number in part:
+                                            tmp_s.setdefault('issue', number.text)
+                    tmp_s.setdefault('pubtype', 'Series')
+                    tmp_p.setdefault('pubtype', 'Series')
+                    if not tmp_s.get('is_part_of'):
+                        tmp_s.setdefault('is_part_of', str(uuid.uuid4()))
+                        tmp_p.setdefault('id', tmp_s.get('is_part_of'))
+                    if not tmp_p.get('created'):
+                        tmp_p.setdefault('created', str(datetime.datetime.now()))
+                    if not tmp_p.get('changed'):
+                        tmp_p.setdefault('changed', str(datetime.datetime.now()))
+                    tmp_p.setdefault('editorial_status', 'imported')
+                    tmp_p.setdefault('owner', 'daten.ub@tu-dortmund.de')
+                    tmp_series.append(tmp_s)
+                    more_parents.append(tmp_p)
+            #logging.info(tmp_series)
+            tmp.setdefault('is_part_of', tmp_series)
+
         #logging.info(tmp)
-
         parents.append(tmp)
 
-def get_solr_series(elems):
-    solr_series = []
+
+def get_wtf_series(elems):
+    wtf_series = []
     for host in elems:
         tmp = {}
         for item in host:
@@ -387,11 +490,16 @@ def get_solr_series(elems):
                                 tmp.setdefault('page_first', str(extent.text).split("–")[0])
                                 tmp.setdefault('page_last', str(extent.text).split("–")[1])
         tmp.setdefault('pubtype', 'Series')
+        if not tmp.get('is_part_of'):
+            tmp.setdefault('is_part_of', str(uuid.uuid4()))
+        #logging.info('series')
         #logging.info(tmp)
 
-        solr_series.append(tmp)
+        wtf_series.append(tmp)
 
-    return {'is_part_of': solr_series}
+        get_wtf_parents(elems, tmp.get('is_part_of'), 'Series')
+
+    return {'is_part_of': wtf_series}
 
 def get_wtf_subject(elems):
     wtf_subject = []
@@ -421,6 +529,22 @@ def get_wtf_abstract(elems):
 
     return {'abstract': wtf_abstracts}
 
+def get_new_pubtype(old_pubtype):
+
+    new_pubtype = ''
+    if OLD_PUBTYPES_MAP.get(old_pubtype.replace(' ','')):
+        new_pubtype = OLD_PUBTYPES_MAP.get(old_pubtype.replace(' ',''))
+    else:
+        logging.info('ERROR old pubtype: ' + old_pubtype.replace(' ',''))
+
+    return new_pubtype
+
+def get_value(input):
+    value = ''
+    #logging.info(input)
+    value = input
+    return value
+
 def doi2index(elems):
     doi = elems[0].text
     solr_doi = {}
@@ -436,7 +560,7 @@ try:
         "./m:abstract": {
             'wtf': get_wtf_abstract,
             'csl': lambda elems: {'abstract': elems[0].text},
-            'solr': lambda elems: {'ro_abstract': elems[0].text},
+            'solr': lambda elems: {'ro_abstract': get_value(elems[0].text)},
             'oai_dc': (oai_elements, 'abstract')
         },
         # "./m:accessCondition[@type='restriction on access']": lambda elem : {'': elem.text},
@@ -447,7 +571,7 @@ try:
         },
         # "./m:extension": lambda elem : {'': elem.text},
         "./m:extension/dcterms:bibliographicCitation": {
-            'solr': lambda elem : {'bibliographicCitation': elem[0].text},
+            'wtf': lambda elem : {'bibliographicCitation': elem[0].text},
         },
         "./m:frequency[@authority='marcfrequency']": {'wtf': lambda elems: {'frequency': FREQUENCY_MAP.get(elems[0].text)}},
         # "./m:genre": lambda elem : {'': elem.text},
@@ -457,8 +581,8 @@ try:
         "./m:genre[@authority='dct' and @valueURI='http://purl.org/dc/dcmitype/Sound']": {'oai_dc': (oai_valueURI, 'type')},
         "./m:genre[@authority='dct' and @valueURI='http://purl.org/dc/dcmitype/Text']": {'oai_dc': (oai_valueURI, 'type')},
         "./m:genre[@authority='local']": {
-            'wtf': lambda elem : {'pubtype': OLD_PUBTYPES_MAP.get(elem[0].text)},
-            'solr': lambda elem : {'pubtype': OLD_PUBTYPES_MAP.get(elem[0].text)}
+            'wtf': lambda elem: {'pubtype': get_new_pubtype(elem[0].text)} if not record.xpath("./m:genre[not(@authority) and not(@valueURI)]", namespaces=NSMAP) else
+                                {'pubtype': get_new_pubtype('%s%s' % (elem[0].text, record.xpath("./m:genre[not(@authority) and not(@valueURI)]", namespaces=NSMAP)[0].text)).split('#')[0], 'subtype': get_new_pubtype('%s%s' % (elem[0].text, record.xpath("./m:genre[not(@authority) and not(@valueURI)]", namespaces=NSMAP)[0].text)).split('#')[1]},
         },
         # "./m:genre[@authority='marcgt']": lambda elem : {'': elem.text},
         "./m:genre[@valueURI='http://purl.org/info:eu-repo/semantics/article']": {'oai_dc': (oai_valueURI, 'type')},
@@ -601,12 +725,14 @@ try:
             'solr': lambda elems: {'note': elems[0].text},
         },
         "./m:recordInfo/m:recordChangeDate[@encoding='iso8601']": {
-            'wtf': lambda elems: {'changed': elems[0].text},
-            'solr': lambda elems: {'recordChangeDate': '%sT00:00:00Z' % elems[0].text},
+            #'wtf': lambda elems: {'changed': elems[0].text},
+            'wtf': lambda elems: {'changed': '%s 00:00:00.001' % elems[0].text},
+            'solr': lambda elems: {'changed': '%s 00:00:00.001' % elems[0].text},
         },
         "./m:recordInfo/m:recordCreationDate[@encoding='iso8601']": {
-            'wtf': lambda elems: {'created': elems[0].text},
-            'solr': lambda elems: {'recordCreationDate': '%sT00:00:00Z' % elems[0].text},
+            #'wtf': lambda elems: {'created': elems[0].text},
+            'wtf': lambda elems: {'created': '%s 00:00:00.001' % elems[0].text},
+            'solr': lambda elems: {'created': '%s 00:00:00.001' % elems[0].text},
         },
         "./m:recordInfo/m:recordIdentifier": {
             'wtf': lambda elems: {'id': elems[0].text},
@@ -663,16 +789,16 @@ try:
         # "./m:relatedItem/titleInfo[@type='translated']": lambda elem : {'': elem.text},
         "./m:relatedItem[@type='host']": {
             'wtf': get_wtf_hosts,
-            'solr': get_solr_hosts,
-            'solr_parents': get_solr_parents,
+            #'solr': get_solr_hosts,
+            #'solr_parents': get_solr_parents,
         },
         # "./m:relatedItem[@type='isReferencedBy']": lambda elem : {'': elem.text},
         # "./m:relatedItem[@type='otherVersion']": lambda elem : {'': elem.text},
         # "./m:relatedItem[@type='preceding']": lambda elem : {'': elem.text},
         # "./m:relatedItem[@type='references']": lambda elem : {'': elem.text},
         "./m:relatedItem[@type='series']": {
-            'wtf': get_wtf_hosts,
-            'solr': get_solr_series,
+            'wtf': get_wtf_series,
+            #'solr': get_solr_series,
         },
         "./m:subject[not(@authority)]/m:topic":  {
             'wtf': lambda elems: {'keyword': [elem.text for elem in elems]},
@@ -718,11 +844,15 @@ except IndexError:
     pass
 
 parents = []
+more_parents = []
+solr_json = []
+wtfs = []
 
 for event, record in mc:
     wtf = {}
     csl = {}
     solr = {}
+    old_pubtype = ''
     oai_dc = etree.Element('%smetadata' % OAI_DC, nsmap=OAI_MAP)
     #print '%s => %s' % (event, etree.tostring(record))
     for xpath_expr in CONVERTER_MAP:
@@ -799,8 +929,15 @@ for event, record in mc:
             logging.info(record.xpath("./m:recordInfo/m:recordIdentifier", namespaces=NSMAP)[0].text)
             raise
 
-    solr.setdefault('editorial_status', 'imported')
-    solr.setdefault('wtf_json', wtf)
+    wtf.setdefault('editorial_status', 'imported')
+    wtf.setdefault('owner', 'daten.ub@tu-dortmund.de')
+
+    if len(wtf.get('pubtype').split('#')) > 1:
+        tmp = wtf.get('pubtype').split('#')
+        wtf['pubtype'] = tmp[0]
+        wtf.setdefault('subtype', tmp[1])
+
+    wtfs.append(wtf)
     #solr.setdefault('dc', oai_dc)
     #logging.info('WTF %s' % wtf)
     #pprint.pprint(oai_dc)
@@ -809,5 +946,23 @@ for event, record in mc:
     #logging.info('SOLR %s' % solr)
     #pprint.pprint(solr)
 
-pprint.pprint(parents)
+    solr.setdefault('pubtype', wtf.get('pubtype'))
+    solr.setdefault('wtf_json', wtf)
+    solr_json.append(solr)
+
+fo = open("../data/more_parents.json", "w")
+fo.write(json.dumps(more_parents, indent=4))
+fo.close()
+
+fo = open("../data/parents.json", "w")
+fo.write(json.dumps(parents, indent=4))
+fo.close()
+
+fo = open("../data/records.json", "w")
+fo.write(json.dumps(wtfs, indent=4))
+fo.close()
+
+#print(json.dumps(parents, indent=4))
+
+#pprint.pprint(parents)
 #logging.info('####################################################################################################')
