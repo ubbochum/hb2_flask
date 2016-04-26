@@ -748,6 +748,7 @@ class SpecialIssueForm(JournalForm):
         ('festschrift', lazy_gettext('Festschrift')),
     ])
     ISBN = FieldList(StringField(lazy_gettext('ISBN'), validators=[Optional(), Isbn]), min_entries=1)
+    is_part_of = FieldList(FormField(IsPartOfForm), min_entries=1)
 
     def groups(self):
         yield [
