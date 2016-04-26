@@ -768,7 +768,8 @@ def dashboard():
         'pubtype':
             {
                 'type': 'terms',
-                'field': 'pubtype'
+                'field': 'pubtype',
+                'limit': 20
             },
         'fperson':
             {
