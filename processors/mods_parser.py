@@ -364,6 +364,10 @@ def get_wtf_parents(elems, id='', default_pubtype=''):
         pubtype = ''
         subtype = ''
         relateditem = None
+        names = []
+        stw = []
+        mesh = []
+        keywords = []
         for item in host:
             if item.tag == '%stitleInfo' % MODS:
                 for title in item:
@@ -387,6 +391,21 @@ def get_wtf_parents(elems, id='', default_pubtype=''):
                 if item.get('type') == 'isbn':
                     tmp.get('ISBN').append(item.text)
                     #logging.info(tmp)
+                if item.get('type') == 'doi':
+                    tmp.setdefault('DOI',item.text)
+                    #logging.info(tmp)
+                if item.get('type') == 'pm':
+                    tmp.setdefault('PMID',item.text)
+                    #logging.info(tmp)
+                if item.get('type') == 'urn':
+                    tmp.setdefault('urn',item.text)
+                    #logging.info(tmp)
+                if item.get('type') == 'zdb':
+                    tmp.setdefault('ZDBID',item.text)
+                    #logging.info(tmp)
+                if item.get('type') == 'local' and item.get('displayLabel') == 'HT-ID':
+                    tmp.setdefault('hbz_id',item.text)
+                    #logging.info(tmp)
             if item.tag == '%srecordInfo' % MODS:
                 for info in item:
                     if info.tag == '%srecordCreationDate' % MODS:
@@ -395,6 +414,40 @@ def get_wtf_parents(elems, id='', default_pubtype=''):
                     if info.tag == '%srecordChangeDate' % MODS:
                         tmp.setdefault('changed', info.text)
                         #logging.info(tmp)
+            if item.tag == '%sname' % MODS:
+                names.append(item)
+            if item.tag == '%stableOfContents' % MODS:
+                tmp.setdefault(get_wtf_tocs(item))
+            if item.tag == '%soriginInfo' % MODS:
+                for origin in item:
+                    if origin.tag == '%sdateIssued' % MODS:
+                        tmp.setdefault('issued', origin.text)
+                        #logging.info(tmp)
+                    if origin.tag == '%spublisher' % MODS:
+                        tmp.setdefault('publisher', origin.text)
+                        #logging.info(tmp)
+                    if origin.tag == '%splace' % MODS:
+                        for place in origin:
+                            if place.tag == '%splaceTerm' % MODS and place.get('type') == 'text':
+                                tmp.setdefault('publisher_place', place.text)
+                        #logging.info(tmp)
+            if item.tag == '%slanguage' % MODS:
+                for lang in item:
+                    if lang.tag == '%slanguageTerm' % MODS and lang.get('type') == 'code' and lang.get('authority') == 'iso639-2b':
+                        tmp.setdefault('language', lang.text)
+                #logging.info(tmp)
+            if item.tag == '%sphysicalDescription' % MODS:
+                for physDesc in item:
+                    if physDesc.tag == '%sextent' % MODS:
+                        tmp.setdefault('number_of_pages', physDesc.text)
+                #logging.info(tmp)
+            if item.tag == '%ssubject' % MODS and item.get('authority') == 'stw':
+                stw.append(item)
+            if item.tag == '%ssubject' % MODS and item.get('authority') == 'mesh':
+                mesh.append(item)
+            if item.tag == '%ssubject' % MODS and not item.get('type') and not item.get('authority'):
+                for topic in item:
+                    keywords.append(topic.text)
             if item.tag == '%srelatedItem' % MODS:
                 if item.get('type') == 'series':
                     relateditem = host
@@ -409,6 +462,18 @@ def get_wtf_parents(elems, id='', default_pubtype=''):
                 tmp.setdefault('pubtype', OLD_PUBTYPES_MAP.get(old_pubtype))
         else:
             tmp.setdefault('pubtype', default_pubtype)
+        #logging.info(names)
+        names_wtf = get_wtf_names(names)
+        if len(names_wtf[0].get('person')) > 0:
+            tmp.setdefault('person', names_wtf[0].get('person'))
+        if len(names_wtf[1].get('corporation')) > 0:
+            tmp.setdefault('corporation', names_wtf[1].get('corporation'))
+        if len(stw) > 0:
+            tmp.setdefault(get_wtf_subject(stw))
+        if len(mesh) > 0:
+            tmp.setdefault(get_wtf_subject(mesh))
+        if len(keywords) > 0:
+            tmp.setdefault('keyword', keywords)
         if not tmp.get('created'):
             tmp.setdefault('created', str(datetime.datetime.now()))
         if not tmp.get('changed'):
@@ -656,9 +721,9 @@ try:
         # "./m:location": lambda elem : {'': elem.text},
         # "./m:location/physicalLocation": lambda elem : {'': elem.text},
         # "./m:location/shelfLocator": lambda elem : {'': elem.text},
-        "./m:location/url": {
-            'wtf': lambda elems: {'uri': elems[0].text},
-            'csl': lambda elems: {'url': elems[0].text},
+        "./m:location/m:url": {
+            'wtf': lambda elems: {'url': elems[0].text},
+            'csl': lambda elems: {'uri': elems[0].text},
             #'solr': lambda elems: {'publisher': elems[0].text},
             'oai_dc': (oai_elements, 'identifier')
         },
@@ -712,15 +777,15 @@ try:
         },
 
         # "./m:originInfo[@displayLabel='embargoEnd']": lambda elem : {'': elem.text},
-        "./m:physicalDescription/extent": {
+        "./m:physicalDescription/m:extent": {
             'wtf': lambda elems: {'number_of_pages': elems[0].text},
             'csl': lambda elems: {'number-of-pages': elems[0].text},
         },
         # "./m:physicalDescription/form": lambda elem : {'': elem.text},
-        "./m:physicalDescription/internetMediaType": {
+        "./m:physicalDescription/m:internetMediaType": {
             'wtf': lambda elems: {'mime_type': elems[0].text},
         },
-        "./m:physicalDescription/note": {
+        "./m:physicalDescription/m:note": {
             'wtf': lambda elems: {'note': elems[0].text},
             'solr': lambda elems: {'note': elems[0].text},
         },
