@@ -298,9 +298,12 @@ def get_wtf_tocs(elems):
     wtf_tocs = []
     for toc in elems:
         tmp = {}
-        tmp.setdefault('toc', toc.text)
-        tmp.setdefault('uri', toc.get('%shref' % XLINK))
-        wtf_tocs.append(tmp)
+        if len(toc.text) > 0:
+            tmp.setdefault('toc', toc.text)
+        if toc.get('%shref' % XLINK):
+            tmp.setdefault('uri', toc.get('%shref' % XLINK))
+        if tmp.get('toc') or tmp.get('uri'):
+            wtf_tocs.append(tmp)
 
     return {'table_of_contents': wtf_tocs}
 
@@ -479,7 +482,8 @@ def get_wtf_parents(elems, id='', default_pubtype=''):
         if not tmp.get('changed'):
             tmp.setdefault('changed', str(datetime.datetime.now()))
         tmp.setdefault('editorial_status', 'imported')
-        tmp.setdefault('owner', 'daten.ub@tu-dortmund.de')
+        tmp.setdefault('owner', ['daten.ub@tu-dortmund.de'])
+        tmp.setdefault('catalog', ['Ruhr-Universität Bochum'])
 
         tmp_parents = []
         if relateditem is not None:
@@ -517,7 +521,8 @@ def get_wtf_parents(elems, id='', default_pubtype=''):
                     if not tmp_p.get('changed'):
                         tmp_p.setdefault('changed', str(datetime.datetime.now()))
                     tmp_p.setdefault('editorial_status', 'imported')
-                    tmp_p.setdefault('owner', 'daten.ub@tu-dortmund.de')
+                    tmp_p.setdefault('owner', ['daten.ub@tu-dortmund.de'])
+                    tmp_p.setdefault('catalog', ['Ruhr-Universität Bochum'])
                     tmp_series.append(tmp_s)
                     more_parents.append(tmp_p)
             #logging.info(tmp_series)
@@ -582,9 +587,11 @@ def get_wtf_abstract(elems):
     for abstract in elems:
         tmp = {}
         tmp.setdefault('content', abstract.text)
-        tmp.setdefault('address', abstract.get('%shref' % XLINK))
+        if not abstract.get('%shref' % XLINK):
+            tmp.setdefault('address', abstract.get('%shref' % XLINK))
         tmp.setdefault('label', '')
-        tmp.setdefault('language', abstract.get('lang'))
+        if not abstract.get('lang'):
+            tmp.setdefault('language', abstract.get('lang'))
         if abstract.get('shareable') == 'no':
             tmp.setdefault('shareable', False)
         else:
@@ -747,9 +754,15 @@ try:
         # "./m:note[@displayLabel='Notiz']": lambda elem : {'': elem.text},
         # "./m:note[@displayLabel='Preis']": lambda elem : {'': elem.text},
         # u"./m:note[@displayLabel='Prioritätsdaten']": lambda elem : {'': elem.text},
-        # "./m:note[@displayLabel='Tagungsort']": lambda elem : {'': elem.text},
-        # u"./m:note[@displayLabel='Titelzusätze']": lambda elem : {'': elem.text},
-        # "./m:note[@displayLabel='Veranstaltungsdatum']": lambda elem : {'': elem.text},
+        "./m:note[@displayLabel='Tagungsort']": {
+            'wtf': lambda elem : {'place': elems[0].text}
+        },
+        "./m:note[@displayLabel='Titelzusätze']": {
+            'wtf': lambda elem : {'title_supplement': elems[0].text}
+        },
+        #"./m:note[@displayLabel='Veranstaltungsdatum']": {
+        #    'wtf': lambda elem : {'': elem.text}
+        #},
         # "./m:note[@type='publication status']": lambda elem : {'': elem.text},
         "./m:originInfo/m:dateIssued[@encoding='iso8601']": {
             'wtf': lambda elem : {'issued': elem[0].text},
@@ -764,7 +777,7 @@ try:
             'wtf': lambda elem : {'edition': elem[0].text}
         },
         "./m:originInfo/m:place/m:placeTerm[@type='text']": {
-            'wtf': lambda elems: {'publisher_place': elems[0].text},
+            'wtf': lambda elems: {'publisher_place': elems[0].text, 'place': elems[0].text},
             'csl': lambda elems: {'publisher_place': elems[0].text},
             'solr': lambda elems: {'place': elems[0].text},
             #'oai_dc': (oai_elements, 'publisher_place')
@@ -821,7 +834,10 @@ try:
         # u"./m:relatedItem/note[@displayLabel='Nachträge']": lambda elem : {'': elem.text},
         # u"./m:relatedItem/note[@displayLabel='Titelzusätze']": lambda elem : {'': elem.text},
         # "./m:relatedItem/originInfo": lambda elem : {'': elem.text},
-        # "./m:relatedItem/originInfo/dateIssued[@encoding='iso8601']": lambda elem : {'': elem.text},
+        "./m:relatedItem/originInfo/dateIssued[@encoding='iso8601']": {
+            'wtf': lambda elem : {'issued': elem[0].text},
+            'solr': get_solr_issued
+        },
         # "./m:relatedItem/originInfo/edition": lambda elem : {'': elem.text},
         # "./m:relatedItem/originInfo/place": lambda elem : {'': elem.text},
         # "./m:relatedItem/originInfo/place/placeTerm[@type='text']": lambda elem : {'': elem.text},
@@ -995,7 +1011,8 @@ for event, record in mc:
             raise
 
     wtf.setdefault('editorial_status', 'imported')
-    wtf.setdefault('owner', 'daten.ub@tu-dortmund.de')
+    wtf.setdefault('owner', ['daten.ub@tu-dortmund.de'])
+    wtf.setdefault('catalog', ['Ruhr-Universität Bochum'])
 
     if len(wtf.get('pubtype').split('#')) > 1:
         tmp = wtf.get('pubtype').split('#')
