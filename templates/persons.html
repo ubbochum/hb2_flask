@@ -6,12 +6,13 @@
     {% include 'confirm_delete_modal.html' %}
     <p>{% include 'admin_nav.html' %}</p>
     {% if results|length > 0 %}<div class="row">
-        <div class="col-sm-4" id="facets">
-            {{ drill_down.facets(facet_data.affiliation, 'affiliation', heading='Affiliation', target='persons') }}
+        <div class="col-sm-3" id="facets">
+            {{ drill_down.facets(facet_data.faffiliation, 'faffiliation', heading='Affiliation', target='persons') }}
             {{ drill_down.simple_filter('gnd', heading='GND', target='persons') }}
             {{ drill_down.simple_filter('orcid', heading='ORCID', target='persons') }}
+            {{ drill_down.facets(facet_data.editorial_status, 'editorial_status', heading='Editorial Status', target='persons') }}
         </div>
-        <div class="col-sm-8">
+        <div class="col-sm-9">
             {{ pagination.info }}
             {{ remove_filters.remove_filter(target='persons') }}
             {{ pagination.links }}
@@ -19,7 +20,7 @@
                 <thead>
                     <tr>
                         <td>#</td>
-                        <td>{{ _('ID') }}</td>
+                        <td>{{ _('Editorial Status') }}</td>
                         <td>{{ _('Name') }}</td>
                         <td>{{ _('Created') }}</td>
                         <td>{{ _('Changed') }}</td>
@@ -29,7 +30,10 @@
                 {% for record in results %}
                     <tr>
                         <th scope="row">{{ loop.index + offset }}</th>
-                        <td>{% if record.id == record.gnd %}<a href="http://d-nb.info/gnd/{{ record.id }}">{{ record.id }}</a>{% elif record.id == record.orcid %}<a href="https://orcid.org/{{ record.id }}">{{ record.id }}</a>{% else %}{{ record.id }}{% endif %}</td>
+                        {#<td>{% if record.id == record.gnd %}<a href="http://d-nb.info/gnd/{{ record.id }}">{{ record.id }}</a>{% elif record.id == record.orcid %}<a href="https://orcid.org/{{ record.id }}">{{ record.id }}</a>{% else %}{{ record.id }}{% endif %}</td>#}
+                        <td>
+                            <span class="label label-{% if record.editorial_status == 'new' %}info{% elif record.editorial_status == 'in_process' %}default{% elif record.editorial_status == 'processed' %}primary{% elif record.editorial_status == 'final_editing' %}warning{% elif record.editorial_status == 'finalized' or record.editorial_status == 'imported' %}success{% endif %}">{% if record.locked %} <i class="fa fa-lock"></i> {% endif %}{{ record.editorial_status|capitalize }}</span>
+                        </td>
                         <td><a href="{% if record.gnd %}{{ url_for('show_person', person_id=record.gnd) }}{% else %}{{ url_for('show_person', person_id=record.id) }}{% endif %}">{{ record|get_name }}</a>{% if record.gnd %}<br/> GND: {{ record.gnd }}{% endif %}{% if record.orcid %}<br/> ORCID: {{ record.orcid }}{% endif %}</td>
                         <td>{{ (now - record.created|mk_time())|humanize() }}</td>
                         <td>{{ (now - record.changed|mk_time())|humanize() }}</td>

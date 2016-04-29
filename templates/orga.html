@@ -45,7 +45,7 @@
                         {{ _('Parent') }}
                     </dt>
                     <dd>
-                        <a href="{{ url_for('show_orga', orga_id=record.data.parent_id) }}">{{ record.data.parent_label }}</a><br/>
+                        <a href="{{ url_for('show_orga', orga_id=record.data.parent_id) }}">{% if record.data.parent_label %}{{ record.data.parent_label }}{% else %}{{ record.data.parent_id }}{% endif %}</a><br/>
                     </dd>
                 {% endif %}
                 <br/>
@@ -82,10 +82,15 @@
                     </dd>
                 {% endif %}
             </dl>
+                {% if config.DEBUG and current_user.role == 'admin' %}
+                    <div>
+                        <pre><code class="language-json">{"record": {{ record.data|tojson|safe }}}</code></pre>
+                    </div>
+                {% endif %}
             </div>
             <div class="col-sm-2">
                 <div class="btn-group" role="group" aria-label="action-group">
-                    <a href="{{ url_for('edit_record', record_id=record.data.id, pubtype='organisation') }}" class="btn btn-default"><i class="fa fa-pencil"></i> {{ _('Edit') }}</a>
+                    <a href="{{ url_for('edit_orga', orga_id=record.data.id) }}" class="btn btn-default"><i class="fa fa-pencil"></i> {{ _('Edit') }}</a>
                     <a href="#" data-href="{{ url_for('delete_orga', orga_id=record.data.id) }}" class="btn btn-danger" data-toggle="modal" data-target="#confirm-delete"><i class="fa fa-trash"></i> {{ _('Delete') }}</a>
                     {#<label for="apparent_dup">{{ _('Apparent Duplicate') }}</label>
                     <input type="checkbox" id="apparent_dup" name="apparent_dup">#}

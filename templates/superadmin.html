@@ -5,6 +5,9 @@
     {% include 'confirm_delete_modal.html' %}
     <p>{% include 'admin_nav.html' %}</p>
         <div class="row">
+        {% if form.errors %}
+            {{ form.errors }}
+        {% endif %}
             <div class="col-sm-6">
                 <h4>{{ _('Import/Export') }}</h4>
                 <p><a href="{{ url_for('export_solr_dump') }}" type="button" class="btn btn-default"><i class="fa fa-cloud-download"></i> {{ _('Export Index') }}</a></p>

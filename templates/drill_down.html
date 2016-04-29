@@ -5,7 +5,7 @@
         {% for bucket in facet.buckets %}
             <li class="list-group-item">
                 <a href="{{ request.script_root }}/{{ target }}?q={{ query|urlencode }}&amp;filter={{ category }}:%22{{ bucket.val|urlencode }}%22{% if filterquery %}{% for fq in filterquery %}&amp;filter={{ fq }}{% endfor %}{% endif %}{% if mysort %}&amp;sort={{ mysort }}{% endif %}"
-                   title="{{ bucket.val|safe }}">{{ bucket.val|safe }}
+                   title="{{ bucket.val|safe }}">{% if bucket.val|safe %}{{ bucket.val|safe }}{% else %}{{ _('No Value')}}{% endif %}
                 </a><span class="badge">{{ bucket.count }}</span>
             </li>
         {% endfor %}

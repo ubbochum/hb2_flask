@@ -1,9 +1,23 @@
 <div class="form-group">
     <div class="col-xs-offset-9 col-xs-3">
-        {% if locked %}
-        <a href="{{ url_for('unlock', record_id=record_id, next='dashboard') }}" class="btn btn-danger">{{ _('Cancel') }}</a>
+        {% if pubtype == 'organisation' %}
+            {% if locked %}
+            <a href="{{ url_for('unlock_orga', orga_id=record_id, next='orgas') }}" class="btn btn-danger">{{ _('Cancel') }}</a>
+            {% else %}
+            <a href="{% if current_user.role == 'admin' %}../../organisations{% else %}/{% endif %}" class="btn btn-danger">{{ _('Cancel') }}</a>
+            {% endif %}
+        {% elif pubtype == 'person' %}
+            {% if locked %}
+            <a href="{{ url_for('unlock_person', person_id=record_id, next='persons') }}" class="btn btn-danger">{{ _('Cancel') }}</a>
+            {% else %}
+            <a href="{% if current_user.role == 'admin' %}../../persons{% else %}/{% endif %}" class="btn btn-danger">{{ _('Cancel') }}</a>
+            {% endif %}
         {% else %}
-        <a href="{% if current_user.role == 'admin' %}../dashboard{% else %}/{% endif %}" class="btn btn-danger">{{ _('Cancel') }}</a>
+            {% if locked %}
+            <a href="{{ url_for('unlock', record_id=record_id, next='dashboard') }}" class="btn btn-danger">{{ _('Cancel') }}</a>
+            {% else %}
+            <a href="{% if current_user.role == 'admin' %}../dashboard{% else %}/{% endif %}" class="btn btn-danger">{{ _('Cancel') }}</a>
+            {% endif %}
         {% endif %}
         <button type="submit" class="btn btn-primary submit" form="theform">{{ _('Submit') }}</button>
     </div>

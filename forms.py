@@ -350,7 +350,8 @@ class PersonAdminForm(Form):
     viaf = StringField(lazy_gettext('VIAF'), validators=[Optional()], description=Markup(lazy_gettext('<a href="http://www.viaf.org" target="_blank">Find in VIAF</a>')))
     isni = StringField(lazy_gettext('ISNI'), validators=[Optional()], description=Markup(lazy_gettext('<a href="http://www.isni.org" target="_blank">Find in ISNI</a>')))
     researcher_id = StringField(lazy_gettext('Researcher ID'), validators=[Optional()], description=Markup(lazy_gettext('<a href="http://www.researcherid.com/ViewProfileSearch.action" target="_blank">Find in Researcher ID</a>')))
-    scopus_id = StringField(lazy_gettext('Scopus Author ID'), validators=[Optional()], description=Markup(lazy_gettext('<a href="https://www.scopus.com/search/form/authorFreeLookup.uri" target="_blank">Find in Scopus Author ID</a>')))
+    #scopus_id = StringField(lazy_gettext('Scopus Author ID'), validators=[Optional()], description=Markup(lazy_gettext('<a href="https://www.scopus.com/search/form/authorFreeLookup.uri" target="_blank">Find in Scopus Author ID</a>')))
+    scopus_id = FieldList(StringField(lazy_gettext('Scopus Author ID'), validators=[Optional()], description=Markup(lazy_gettext('<a href="https://www.scopus.com/search/form/authorFreeLookup.uri" target="_blank">Find in Scopus Author ID</a>'))), min_entries=1)
     arxiv_id = StringField(lazy_gettext('ArXiv Author ID'), validators=[Optional()], description=Markup(lazy_gettext('<a href="http://arxiv.org/find" target="_blank">Find in ArXiv Author ID</a>')))
     research_interest = FieldList(StringField(lazy_gettext('Research Interest')), validators=[Optional()], min_entries=1)
 
@@ -377,6 +378,14 @@ class PersonAdminForm(Form):
                               description=lazy_gettext('The date of the latest data delivery'),
                                 widget=CustomTextInput(placeholder=lazy_gettext('YYYY-MM-DD')))
 
+    editorial_status = SelectField(lazy_gettext('Editorial Status'), validators=[DataRequired()], choices=[
+        ('', lazy_gettext('Select an Editorial Status')),
+        ('new', lazy_gettext('New')),
+        ('in_process', lazy_gettext('In Process')),
+        ('processed', lazy_gettext('Processed')),
+        ('final_editing', lazy_gettext('Final Editing')),
+        ('finalized', lazy_gettext('Finalized')),
+    ], default='new')
     created = StringField(lazy_gettext('Record Creation Date'), widget=CustomTextInput(readonly='readonly'))
     changed = StringField(lazy_gettext('Record Change Date'), widget=CustomTextInput(readonly='readonly'))
     id = StringField(lazy_gettext('ID'), widget=CustomTextInput(readonly='readonly'))
@@ -397,7 +406,7 @@ class PersonAdminForm(Form):
             {'group': [self.award], 'label': lazy_gettext('Award') + ' (P)'},
             {'group': [self.project], 'label': lazy_gettext('Project') + ' (P)'},
             {'group': [self.reviewer], 'label': lazy_gettext('Reviewer') + ' (P)'},
-            {'group': [self.id, self.created, self.changed, self.owner, self.deskman], 'label': lazy_gettext('Administrative')},
+            {'group': [self.id, self.created, self.changed, self.editorial_status, self.owner, self.deskman], 'label': lazy_gettext('Administrative')},
         ]
 
 class DestatisForm(IDLForm):
@@ -413,12 +422,21 @@ class OrgaAdminForm(Form):
     id = StringField(lazy_gettext('Organisation ID'), description=lazy_gettext('An Organisation ID such as GND, ISNI, Ringgold or a URI'), validators=[DataRequired()])
     # Die folgende Zeile erzeugt btgl. des Solr-Schemas nicht konsistente Daten!
     #account = FieldList(FormField(AccountForm), min_entries=1)
+    dwid = StringField(lazy_gettext('Verwaltungs-ID'), validators=[Optional()])
     parent_id = StringField(lazy_gettext('Parent ID'))
     parent_label = StringField(lazy_gettext('Parent Label'))
     start_date = StringField(lazy_gettext('Start Date'))
     end_date = StringField(lazy_gettext('End Date'))
     correction_request = StringField(lazy_gettext('Correction Request'))
     owner = FieldList(StringField(lazy_gettext('Owner')), min_entries=1)
+    editorial_status = SelectField(lazy_gettext('Editorial Status'), validators=[DataRequired()], choices=[
+        ('', lazy_gettext('Select an Editorial Status')),
+        ('new', lazy_gettext('New')),
+        ('in_process', lazy_gettext('In Process')),
+        ('processed', lazy_gettext('Processed')),
+        ('final_editing', lazy_gettext('Final Editing')),
+        ('finalized', lazy_gettext('Finalized')),
+    ], default='new')
     created = StringField(lazy_gettext('Record Creation Date'), widget=CustomTextInput(readonly='readonly'))
     changed = StringField(lazy_gettext('Record Change Date'), widget=CustomTextInput(readonly='readonly'))
     destatis = FieldList(FormField(DestatisForm), min_entries=1)
@@ -1533,7 +1551,13 @@ class IDListForm(Form):
     submit = SubmitField(lazy_gettext('Search'))
 
 class FileUploadForm(Form):
-    file = FileField(lazy_gettext('Publication Data'))
+    type = SelectField(lazy_gettext('Entity Type'), choices=[
+        ('', lazy_gettext('Select a Type')),
+        ('publication', 'Publication'),
+        ('person', 'Person'),
+        ('organisation', 'Organisation')])
+    #file = FileField(lazy_gettext('Publication Data'))
+    file = FileField(lazy_gettext('Data'))
     submit = SubmitField()
 
 class SimpleSearchForm(Form):
