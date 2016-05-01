@@ -274,7 +274,10 @@
                                 <li>
                                     <a href="{{ url_for('show_record', pubtype=mypart.pubtype, record_id=mypart.id) }}">{{ mypart.title }}</a>
                                     {% if mypart.volume %}
-                                        <br/>{{ _('Vol.') }} {{ mypart.volume }}{% if mypart.issue %}, {{ _('Issue') }} {{ mypart.issue }}{% endif %}
+                                        <br/>{{ _('Vol.') }}: {{ mypart.volume }}{% if mypart.issue %}, {{ _('Issue') }}: {{ mypart.issue }}{% endif %}
+                                    {% endif %}
+                                    {% if not mypart.volume and mypart.issue %}
+                                        <br/>{{ _('Issue') }}: {{ mypart.issue }}
                                     {% endif %}
                                     {% if mypart.page_first and mypart.page_last %}
                                         | {{ _('p.') }} {{ mypart.page_first }}-{{ mypart.page_last }}

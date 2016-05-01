@@ -8,6 +8,7 @@
     {% if numFound > 0 %}
         <div class="row">
             <div class="col-sm-3">
+                {{ drill_down.facets(facet_data.catalog, 'catalog', heading='Catalog', target=target) }}
                 {{ drill_down.facets(facet_data.fperson, 'fperson', heading='Person', target=target) }}
                 {{ drill_down.facets(facet_data.pubtype, 'pubtype', heading='Publication Type', target=target) }}
                 {{ drill_down.facets(facet_data.editorial_status, 'editorial_status', heading='Editorial Status', target=target) }}

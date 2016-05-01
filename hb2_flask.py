@@ -120,7 +120,7 @@ PUBTYPE2TEXT = {
     'ArticleJournal': lazy_gettext('Article in Journal'),
     'ArticleNewspaper': lazy_gettext('Article in Newspaper'),
     'AudioBook': lazy_gettext('Audio Book'),
-    'AudioVideoDocument': lazy_gettext('Audio or Video Document'),
+    'AudioOrVideoDocument': lazy_gettext('Audio or Video Document'),
     'Chapter': lazy_gettext('Chapter in...'),
     'ChapterInLegalCommentary': lazy_gettext('Chapter in a Legal Commentary'),
     'ChapterInMonograph': lazy_gettext('Chapter in a Monograph'),
@@ -560,17 +560,33 @@ def _record2solr_doc(form, action):
     solr_data = {}
     wtf = json.dumps(form.data).replace(' "', '"')
     solr_data.setdefault('wtf_json', wtf)
+    if form.data.get('id').strip() == 'd089cf42-7b80-4b76-8d24-bb5d0426c97c':
+        logging.info(solr_data)
     for field in form.data:
         #logging.info('%s => %s' % (field, form.data.get(field)))
         if field == 'id':
             solr_data.setdefault('id', form.data.get(field).strip())
         if field == 'created':
-            solr_data.setdefault('recordCreationDate', form.data.get(field).strip().replace(' ', 'T') + 'Z')
+            if len(form.data.get(field).strip()) == 10:
+                solr_data.setdefault('recordCreationDate', '%sT00:00:00.001Z' % form.data.get(field).strip())
+            else:
+                solr_data.setdefault('recordCreationDate', form.data.get(field).strip().replace(' ', 'T') + 'Z')
         if field == 'changed':
-            solr_data.setdefault('recordChangeDate', form.data.get(field).strip().replace(' ', 'T') + 'Z')
+            if len(form.data.get(field).strip()) == 10:
+                solr_data.setdefault('recordChangeDate', '%sT00:00:00.001Z' % form.data.get(field).strip())
+            else:
+                solr_data.setdefault('recordChangeDate', form.data.get(field).strip().replace(' ', 'T') + 'Z')
         if field == 'owner':
             for owner in form.data.get(field):
                 solr_data.setdefault('owner', owner.strip())
+        if field == 'catalog':
+            for catalog in form.data.get(field):
+                solr_data.setdefault('catalog', catalog.strip())
+        #if field == 'affiliation_context':
+            # TODO Datenanreicherung und ID-Verknüpfung mit "Organisation" / Wo ist der Kontext in den Bochumer Daten?
+            # TODO if TUDO: Voranstellen von "Fakultät ", damit die in Organisations gefunden werden können!
+            #if len(form.data.get(field)) > 0:
+                #logging.info(form.data.get(field))
         if field == 'deskman' and form.data.get(field):
             solr_data.setdefault('deskman', form.data.get(field).strip())
         if field == 'editorial_status':
@@ -632,13 +648,21 @@ def _record2solr_doc(form, action):
         if field == 'apparent_dup':
             solr_data.setdefault('apparent_dup', form.data.get(field))
         if field == 'ISSN':
-            for issn in form.data.get(field):
-                solr_data.setdefault('issn', issn.strip())
-                solr_data.setdefault('isxn', issn.strip())
+            try:
+                for issn in form.data.get(field):
+                    solr_data.setdefault('issn', issn.strip())
+                    solr_data.setdefault('isxn', issn.strip())
+            except AttributeError as e:
+                logging.error(form.data.get('id'))
+                pass
         if field == 'ISBN':
-            for isbn in form.data.get(field):
-                solr_data.setdefault('isbn', isbn.strip())
-                solr_data.setdefault('isxn', isbn.strip())
+            try:
+                for isbn in form.data.get(field):
+                    solr_data.setdefault('isbn', isbn.strip())
+                    solr_data.setdefault('isxn', isbn.strip())
+            except AttributeError as e:
+                logging.error(form.data.get('id'))
+                pass
         if field == 'PMID':
             solr_data.setdefault('pmid', form.data.get(field).strip())
         if field == 'DOI':
@@ -721,6 +745,7 @@ def _record2solr_doc(form, action):
                                                                                 'page_last': myjson.get('is_part_of')[0].get('page_last', ''),
                                                                                 'volume': myjson.get('is_part_of')[0].get('volume', ''),
                                                                                 'issue': myjson.get('is_part_of')[0].get('issue', '')}))
+                    #logging.info(solr_data.get('has_part'))
             except AttributeError as e:
                 logging.error(e)
         if field == 'other_version' and len(form.data.get(field)) > 0:
@@ -800,6 +825,11 @@ def dashboard():
             {
                 'type': 'terms',
                 'field': 'editorial_status'
+            },
+        'catalog':
+            {
+                'type': 'terms',
+                'field': 'catalog'
             },
         'owner':
             {
@@ -1846,27 +1876,25 @@ def import_solr_dump(filename=''):
 
     #pool = Pool(4)
     #solr_data.append(pool.map(_import_data, thedata))
+    target = 'dashboard'
     if type == 'publication':
         for mydata in thedata:
+            #logging.info(mydata)
             solr_data.append(_import_data(mydata))
         import_solr = Solr(core='hb2', data=solr_data)
         import_solr.update()
-        flash('%s records imported!' % len(thedata), 'success')
-        return redirect('dashboard')
     elif type == 'person':
-        logging.info('do person import')
         for mydata in thedata:
             _import_person_data(mydata)
-        flash('%s records imported!' % len(thedata), 'success')
-        return redirect('persons')
+        target = 'persons'
     elif type == 'organisation':
-        logging.info('do orga import')
         for mydata in thedata:
             _import_orga_data(mydata)
-        flash('%s records imported!' % len(thedata), 'success')
-        return redirect('organisations')
+        target = 'organisations'
 
-    return redirect('dashboard')
+    flash('%s records imported!' % len(thedata), 'success')
+    return redirect(target)
+
 
 @app.route('/delete/solr_dump/<record_id>')
 @login_required

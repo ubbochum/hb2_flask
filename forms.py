@@ -474,6 +474,11 @@ class IsPartOfForm(Form):
     is_part_of = StringField(lazy_gettext('Is Part of'))
     volume = StringField(lazy_gettext('Volume'))
 
+class SpecialIssueRelationForm(IsPartOfForm):
+    is_part_of = StringField(lazy_gettext('Is Part of'))
+    volume = StringField(lazy_gettext('Volume'))
+    issue = StringField(lazy_gettext('Issue'))
+
 class OtherVersionForm(Form):
     other_version = StringField(lazy_gettext('Other Version'))
 
@@ -563,6 +568,7 @@ class WorkForm(Form):
         ('finalized', lazy_gettext('Finalized')),
     ], default='new')
     owner = FieldList(StringField(lazy_gettext('Owner'), validators=[DataRequired()]), min_entries=1)
+    catalog = FieldList(StringField(lazy_gettext('Data Catalog'), validators=[DataRequired()]), min_entries=1)
     deskman = StringField(lazy_gettext('Deskman'), validators=[Optional()])
     apparent_dup = BooleanField(lazy_gettext('Apparent Duplicate'))
     license = SelectField(lazy_gettext('License'), choices=LICENSES)
@@ -635,7 +641,7 @@ class SeriesForm(SerialForm):
                         ],
              'label': lazy_gettext('Keyword')},
             {'group': [self.abstract, self.table_of_contents], 'label': lazy_gettext('Content')},
-            {'group': [self.id, self.affiliation_context, self.external, self.apparent_dup, self.editorial_status, self.created, self.changed,
+            {'group': [self.id, self.affiliation_context, self.external, self.apparent_dup, self.editorial_status, self.created, self.changed, self.catalog,
                        self.owner, self.deskman],
              'label': lazy_gettext('Administrative')},
         ]
@@ -661,7 +667,7 @@ class JournalForm(SerialForm):
              'label': lazy_gettext('Keyword')},
             {'group': [self.abstract, self.table_of_contents], 'label': lazy_gettext('Content')},
             {'group': [self.id, self.affiliation_context, self.external, self.apparent_dup, self.editorial_status,
-                       self.created, self.changed, self.owner, self.deskman],
+                       self.created, self.changed, self.catalog, self.owner, self.deskman],
              'label': lazy_gettext('Administrative')},
         ]
 
@@ -723,7 +729,7 @@ class ArticleJournalForm(ArticleForm):
             {'group': [self.abstract], 'label':lazy_gettext('Content')},
             {'group': [self.open_access, self.DFG], 'label': lazy_gettext('Open Access')},
             {'group': [self.id, self.affiliation_context, self.apparent_dup, self.editorial_status, self.created,
-                       self.changed, self.owner, self.deskman, self.key_publication],
+                       self.changed, self.catalog, self.owner, self.deskman, self.key_publication],
              'label': lazy_gettext('Administrative')},
         ]
 
@@ -731,6 +737,7 @@ class ArticleNewspaperForm(ArticleForm):
     subtype = SelectField(lazy_gettext('Subtype'), validators=[Optional()], choices=[
         ('', lazy_gettext('Select a Subtype')),
         ('review', lazy_gettext('Review')),
+        ('interview', lazy_gettext('Interview')),
     ])
     is_part_of = FieldList(FormField(NewspaperRelationForm), min_entries=1)
     key_publication = BooleanField(lazy_gettext('Key Publication'),
@@ -756,7 +763,7 @@ class ArticleNewspaperForm(ArticleForm):
              'label': lazy_gettext('Keyword')},
             {'group': [self.abstract], 'label':lazy_gettext('Content')},
             {'group': [self.id, self.affiliation_context, self.apparent_dup, self.editorial_status,
-                       self.created, self.changed, self.owner, self.deskman],
+                       self.created, self.changed, self.catalog, self.owner, self.deskman],
              'label': lazy_gettext('Administrative')},
         ]
 
@@ -766,7 +773,7 @@ class SpecialIssueForm(JournalForm):
         ('festschrift', lazy_gettext('Festschrift')),
     ])
     ISBN = FieldList(StringField(lazy_gettext('ISBN'), validators=[Optional(), Isbn]), min_entries=1)
-    is_part_of = FieldList(FormField(IsPartOfForm), min_entries=1)
+    is_part_of = FieldList(FormField(SpecialIssueRelationForm), min_entries=1)
 
     def groups(self):
         yield [
@@ -786,7 +793,7 @@ class SpecialIssueForm(JournalForm):
              'label': lazy_gettext('Keyword')},
             {'group': [self.abstract, self.table_of_contents], 'label': lazy_gettext('Content')},
             {'group': [self.id, self.affiliation_context, self.external, self.apparent_dup, self.editorial_status,
-                       self.created, self.changed, self.owner, self.deskman],
+                       self.created, self.changed, self.catalog, self.owner, self.deskman],
              'label': lazy_gettext('Administrative')},
         ]
 
@@ -831,7 +838,7 @@ class CollectionForm(ContainerForm):
             {'group': [self.abstract, self.table_of_contents], 'label': lazy_gettext('Content')},
             {'group': [self.open_access], 'label': lazy_gettext('Open Access')},
             {'group': [self.id, self.affiliation_context, self.external, self.apparent_dup, self.editorial_status,
-                       self.created, self.changed, self.owner, self.deskman],
+                       self.created, self.changed, self.catalog, self.owner, self.deskman],
              'label': lazy_gettext('Administrative')},
         ]
 
@@ -862,7 +869,7 @@ class ConferenceForm(CollectionForm):
             {'group': [self.abstract, self.table_of_contents], 'label': lazy_gettext('Content')},
             {'group': [self.open_access], 'label': lazy_gettext('Open Access')},
             {'group': [self.id, self.affiliation_context, self.peer_reviewed, self.external, self.apparent_dup,
-                       self.editorial_status, self.created, self.changed, self.owner, self.deskman],
+                       self.editorial_status, self.created, self.changed, self.catalog, self.owner, self.deskman],
              'label': lazy_gettext('Administrative')},
         ]
 
@@ -892,7 +899,7 @@ class EditionForm(CollectionForm):
             {'group': [self.abstract, self.table_of_contents], 'label': lazy_gettext('Content')},
             {'group': [self.open_access], 'label': lazy_gettext('Open Access')},
             {'group': [self.id, self.affiliation_context, self.external, self.apparent_dup, self.editorial_status,
-                       self.created, self.changed, self.owner, self.deskman],
+                       self.created, self.changed, self.catalog, self.owner, self.deskman],
              'label': lazy_gettext('Administrative')},
         ]
 
@@ -920,7 +927,7 @@ class LegalCommentaryForm(CollectionForm):
             {'group': [self.abstract, self.table_of_contents], 'label': lazy_gettext('Content')},
             {'group': [self.open_access], 'label': lazy_gettext('Open Access')},
             {'group': [self.id, self.affiliation_context, self.external, self.apparent_dup, self.editorial_status,
-                       self.created, self.changed, self.owner, self.deskman],
+                       self.created, self.changed, self.catalog, self.owner, self.deskman],
              'label': lazy_gettext('Administrative')},
         ]
 
@@ -971,7 +978,7 @@ class ChapterForm(WorkForm):
             {'group': [self.abstract], 'label':lazy_gettext('Content')},
             {'group': [self.open_access, self.DFG], 'label': lazy_gettext('Open Access')},
             {'group': [self.id, self.affiliation_context, self.peer_reviewed, self.apparent_dup, self.editorial_status,
-                       self.created, self.changed, self.owner, self.deskman],
+                       self.created, self.changed, self.catalog, self.owner, self.deskman],
              'label': lazy_gettext('Administrative')},
         ]
 
@@ -998,7 +1005,7 @@ class ChapterInLegalCommentaryForm(ChapterForm):
             {'group': [self.abstract], 'label':lazy_gettext('Content')},
             {'group': [self.open_access, self.DFG], 'label': lazy_gettext('Open Access')},
             {'group': [self.id, self.affiliation_context, self.peer_reviewed, self.apparent_dup, self.editorial_status,
-                       self.created, self.changed, self.owner, self.deskman],
+                       self.created, self.changed, self.catalog, self.owner, self.deskman],
              'label': lazy_gettext('Administrative')},
         ]
 
@@ -1028,7 +1035,7 @@ class ChapterInMonographForm(ChapterForm):
             {'group': [self.abstract], 'label':lazy_gettext('Content')},
             {'group': [self.open_access, self.DFG], 'label': lazy_gettext('Open Access')},
             {'group': [self.id, self.affiliation_context, self.peer_reviewed, self.apparent_dup, self.editorial_status,
-                       self.created, self.changed, self.owner, self.deskman],
+                       self.created, self.changed, self.catalog, self.owner, self.deskman],
              'label': lazy_gettext('Administrative')},
         ]
 class AudioBookForm(PrintedWorkForm):
@@ -1054,7 +1061,7 @@ class AudioBookForm(PrintedWorkForm):
              'label': lazy_gettext('Keyword')},
             {'group': [self.abstract, self.table_of_contents], 'label': lazy_gettext('Content')},
             {'group': [self.id, self.affiliation_context, self.apparent_dup, self.editorial_status, self.created,
-                       self.changed, self.owner, self.deskman],
+                       self.changed, self.catalog, self.owner, self.deskman],
              'label': lazy_gettext('Administrative')},
         ]
 
@@ -1064,6 +1071,7 @@ class AudioVideoDocumentForm(PrintedWorkForm):
         ('image_database', lazy_gettext('Image Database')),
         ('dramatic_work', lazy_gettext('Dramatic Work')),
         ('interview', lazy_gettext('Interview')),
+        ('sermon', lazy_gettext('Sermon')),
     ])
     ISBN = FieldList(StringField(lazy_gettext('ISBN'), validators=[Optional(), Isbn]), min_entries=1)
     other_version = FieldList(FormField(OtherVersionForm), min_entries=1)
@@ -1087,7 +1095,7 @@ class AudioVideoDocumentForm(PrintedWorkForm):
              'label': lazy_gettext('Keyword')},
             {'group': [self.abstract, self.table_of_contents], 'label': lazy_gettext('Content')},
             {'group': [self.id, self.affiliation_context, self.apparent_dup, self.editorial_status, self.created,
-                       self.changed, self.owner, self.deskman],
+                       self.changed, self.catalog, self.owner, self.deskman],
              'label': lazy_gettext('Administrative')},
         ]
 
@@ -1129,7 +1137,7 @@ class InternetDocumentForm(WorkForm):
              'label': lazy_gettext('Keyword')},
             {'group': [self.abstract], 'label':lazy_gettext('Content')},
             {'group': [self.id, self.affiliation_context, self.apparent_dup, self.editorial_status, self.created,
-                       self.changed, self.owner, self.deskman],
+                       self.changed, self.catalog, self.owner, self.deskman],
              'label': lazy_gettext('Administrative')},
         ]
 
@@ -1169,7 +1177,7 @@ class LectureForm(WorkForm):
             {'group': [self.abstract], 'label':lazy_gettext('Content')},
             {'group': [self.open_access], 'label': lazy_gettext('Open Access')},
             {'group': [self.id, self.affiliation_context, self.apparent_dup, self.editorial_status, self.created,
-                       self.changed, self.owner, self.deskman],
+                       self.changed, self.catalog, self.owner, self.deskman],
              'label': lazy_gettext('Administrative')},
         ]
 
@@ -1218,7 +1226,7 @@ class MonographForm(PrintedWorkForm):
             {'group': [self.abstract, self.table_of_contents], 'label': lazy_gettext('Content')},
             {'group': [self.open_access], 'label': lazy_gettext('Open Access')},
             {'group': [self.id, self.affiliation_context, self.apparent_dup, self.editorial_status, self.created,
-                       self.changed, self.owner, self.deskman],
+                       self.changed, self.catalog, self.owner, self.deskman],
              'label': lazy_gettext('Administrative')},
         ]
 
@@ -1267,7 +1275,7 @@ class MultivolumeWorkForm(PrintedWorkForm):
             {'group': [self.abstract, self.table_of_contents], 'label': lazy_gettext('Content')},
             {'group': [self.open_access], 'label': lazy_gettext('Open Access')},
             {'group': [self.id, self.affiliation_context, self.apparent_dup, self.editorial_status, self.created,
-                       self.changed, self.owner, self.deskman],
+                       self.changed, self.catalog, self.owner, self.deskman],
              'label': lazy_gettext('Administrative')},
         ]
 
@@ -1313,7 +1321,7 @@ class OtherForm(WorkForm):
              'label': lazy_gettext('Keyword')},
             {'group': [self.abstract], 'label':lazy_gettext('Content')},
             {'group': [self.id, self.affiliation_context, self.apparent_dup, self.editorial_status, self.created,
-                       self.changed, self.owner, self.deskman],
+                       self.changed, self.catalog, self.owner, self.deskman],
              'label': lazy_gettext('Administrative')},
         ]
 
@@ -1354,7 +1362,7 @@ class PatentForm(WorkForm):
             {'group': [self.abstract], 'label':lazy_gettext('Content')},
             {'group': [self.open_access], 'label': lazy_gettext('Open Access')},
             {'group': [self.id, self.affiliation_context, self.apparent_dup, self.editorial_status, self.created,
-                       self.changed, self.owner, self.deskman],
+                       self.changed, self.catalog, self.owner, self.deskman],
              'label': lazy_gettext('Administrative')},
         ]
 
@@ -1380,7 +1388,7 @@ class PressReleaseForm(WorkForm):
              'label': lazy_gettext('Keyword')},
             {'group': [self.abstract], 'label':lazy_gettext('Content')},
             {'group': [self.id, self.affiliation_context, self.apparent_dup, self.editorial_status, self.created,
-                       self.changed, self.owner, self.deskman],
+                       self.changed, self.catalog, self.owner, self.deskman],
              'label': lazy_gettext('Administrative')},
         ]
 
@@ -1410,7 +1418,7 @@ class RadioTVProgramForm(WorkForm):
              'label': lazy_gettext('Keyword')},
             {'group': [self.abstract], 'label':lazy_gettext('Content')},
             {'group': [self.id, self.affiliation_context, self.apparent_dup, self.editorial_status, self.created,
-                       self.changed, self.owner, self.deskman],
+                       self.changed, self.catalog, self.owner, self.deskman],
              'label': lazy_gettext('Administrative')},
         ]
 
@@ -1444,7 +1452,7 @@ class SoftwareForm(PrintedWorkForm):
             {'group': [self.abstract, self.table_of_contents], 'label': lazy_gettext('Content')},
             {'group': [self.open_access], 'label': lazy_gettext('Open Access')},
             {'group': [self.id, self.affiliation_context, self.apparent_dup, self.editorial_status, self.created,
-                       self.changed, self.owner, self.deskman],
+                       self.changed, self.catalog, self.owner, self.deskman],
              'label': lazy_gettext('Administrative')},
         ]
 
@@ -1483,7 +1491,7 @@ class StandardForm(PrintedWorkForm):
             {'group': [self.abstract, self.table_of_contents], 'label': lazy_gettext('Content')},
             {'group': [self.open_access], 'label': lazy_gettext('Open Access')},
             {'group': [self.id, self.affiliation_context, self.apparent_dup, self.editorial_status, self.created,
-                       self.changed, self.owner, self.deskman],
+                       self.changed, self.catalog, self.owner, self.deskman],
              'label': lazy_gettext('Administrative')},
         ]
 
@@ -1529,7 +1537,7 @@ class ThesisForm(WorkForm):
             {'group': [self.abstract], 'label':lazy_gettext('Content')},
             {'group': [self.open_access], 'label': lazy_gettext('Open Access')},
             {'group': [self.id, self.affiliation_context, self.apparent_dup, self.editorial_status, self.created,
-                       self.changed, self.owner, self.deskman],
+                       self.changed, self.catalog, self.owner, self.deskman],
              'label': lazy_gettext('Administrative')},
         ]
 
