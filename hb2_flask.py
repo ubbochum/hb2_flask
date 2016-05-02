@@ -582,11 +582,11 @@ def _record2solr_doc(form, action):
         if field == 'catalog':
             for catalog in form.data.get(field):
                 solr_data.setdefault('catalog', catalog.strip())
-        #if field == 'affiliation_context':
+        if field == 'affiliation_context':
             # TODO Datenanreicherung und ID-Verknüpfung mit "Organisation" / Wo ist der Kontext in den Bochumer Daten?
-            # TODO if TUDO: Voranstellen von "Fakultät ", damit die in Organisations gefunden werden können!
-            #if len(form.data.get(field)) > 0:
-                #logging.info(form.data.get(field))
+            for context in form.data.get(field):
+                logging.info(context)
+                solr_data.setdefault('fakultaet', []).append(context)
         if field == 'deskman' and form.data.get(field):
             solr_data.setdefault('deskman', form.data.get(field).strip())
         if field == 'editorial_status':
@@ -660,6 +660,14 @@ def _record2solr_doc(form, action):
                 for isbn in form.data.get(field):
                     solr_data.setdefault('isbn', isbn.strip())
                     solr_data.setdefault('isxn', isbn.strip())
+            except AttributeError as e:
+                logging.error(form.data.get('id'))
+                pass
+        if field == 'ISMN':
+            try:
+                for ismn in form.data.get(field):
+                    solr_data.setdefault('ismn', ismn.strip())
+                    solr_data.setdefault('isxn', ismn.strip())
             except AttributeError as e:
                 logging.error(form.data.get('id'))
                 pass
