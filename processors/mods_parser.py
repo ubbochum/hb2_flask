@@ -39,9 +39,6 @@ logging.basicConfig(level=logging.DEBUG,
                     datefmt='%a, %d %b %Y %H:%M:%S.f%',
                     )
 
-CATALOG = 'Ruhr-Universität Bochum'
-#CATALOG = 'Technische Universität Dortmund'
-
 MODS_NAMESPACE = 'http://www.loc.gov/mods/v3'
 OAI_DC_NAMESPACE = 'http://www.openarchives.org/OAI/2.0/oai_dc/'
 DC_NAMESPACE = 'http://purl.org/dc/elements/1.1/'
@@ -333,6 +330,19 @@ def get_wtf_issued(elems):
     return {'issued': issued, 'startdate_conference': start, 'enddate_conference': end}
 
 
+def get_wtf_date_application(elems):
+    date_application = ''
+    for date_other in elems:
+        if len(date_other.text.strip()) == 4:
+            date_application = '%s-01-01 00:00:00.001' % date_other.text
+        elif len(date_other.text.strip()) == 7:
+            date_application = '%s-01 00:00:00.001' % date_other.text
+        else:
+            date_application = '%s 00:00:00.001' % date_other.text
+
+    return {'date_application': date_application}
+
+
 def get_solr_issued(elems):
     date = '';
     fdate = None;
@@ -341,13 +351,13 @@ def get_solr_issued(elems):
         date = issued.text.replace('[', '').replace(']', '').strip()
         if len(date.strip()) == 4:
             fdate = int(date)
-            date_boost = '%s-01-01T00:00:00.000Z' % date
+            date_boost = '%s-01-01T00:00:00.001Z' % date
         elif len(date.strip()) == 7:
             fdate = int(date[0:4])
-            date_boost = '%s-01T00:00:00Z.000' % date
+            date_boost = '%s-01T00:00:00.001Z' % date
         else:
             fdate = int(date[0:4])
-            date_boost = '%sT00:00:00.000Z' % date
+            date_boost = '%sT00:00:00.001Z' % date
 
     return {'date': date, 'fdate': fdate, 'date_boost': date_boost}
 
@@ -550,7 +560,7 @@ def get_wtf_parents(elems, id='', default_pubtype=''):
             tmp.setdefault('changed', str(datetime.datetime.now()))
         tmp.setdefault('editorial_status', 'imported')
         tmp.setdefault('owner', ['daten.ub@tu-dortmund.de'])
-        tmp.setdefault('catalog', [CATALOG])
+        tmp.setdefault('catalog', [secrets.CATALOG])
 
         tmp_parents = []
         if relateditem is not None:
@@ -589,7 +599,7 @@ def get_wtf_parents(elems, id='', default_pubtype=''):
                         tmp_p.setdefault('changed', str(datetime.datetime.now()))
                     tmp_p.setdefault('editorial_status', 'imported')
                     tmp_p.setdefault('owner', ['daten.ub@tu-dortmund.de'])
-                    tmp_p.setdefault('catalog', [CATALOG])
+                    tmp_p.setdefault('catalog', [secrets.CATALOG])
                     tmp_series.append(tmp_s)
                     more_parents.append(tmp_p)
             # logging.info(tmp_series)
@@ -680,6 +690,15 @@ def get_new_pubtype(old_pubtype):
 
     return new_pubtype
 
+def get_wtf_affiliation_context(elems):
+    contexts = []
+    for context in elems:
+        if secrets.CATALOG == 'Technische Universität Dortmund':
+            contexts.append('Fakultät %s' % context.text)
+        else:
+            contexts.append(context.text)
+
+    return {'affiliation_context': contexts}
 
 def get_value(input):
     value = ''
@@ -715,7 +734,7 @@ try:
         },
         # TUDO Zuordnung zur Affiliation
         "./m:classification[not(@authority)]": {
-            'wtf': lambda elems: {'affiliation_context': [elem.text for elem in elems]},
+            'wtf': get_wtf_affiliation_context,
             # 'solr': lambda elems: {'number': elems[0].text},
         },
         # "./m:extension": lambda elem : {'': elem.text},
@@ -792,6 +811,12 @@ try:
             'solr': lambda elems: {'issn': [elem.text for elem in elems], 'isxn': [elem.text for elem in elems]},
             'oai_dc': (oai_elements, 'identifier')
         },
+        "./m:identifier[@type='ismn']": {
+            'wtf': lambda elems: {'ISMN': [elem.text for elem in elems]},
+            'csl': lambda elems: {'ismn': [elem.text for elem in elems]},
+            'solr': lambda elems: {'ismn': [elem.text for elem in elems], 'isxn': [elem.text for elem in elems]},
+            'oai_dc': (oai_elements, 'identifier')
+        },
         "./m:identifier[@type='local' and @displayLabel='HT-ID']": {
             'wtf': lambda elems: {'hbz_id': elems[0].text},
             'solr': lambda elems: {'hbz_id': elems[0].text},
@@ -866,7 +891,9 @@ try:
             'wtf': lambda elem: {'issued': elem[0].text},
             'solr': get_solr_issued
         },
-        # "./m:originInfo/m:dateOther[@encoding='iso8601']": lambda elem : {'': elem.text},
+        "./m:originInfo/m:dateOther[@encoding='iso8601']": {
+            'wtf': get_wtf_date_application,
+        },
         "./m:originInfo/m:edition": {
             'wtf': lambda elem: {'edition': elem[0].text}
         },
@@ -1111,7 +1138,7 @@ for event, record in mc:
 
     wtf.setdefault('editorial_status', 'imported')
     wtf.setdefault('owner', ['daten.ub@tu-dortmund.de'])
-    wtf.setdefault('catalog', [CATALOG])
+    wtf.setdefault('catalog', [secrets.CATALOG])
 
     if not wtf.get('pubtype'):
         logging.info('%s: ERROR no pubtype', wtf.get('id'))
