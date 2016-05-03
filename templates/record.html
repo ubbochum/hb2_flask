@@ -563,7 +563,7 @@
                 <dd>{{ _('Created %(created)s by %(owner)s.', created=record.data.created|mk_time|humanize(), owner=record.data.owner) }}{% if record.data.created != record.data.changed %} {{ _('Last changed %(changed)s.', changed=record.data.changed|mk_time|humanize()) }}{% endif %}</dd>
             {% endif %}
         </dl>
-        {% if config.DEBUG and current_user.role == 'admin' %}
+        {% if config.DEBUG and (current_user.role == 'admin' or current_user.role == 'superadmin') %}
             {#<div id="json_edit">
                 <pre  contenteditable="true"><code class="language-json">{{ record.data|tojson|safe }}</code></pre>
                 {% include 'submit_form.html' %}
@@ -575,12 +575,16 @@
         </div>
         <div class="col-sm-2">
             {% if not locked %}
-                {% if current_user.role == 'admin' or current_user.name == record.owner %}<div class="btn-group" role="group" aria-label="action-group">
+                {% if (current_user.role == 'admin' and not record.data.editorial_status == 'deleted') or current_user.role == 'superadmin' or current_user.email in record.owner %}
+                <div class="btn-group" role="group" aria-label="action-group">
                     <a href="{{ url_for('edit_record', pubtype=pubtype, record_id=record_id) }}" class="btn btn-default"><i class="fa fa-pencil"></i> {{ _('Edit') }}</a>
                     <a href="#" data-href="{{ url_for('delete_record', record_id=record.data.id) }}" class="btn btn-danger" data-toggle="modal" data-target="#confirm-delete"><i class="fa fa-trash"></i> {{ _('Delete') }}</a>
                     {#<label for="apparent_dup">{{ _('Apparent Duplicate') }}</label>
                     <input type="checkbox" id="apparent_dup" name="apparent_dup">#}
-                </div>{% endif %}
+                </div>
+                {% else %}
+                    <div class="alert alert-danger" role="alert"><span class="glyphicon glyphicon-warning-sign" aria-hidden="true"></span> This record is marked for deletion!</div>
+                {% endif %}
             {% else %}
                 <div class="alert alert-warning" role="alert"><span class="glyphicon glyphicon-warning-sign" aria-hidden="true"></span> This record is currently locked!</div>
             {% endif %}

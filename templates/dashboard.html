@@ -38,19 +38,21 @@
                         <tr>
                             <th scope="row">{{ loop.index + offset }}</th>
                             <td>
-                                <span class="label label-{% if record.editorial_status == 'new' %}info{% elif record.editorial_status == 'in_process' %}default{% elif record.editorial_status == 'processed' %}primary{% elif record.editorial_status == 'final_editing' %}warning{% elif record.editorial_status == 'finalized' or record.editorial_status == 'imported' %}success{% endif %}">{% if record.locked %} <i class="fa fa-lock"></i> {% endif %}{{ record.editorial_status|capitalize }}</span>
+                                <span class="label label-{% if record.editorial_status == 'new' %}info{% elif record.editorial_status == 'in_process' %}default{% elif record.editorial_status == 'processed' %}primary{% elif record.editorial_status == 'final_editing' %}warning{% elif record.editorial_status == 'deleted' %}danger{% elif record.editorial_status == 'finalized' or record.editorial_status == 'imported' %}success{% endif %}">{% if record.locked %} <i class="fa fa-lock"></i> {% endif %}{{ record.editorial_status|capitalize }}</span>
                             </td>
                             <td>{% include 'resultlist_record.html' %}<br/>
                             <td>{{ (now - record.recordCreationDate|mk_time())|humanize() }}</td>
                             <td>{{ (now - record.recordChangeDate|mk_time())|humanize() }}</td>
-{#                            <td>{{ record.owner }}</td>#}
+{#                            <td>{{ record.owner }}</br>{{ current_user.email }}</td>#}
 {#                            <td>{{ record.deskman }}</td>#}
                             <td class="dropdown">
                                 <button class="btn btn-default dropdown-toggle" type="button" id="action{{ loop.index }}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true"><i class="fa fa-cog"></i> {{ _('Action') }} <span class="fa fa-caret-down"></span></button>
                                 <ul class="dropdown-menu" aria-labelledby="action{{ loop.index }}">
                                     <li><a href="{{ url_for('show_record', pubtype=record.pubtype, record_id=record.id) }}"><i class="fa fa-eye"></i> {{ _('View') }}</a></li>
-                                    {% if not record.locked %}<li id="{{ record.id }}" class="{{ record.id }}_edit"><a href="{{ url_for('edit_record', record_id=record.id, pubtype=record.pubtype) }}" class="lock_me"><i class="fa fa-pencil"></i> {{ _('Edit') }}</a></li>
-                                    {% if current_user.role == 'admin' %}<li class="bg-danger {{ record.id }}_del"><a href="#" data-href="{{ url_for('delete_record', record_id=record.id) }}" data-toggle="modal" data-target="#confirm-delete"><i class="fa fa-trash"></i> {{ _('Delete') }}</a></li>{% endif %}{% endif %}
+                                    {% if (current_user.role == 'admin' and not record.editorial_status == 'deleted') or current_user.role == 'superadmin' or current_user.email in record.owner %}
+                                    <li id="{{ record.id }}" class="{{ record.id }}_edit"><a href="{{ url_for('edit_record', record_id=record.id, pubtype=record.pubtype) }}" class="lock_me"><i class="fa fa-pencil"></i> {{ _('Edit') }}</a></li>
+                                    <li class="bg-danger {{ record.id }}_del"><a href="#" data-href="{{ url_for('delete_record', record_id=record.id) }}" data-toggle="modal" data-target="#confirm-delete"><i class="fa fa-trash"></i> {{ _('Delete') }}</a></li>
+                                    {% endif %}
                                     <li class="divider" role="separator"></li>
                                     <li class="dropdown-header"><i class="fa fa-plus"></i> {{ _('Add') }}</li>
                                     <li class="disabled"><a href="{{ url_for('add_file', record_id=record.id) }}" disabled="disabled">{{ _('File') }}</a></li>

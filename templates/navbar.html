@@ -3,7 +3,7 @@
     <ul class="nav navbar-nav">
         <li{% if header == 'Home' %} class="active"{% endif %}><a href="{{ url_for('homepage') }}"><i class="fa fa-home"></i> {{ _('Home') }}</a></li>
         <li class="divider"></li>
-        {% if current_user.role == 'admin' %}
+        {% if current_user.role == 'admin' or current_user.role == 'superadmin' %}
         <li{% if header == 'Dashboard' %} class="active"{% endif %}><a href="{{ url_for('dashboard') }}"><i class="fa fa-list"></i> {{ _('Dashboard') }}</a></li>
         <li class="divider"></li>
         {% endif %}
@@ -12,8 +12,11 @@
             <ul class="dropdown-menu">
                 <li><a href="{{ url_for('new_by_form') }}">{{ _('Publication') }}</a></li>
                 <li class="divider"></li>
+                {% if current_user.role == 'admin' or current_user.role == 'superadmin' %}
                 <li><a href="{{ url_for('new_person') }}">{{ _('Person') }}</a></li>
                 <li><a href="{{ url_for('new_orga') }}">{{ _('Organisation') }}</a></li>
+                {% endif %}
+                <li class="disabled"><a href="{{ url_for('new_orga') }}">{{ _('Working Group') }}</a></li>
             </ul>
         </li>
         <li class="divider"></li>

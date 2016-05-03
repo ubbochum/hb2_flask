@@ -560,8 +560,6 @@ def _record2solr_doc(form, action):
     solr_data = {}
     wtf = json.dumps(form.data).replace(' "', '"')
     solr_data.setdefault('wtf_json', wtf)
-    if form.data.get('id').strip() == 'd089cf42-7b80-4b76-8d24-bb5d0426c97c':
-        logging.info(solr_data)
     for field in form.data:
         #logging.info('%s => %s' % (field, form.data.get(field)))
         if field == 'id':
@@ -692,7 +690,7 @@ def _record2solr_doc(form, action):
                             # logging.info('PEEP')
                             ipo_ids.append(ipo)
                 query = ''
-                if len(ipo_ids) > 0:
+                if len(ipo_ids) > 1:
                     query = '{!terms f=id}%s' % ','.join(ipo_ids)
                 if len(ipo_ids) == 1:
                     query = 'id:%s' % ipo_ids[0]
@@ -806,6 +804,9 @@ def orcid2name(orcid_id=''):
 @app.route('/dashboard')
 @login_required
 def dashboard():
+    if current_user.role != 'admin' and current_user.role != 'superadmin':
+        flash(gettext('For Admins ONLY!!!'))
+        return redirect(url_for('homepage'))
     page = int(request.args.get('page', 1))
     mystart = 0
     query = '*:*'
@@ -873,11 +874,29 @@ def dashboard():
 @app.route('/make_admin/<user_id>')
 @login_required
 def make_admin(user_id=''):
+    if current_user.role != 'superadmin':
+        flash(gettext('For SuperAdmins ONLY!!!'))
+        return redirect(url_for('homepage'))
     if user_id:
         ma_solr = Solr(core='hb2_users', data=[{'id': user_id, 'role': {'set': 'admin'}}])
         ma_solr.update()
         flash(gettext('%s upgraded to admin!' % user_id), 'success')
-        return redirect(url_for('index'))
+        return redirect(url_for('superadmin'))
+    else:
+        flash(gettext('You did not supply an ID!'), 'danger')
+        return redirect(url_for('superadmin'))
+
+@app.route('/make_superadmin/<user_id>')
+@login_required
+def make_superadmin(user_id=''):
+    if current_user.role != 'superadmin':
+        flash(gettext('For SuperAdmins ONLY!!!'))
+        return redirect(url_for('homepage'))
+    if user_id:
+        ma_solr = Solr(core='hb2_users', data=[{'id': user_id, 'role': {'set': 'superadmin'}}])
+        ma_solr.update()
+        flash(gettext('%s upgraded to superadmin!' % user_id), 'success')
+        return redirect(url_for('superadmin'))
     else:
         flash(gettext('You did not supply an ID!'), 'danger')
         return redirect(url_for('superadmin'))
@@ -885,8 +904,8 @@ def make_admin(user_id=''):
 @app.route('/superadmin', methods=['GET'])
 @login_required
 def superadmin():
-    if current_user.role != 'admin':
-        flash(gettext('For Admins ONLY!!!'))
+    if current_user.role != 'superadmin':
+        flash(gettext('For SuperAdmins ONLY!!!'))
         return redirect(url_for('homepage'))
     # Get locked records that were last changed more than one hour ago...
     page = int(request.args.get('page', 1))
@@ -911,6 +930,9 @@ def superadmin():
 @app.route('/unlock/<record_id>', methods=['GET'])
 @login_required
 def unlock(record_id=''):
+    if current_user.role != 'superadmin':
+        flash(gettext('For SuperAdmins ONLY!!!'))
+        return redirect(url_for('homepage'))
     if record_id:
         unlock_solr = Solr(core='hb2', data=[{'id': record_id, 'locked': {'set': 'false'}}])
         unlock_solr.update()
@@ -924,6 +946,9 @@ def unlock(record_id=''):
 @app.route('/unlock/person/<person_id>', methods=['GET'])
 @login_required
 def unlock_person(person_id=''):
+    if current_user.role != 'superadmin':
+        flash(gettext('For SuperAdmins ONLY!!!'))
+        return redirect(url_for('homepage'))
     if person_id:
         unlock_solr = Solr(core='person', data=[{'id': person_id, 'locked': {'set': 'false'}}])
         unlock_solr.update()
@@ -937,6 +962,9 @@ def unlock_person(person_id=''):
 @app.route('/unlock/organisation/<orga_id>', methods=['GET'])
 @login_required
 def unlock_orga(orga_id=''):
+    if current_user.role != 'superadmin':
+        flash(gettext('For SuperAdmins ONLY!!!'))
+        return redirect(url_for('homepage'))
     if orga_id:
         unlock_solr = Solr(core='organisation', data=[{'id': orga_id, 'locked': {'set': 'false'}}])
         unlock_solr.update()
@@ -1108,6 +1136,9 @@ def _orga2solr(form):
 @app.route('/create/organisation', methods=['GET', 'POST'])
 @login_required
 def new_orga():
+    if current_user.role != 'admin' and current_user.role != 'superadmin':
+        flash(gettext('For Admins ONLY!!!'))
+        return redirect(url_for('homepage'))
     form = OrgaAdminForm()
 
     if form.validate_on_submit():
@@ -1230,6 +1261,9 @@ def _person2solr(form):
 @app.route('/create/person', methods=['GET', 'POST'])
 @login_required
 def new_person():
+    if current_user.role != 'admin' and current_user.role != 'superadmin':
+        flash(gettext('For Admins ONLY!!!'))
+        return redirect(url_for('homepage'))
     form = PersonAdminForm()
     if form.validate_on_submit():
         #logging.info(form.data)
@@ -1384,6 +1418,9 @@ def show_orga(orga_id=''):
 @app.route('/update/organisation/<orga_id>', methods=['GET', 'POST'])
 @login_required
 def edit_orga(orga_id=''):
+    if current_user.role != 'admin' and current_user.role != 'superadmin':
+        flash(gettext('For Admins ONLY!!!'))
+        return redirect(url_for('homepage'))
     lock_record_solr = Solr(core='organisation', data=[{'id': orga_id, 'locked': {'set': 'true'}}])
     lock_record_solr.update()
 
@@ -1417,6 +1454,9 @@ def edit_orga(orga_id=''):
 @app.route('/update/person/<person_id>', methods=['GET', 'POST'])
 @login_required
 def edit_person(person_id=''):
+    if current_user.role != 'admin' and current_user.role != 'superadmin':
+        flash(gettext('For Admins ONLY!!!'))
+        return redirect(url_for('homepage'))
     lock_record_solr = Solr(core='person', data=[{'id': person_id, 'locked': {'set': 'true'}}])
     lock_record_solr.update()
 
@@ -1450,20 +1490,6 @@ def edit_person(person_id=''):
     return render_template('tabbed_form.html', form=form, header=lazy_gettext('Edit: %(person)s', person=form.data.get('name')),
                            locked=True, site=theme(request.access_route), action='update', pubtype='person', record_id=person_id)
 
-@app.route('/delete/person/<person_id>')
-def delete_person(person_id=''):
-    delete_person_solr = Solr(core='person', del_id=person_id)
-    delete_person_solr.delete()
-
-    return jsonify({'deleted': True})
-
-@app.route('/delete/organisation/<orga_id>')
-def delete_orga(orga_id=''):
-    delete_orga_solr = Solr(core='organisation', del_id=orga_id)
-    delete_orga_solr.delete()
-
-    return jsonify({'deleted': True})
-
 @app.route('/update/<pubtype>/<record_id>', methods=['GET', 'POST'])
 @login_required
 def edit_record(record_id='', pubtype=''):
@@ -1474,6 +1500,8 @@ def edit_record(record_id='', pubtype=''):
     edit_record_solr.request()
 
     thedata = json.loads(edit_record_solr.results[0].get('wtf_json'))
+
+    # TODO if admin or superadmin or (user and editorial_status=='new')
 
     if request.method == 'POST':
         #logging.info('POST')
@@ -1523,25 +1551,84 @@ def edit_record(record_id='', pubtype=''):
 
 @app.route('/delete/<record_id>')
 def delete_record(record_id=''):
-    #class DeleteDummy:
-        #data = {'id': record_id}
+    # TODO if admin
+    if current_user.role == 'admin':
+        flash(gettext('Set editorial status of %s to deleted!' % record_id))
+        # load record
+        edit_record_solr = Solr(core='hb2', query='id:%s' % record_id)
+        edit_record_solr.request()
 
-    #form = DeleteDummy()
-    #_record2solr(form, action='delete')
+        thedata = json.loads(edit_record_solr.results[0].get('wtf_json'))
+        pubtype = thedata.get('pubtype')
+        form = PUBTYPE2FORM.get(pubtype).from_json(thedata)
+        # modify status to 'deleted'
+        form.editorial_status.data = 'deleted'
+        form.changed.data = datetime.datetime.now()
+        form.deskman.data = current_user.email
+        # save record
+        _record2solr(form, action='update')
+        return redirect(url_for('dashboard'))
+    # TODO if superadmin
+    elif current_user.role == 'superadmin':
+        delete_record_solr = Solr(core='hb2', del_id=record_id)
+        delete_record_solr.delete()
+        flash(gettext('Record %s deleted!' % record_id))
+        return redirect(url_for('dashboard'))
+    else:
+        flash(gettext('For SuperAdmins ONLY!!!'))
+        return redirect(url_for('homepage'))
 
-    #return redirect(url_for('dashboard'))
 
-    delete_record_solr = Solr(core='hb2', del_id=record_id)
-    delete_record_solr.delete()
+@app.route('/delete/person/<person_id>')
+def delete_person(person_id=''):
+    # TODO if admin
+    if current_user.role == 'admin':
+        flash(gettext('Set status of %s to deleted!' % person_id))
+        # load person
+        # modify status to 'deleted'
+        # save person
+        return redirect(url_for('persons'))
+    # TODO if superadmin
+    elif current_user.role == 'superadmin':
+        delete_person_solr = Solr(core='person', del_id=person_id)
+        delete_person_solr.delete()
+        flash(gettext('Person %s deleted!' % person_id))
+        return redirect(url_for('orgas'))
+    else:
+        flash(gettext('For SuperAdmins ONLY!!!'))
+        return redirect(url_for('homepage'))
 
-    return jsonify({'deleted': True})
+
+@app.route('/delete/organisation/<orga_id>')
+def delete_orga(orga_id=''):
+    # TODO if admin
+    if current_user.role == 'admin':
+        flash(gettext('Set status of %s to deleted!' % orga_id))
+        # load orga
+        # modify status to 'deleted'
+        # save orga
+        return redirect(url_for('persons'))
+    # TODO if superadmin
+    elif current_user.role == 'superadmin':
+        delete_orga_solr = Solr(core='organisation', del_id=orga_id)
+        delete_orga_solr.delete()
+        flash(gettext('Organisation %s deleted!' % orga_id))
+        return redirect(url_for('orgas'))
+    else:
+        flash(gettext('For SuperAdmins ONLY!!!'))
+        return redirect(url_for('homepage'))
+
 
 @app.route('/add/file')
 def add_file():
     pass
 
+
 @app.route(('/consolidate/persons'))
 def consolidate_persons():
+    if current_user.role != 'admin' and current_user.role != 'superadmin':
+        flash(gettext('For Admins ONLY!!!'))
+        return redirect(url_for('homepage'))
     # TODO: Deduplizierung nach Nachname, 1. Buchsctabe des Vornamens
     # TODO: Vorname und Nachname sind gleich, aber GNDs unterschiedlich => Ist das ueberhaupt ein TODO?
     # TODO: Nachname ist gleich und wenn Vorname in den Daten nur ein Buchstabe oder wenn echter Vorname, dann die ersten beiden Buchstaben vergleichen
@@ -1813,6 +1900,9 @@ def connect():
 
 @app.route('/export/solr_dump')
 def export_solr_dump():
+    if current_user.role != 'superadmin':
+        flash(gettext('For SuperAdmins ONLY!!!'))
+        return redirect(url_for('homepage'))
     '''
     Export the wtf_json field of every doc in the index to a new document in the users core and to the user's local file
     system. Uses the current user's ID and a timestamp as the document ID and file name.
@@ -1829,6 +1919,9 @@ def export_solr_dump():
 @app.route('/import/solr_dumps')
 @login_required
 def import_solr_dumps():
+    if current_user.role != 'superadmin':
+        flash(gettext('For SuperAdmins ONLY!!!'))
+        return redirect(url_for('homepage'))
     '''
     Import Solr dumps either from the users core or from the local file system.
     '''
@@ -1859,6 +1952,9 @@ def _import_orga_data(doc):
 @app.route('/import/solr_dump/<filename>', methods=['GET', 'POST'])
 @login_required
 def import_solr_dump(filename=''):
+    if current_user.role != 'superadmin':
+        flash(gettext('For SuperAdmins ONLY!!!'))
+        return redirect(url_for('homepage'))
     thedata = ''
     solr_data = []
     type = ''
@@ -1907,6 +2003,9 @@ def import_solr_dump(filename=''):
 @app.route('/delete/solr_dump/<record_id>')
 @login_required
 def delete_dump(record_id=''):
+    if current_user.role != 'superadmin':
+        flash(gettext('For SuperAdmins ONLY!!!'))
+        return redirect(url_for('homepage'))
     delete_record_solr = Solr(core='hb2_users', del_id=record_id)
     delete_record_solr.delete()
 

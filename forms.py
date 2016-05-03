@@ -385,6 +385,8 @@ class PersonAdminForm(Form):
         ('processed', lazy_gettext('Processed')),
         ('final_editing', lazy_gettext('Final Editing')),
         ('finalized', lazy_gettext('Finalized')),
+        ('imported', lazy_gettext('Imported')),
+        ('deleted', lazy_gettext('Deleted')),
     ], default='new')
     created = StringField(lazy_gettext('Record Creation Date'), widget=CustomTextInput(readonly='readonly'))
     changed = StringField(lazy_gettext('Record Change Date'), widget=CustomTextInput(readonly='readonly'))
@@ -436,6 +438,8 @@ class OrgaAdminForm(Form):
         ('processed', lazy_gettext('Processed')),
         ('final_editing', lazy_gettext('Final Editing')),
         ('finalized', lazy_gettext('Finalized')),
+        ('imported', lazy_gettext('Imported')),
+        ('deleted', lazy_gettext('Deleted')),
     ], default='new')
     created = StringField(lazy_gettext('Record Creation Date'), widget=CustomTextInput(readonly='readonly'))
     changed = StringField(lazy_gettext('Record Change Date'), widget=CustomTextInput(readonly='readonly'))
@@ -566,6 +570,8 @@ class WorkForm(Form):
         ('processed', lazy_gettext('Processed')),
         ('final_editing', lazy_gettext('Final Editing')),
         ('finalized', lazy_gettext('Finalized')),
+        ('imported', lazy_gettext('Imported')),
+        ('deleted', lazy_gettext('Deleted')),
     ], default='new')
     owner = FieldList(StringField(lazy_gettext('Owner'), validators=[DataRequired()]), min_entries=1)
     catalog = FieldList(StringField(lazy_gettext('Data Catalog'), validators=[DataRequired()]), min_entries=1)

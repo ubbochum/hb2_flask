@@ -55,7 +55,7 @@
                 </li>
             </ul>
         </div>
-    {% if current_user.role == 'admin' %}
+    {% if current_user.role == 'admin' or current_user.role == 'superadmin'%}
         <div class="col-sm-4">
             <ul class="list-unstyled">
                 <li><a href="{{ url_for('new_record', pubtype='MultivolumeWork') }}">{{ _('MultivolumeWork') }}</a></li>
@@ -113,7 +113,7 @@
             </ul>
         </div>
     {% endif %}
-                {% if current_user.role == 'admin' %}
+                {% if current_user.role == 'admin' or current_user.role == 'superadmin' %}
                     <div class="col-sm-4">
                     <ul class="list-unstyled">
                 <li>
