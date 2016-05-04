@@ -868,11 +868,15 @@ try:
             'solr': get_solr_corporates
         },
         # "./m:note": lambda elem : {'': elem.text},
-        # u"./m:note[@displayLabel='Ansprüche']": lambda elem : {'': elem.text},
+        "./m:note[@displayLabel='Ansprüche']": {
+            'wtf': lambda elem: {'claims': elems[0].text}
+        },
         # "./m:note[@displayLabel='Art der Schrift']": lambda elem : {'': elem.text},
         # "./m:note[@displayLabel='Notiz']": lambda elem : {'': elem.text},
         # "./m:note[@displayLabel='Preis']": lambda elem : {'': elem.text},
-        # u"./m:note[@displayLabel='Prioritätsdaten']": lambda elem : {'': elem.text},
+        "./m:note[@displayLabel='Prioritätsdaten']": {
+            'wtf': lambda elem: {'priority_date': elems[0].text}
+        },
         "./m:note[@displayLabel='Tagungsort']": {
             'wtf': lambda elem: {'place': elems[0].text}
         },
@@ -898,7 +902,17 @@ try:
             'wtf': lambda elem: {'edition': elem[0].text}
         },
         "./m:originInfo/m:place/m:placeTerm[@type='text']": {
-            'wtf': lambda elems: {'publisher_place': elems[0].text, 'place': elems[0].text},
+            'wtf': lambda elems: {'place_of_application': elems[0].text} if record.xpath(
+                                      "./m:originInfo/m:dateOther[@encoding='iso8601']", namespaces=NSMAP) else
+                                  {'publisher_place': elems[0].text, 'place': elems[0].text},
+            'csl': lambda elems: {'publisher_place': elems[0].text},
+            'solr': lambda elems: {'place': elems[0].text},
+            # 'oai_dc': (oai_elements, 'publisher_place')
+        },
+        "./m:originInfo/m:place/m:placeTerm[@type='code']": {
+            'wtf': lambda elems: {'place_of_application': elems[0].text} if record.xpath(
+                                      "./m:originInfo/m:dateOther[@encoding='iso8601']", namespaces=NSMAP) else
+                                  {'publisher_place': elems[0].text, 'place': elems[0].text},
             'csl': lambda elems: {'publisher_place': elems[0].text},
             'solr': lambda elems: {'place': elems[0].text},
             # 'oai_dc': (oai_elements, 'publisher_place')
