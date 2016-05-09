@@ -625,6 +625,8 @@ def _record2solr_doc(form, action):
                     if person.get('gnd'):
                         solr_data.setdefault('pnd', []).append('%s#%s' % (person.get('gnd').strip(), person.get('name').strip()))
                     else:
+                        # TODO versuche Daten aus dem'person'-Index zu holen (vgl. is_part_of oder has_part)
+                        # die gndid muss dann aber auch dem 'wtf' hinzugefügt werden
                         solr_data.setdefault('pnd', []).append(
                             '%s#person-%s#%s' % (form.data.get('id'), idx, person.get('name').strip()))
         if field == 'corporation':
@@ -1633,7 +1635,8 @@ def consolidate_persons():
     # TODO: Vorname und Nachname sind gleich, aber GNDs unterschiedlich => Ist das ueberhaupt ein TODO?
     # TODO: Nachname ist gleich und wenn Vorname in den Daten nur ein Buchstabe oder wenn echter Vorname, dann die ersten beiden Buchstaben vergleichen
     results = {}
-    new_titles = Solr(fquery=['editorial_status:new'], facet='false', rows=2000000, fields=['fperson', 'pnd', 'id', 'title', 'pubtype'])
+    #new_titles = Solr(fquery=['editorial_status:new'], facet='false', rows=2000000, fields=['fperson', 'pnd', 'id', 'title', 'pubtype'])
+    new_titles = Solr(fquery=['pubtype:Monograph'], facet='false', rows=2000000, fields=['fperson', 'pnd', 'id', 'title', 'pubtype'])
     new_titles.request()
 
     for doc in new_titles.results:

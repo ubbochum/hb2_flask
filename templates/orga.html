@@ -82,7 +82,7 @@
                     </dd>
                 {% endif %}
             </dl>
-                {% if config.DEBUG and current_user.role == 'admin' %}
+                {% if config.DEBUG and (current_user.role == 'admin' or current_user.role == 'superadmin') %}
                     <div>
                         <pre><code class="language-json">{"record": {{ record.data|tojson|safe }}}</code></pre>
                     </div>
