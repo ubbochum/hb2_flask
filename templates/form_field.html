@@ -5,7 +5,7 @@
             {% if subfield.name|last_split not in form.admin_only %}
                 <div class="col-sm-2 control-label">{{ subfield.label }}</div>
                 {% if subfield.type != 'BooleanField' %}
-                    <div class="col-sm-6">{{ subfield(class='form-control') }}</div>
+                    <div class="col-sm-6">{{ subfield(class='form-control typeahead_pers') }}</div>
                 {% else %}
                     <div class="col-sm-6">{{ subfield(class='checkbox') }}</div>
                 {% endif %}
@@ -16,7 +16,7 @@
             {% if subfield.name not in form.user_only %}
                 <div class="col-sm-2 control-label">{{ subfield.label }}</div>
                 {% if subfield.type != 'BooleanField' %}
-                    <div class="col-sm-6">{{ subfield(class='form-control') }}</div>
+                    <div class="col-sm-6">{{ subfield(class='form-control typeahead_pers') }}</div>
                 {% else %}
                     <div class="col-sm-6">{{ subfield(class='checkbox') }}</div>
                 {% endif %}

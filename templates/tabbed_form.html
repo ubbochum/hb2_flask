@@ -3,6 +3,7 @@
 {% block styles %}
     {{ super() }}
     <link rel="stylesheet" href="{{ url_for('static', filename='site/bochum/css/bootstrap.vertical-tabs.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='site/bochum/css/typeaheadjs.css') }}">
 {% endblock %}
 {% block site_content %}
     {{ super() }}
@@ -73,8 +74,10 @@
             var container_id = cpy.attr('id').replace('-' + (thenum - 1), '-' + thenum);
             cpy.attr('id', container_id);
             cpy.find(':input').each(function(){
-                var id = $(this).attr('id').replace('-' + (thenum - 1) + '-', '-' + thenum + '-');
-                $(this).attr('name', id).attr('id', id).val('').removeAttr('checked');
+                if ($(this).attr('id')) {
+                    var id = $(this).attr('id').replace('-' + (thenum - 1) + '-', '-' + thenum + '-');
+                    $(this).attr('name', id).attr('id', id).val('').removeAttr('checked');
+                }
             });
             cpy.find('label').each(function(){
                 var id = $(this).attr('for').replace('-' + (thenum - 1) + '-', '-' + thenum + '-');
@@ -97,8 +100,13 @@
             var container_id = cpy.attr('id').replace('-' + (thenum - 1), '-' + thenum);
             cpy.attr('id', container_id);
             cpy.find(':input').each(function(){
-                var id = $(this).attr('id').replace('-' + (thenum - 1), '-' + thenum);
-                $(this).attr('name', id).attr('id', id).val('').removeAttr('checked');
+                if ($(this).attr('id')) {
+                    var id = $(this).attr('id').replace('-' + (thenum - 1), '-' + thenum);
+                    $(this).attr('name', id).attr('id', id).val('').removeAttr('checked');
+                }
+                else {
+                    $(this).remove();
+                }
             });
             cpy.find('label').each(function(){
                 var id = $(this).attr('for').replace('-' + (thenum - 1), '-' + thenum);
@@ -165,6 +173,85 @@
             event.preventDefault();
             $(this).val(event.originalEvent.dataTransfer.getData('text').split('/').pop());
         })
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.5/handlebars.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/typeahead.js/0.10.5/typeahead.bundle.min.js"></script>
+    <script>
+        var organisations = new Bloodhound({
+            //datumTokenizer: Bloodhound.tokenizers.obj.whitespace('pref_label'),
+            datumTokenizer: function(d){
+                console.log(d);
+                return Bloodhound.tokenizers.whitespace(d.pref_label)
+            },
+            queryTokenizer: Bloodhound.tokenizers.whitespace,
+            remote: {
+                ajax: {datatype: 'jsonp', jsonp: 'json.wrf'},
+                //url: '/typeahead/orga/%QUERY?callback=?',
+                url: 'https://hb2.ub.tu-dortmund.de/test/solr/organisation/tsuggest?q=%QUERY',
+                /*transform: function(data){
+                 console.info(data);
+                 return data;
+                 },*/
+                filter: function(data){
+                    return data.response.docs;
+                }
+            },
+            identify: function(obj){return obj.id;}
+        });
+
+        var persons = new Bloodhound({
+            //datumTokenizer: Bloodhound.tokenizers.obj.whitespace('pref_label'),
+            datumTokenizer: function(d){
+                console.log(d);
+                return Bloodhound.tokenizers.whitespace(d.name)
+            },
+            queryTokenizer: Bloodhound.tokenizers.whitespace,
+            remote: {
+                ajax: {datatype: 'jsonp', jsonp: 'json.wrf'},
+                //url: '/typeahead/orga/%QUERY?callback=?',
+                url: 'https://hb2.ub.tu-dortmund.de/test/solr/person/tsuggest?q=%QUERY',
+                /*transform: function(data){
+                 console.info(data);
+                 return data;
+                 },*/
+                filter: function(data){
+                    //console.log(data.response.docs)
+                    return data.response.docs;
+                }
+            },
+            identify: function(obj){return obj.id;}
+        });
+
+        organisations.initialize();
+        persons.initialize();
+
+        $('.typeahead_orga').click().typeahead({
+            hint: true,
+            highlight: true,
+            minLength: 2,
+        }, {
+            name: 'orga',
+            display: 'pref_label',
+            source: organisations.ttAdapter(),
+            templates: {
+                empty: 'Nothing',
+                suggestion: Handlebars.compile('{% raw %}<div>{{pref_label}} <small>(id:{{id}}, gnd:{{gnd}})</small></div>{% endraw %}')
+            }
+        });
+
+        $('.typeahead_pers').typeahead({
+            hint: true,
+            highlight: true,
+            minLength: 2,
+        }, {
+            name: 'pers',
+            display: 'name',
+            source: persons.ttAdapter(),
+            templates: {
+                empty: 'Nothing',
+                suggestion: Handlebars.compile('{% raw %}<div>{{name}} <small>{{affiliation}} (id:{{id}}, gnd:{{gnd}})</small></div>{% endraw %}')
+            }
+        });
     </script>
     <script src="https://togetherjs.com/togetherjs-min.js"></script>
 {% endblock %}
