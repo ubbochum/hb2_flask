@@ -7,10 +7,14 @@
     <p>{% include 'admin_nav.html' %}</p>
     {% if results|length > 0 %}<div class="row">
         <div class="col-sm-3" id="facets">
+            {{ drill_down.facets(facet_data.catalog, 'catalog', heading='Catalog', target='persons') }}
             {{ drill_down.facets(facet_data.faffiliation, 'faffiliation', heading='Affiliation', target='persons') }}
+            {{ drill_down.facets(facet_data.fgroup, 'fgroup', heading='Working Groups', target='persons') }}
             {{ drill_down.simple_filter('gnd', heading='GND', target='persons') }}
             {{ drill_down.simple_filter('orcid', heading='ORCID', target='persons') }}
             {{ drill_down.facets(facet_data.editorial_status, 'editorial_status', heading='Editorial Status', target='persons') }}
+            {{ drill_down.facets(facet_data.deskman, 'deskman', heading='Deskman', target=target) }}
+            {{ drill_down.facets(facet_data.owner, 'owner', heading='Owner') }}
         </div>
         <div class="col-sm-9">
             {{ pagination.info }}

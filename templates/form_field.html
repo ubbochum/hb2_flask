@@ -5,7 +5,19 @@
             {% if subfield.name|last_split not in form.admin_only %}
                 <div class="col-sm-2 control-label">{{ subfield.label }}</div>
                 {% if subfield.type != 'BooleanField' %}
-                    <div class="col-sm-6">{{ subfield(class='form-control typeahead_pers') }}</div>
+                    <div class="col-sm-6">
+                        {% if 'person' in subfield.name and 'name' in subfield.name %}
+                            {{ subfield(class='form-control typeahead_pers') }}
+                        {% elif 'corporation' in subfield.name %}
+                            {{ subfield(class='form-control typeahead_orga') }}
+                        {% elif 'affiliation_context' in subfield.name %}
+                            {{ subfield(class='form-control typeahead_orga') }}
+                        {% elif 'group_context' in subfield.name %}
+                            {{ subfield(class='form-control typeahead_group') }}
+                        {% else %}
+                            {{ subfield(class='form-control') }}
+                        {% endif %}
+                    </div>
                 {% else %}
                     <div class="col-sm-6">{{ subfield(class='checkbox') }}</div>
                 {% endif %}
@@ -16,7 +28,19 @@
             {% if subfield.name not in form.user_only %}
                 <div class="col-sm-2 control-label">{{ subfield.label }}</div>
                 {% if subfield.type != 'BooleanField' %}
-                    <div class="col-sm-6">{{ subfield(class='form-control typeahead_pers') }}</div>
+                    <div class="col-sm-6">
+                        {% if 'person' in subfield.name and 'name' in subfield.name %}
+                            {{ subfield(class='form-control typeahead_pers') }}
+                        {% elif 'corporation' in subfield.name %}
+                            {{ subfield(class='form-control typeahead_orga') }}
+                        {% elif 'affiliation_context' in subfield.name %}
+                            {{ subfield(class='form-control typeahead_orga') }}
+                        {% elif 'group_context' in subfield.name %}
+                            {{ subfield(class='form-control typeahead_group') }}
+                        {% else %}
+                            {{ subfield(class='form-control') }}
+                        {% endif %}
+                    </div>
                 {% else %}
                     <div class="col-sm-6">{{ subfield(class='checkbox') }}</div>
                 {% endif %}

@@ -13,7 +13,6 @@
             {{ form.errors }}
         {% endif %}
         <p style="margin-left: 3%;">{{ _('Fields marked with <span style="color: orangered;">*</span> are required.') }}</p>
-        <p style="margin-left: 3%;">{{ _('Fields marked with <span style="color: orangered;">(P)</span> are user generated content.') }}</p>
         <form id="theform" class="form form-horizontal" method="post" action="{{ request.script_root }}/{{ action }}/{{ pubtype }}{% if action == 'update' %}/{{ form.id.data }}{% endif %}" enctype="multipart/form-data">
             {{ form.csrf_token }}
             <div class="tab-container"><div class="col-xs-3">
@@ -35,7 +34,7 @@
                                     {% if item.type == 'FormField' %}
                                     {% include 'form_field.html' %}
                                     {% else %}
-                                    {% if current_user.role != 'admin' %}
+                                    {% if current_user.role != 'admin' or current_user.role != 'superadmin' %}
                                         {% if not item.name in form.admin_only %}{{ render_form.render_field(item) }}{% endif %}
                                     {% else %}
                                         {% if not item.name in form.user_only %}{{ render_form.render_field(item) }}{% endif %}
@@ -151,7 +150,8 @@
                 var pubtype = $(this).val();
                 //$('#pubtype select').val('{{ pubtype }}');
                 $('#pubtype option[value="{{ pubtype }}"]').prop('selected', true);
-                $.post('/create/{{ pubtype }}', $('#theform').serialize(), function(){
+                console.log(pubtype)
+                $.post('{{ request.script_root }}/create/' + pubtype, $('#theform').serialize(), function(){
                     window.location.href = '{{ request.script_root }}/update/' + pubtype + '/' + $('.row').attr('id');
                 }).fail(function(e){
                     console.log(e);
@@ -178,7 +178,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/typeahead.js/0.10.5/typeahead.bundle.min.js"></script>
     <script>
         var organisations = new Bloodhound({
-            //datumTokenizer: Bloodhound.tokenizers.obj.whitespace('pref_label'),
             datumTokenizer: function(d){
                 console.log(d);
                 return Bloodhound.tokenizers.whitespace(d.pref_label)
@@ -186,12 +185,23 @@
             queryTokenizer: Bloodhound.tokenizers.whitespace,
             remote: {
                 ajax: {datatype: 'jsonp', jsonp: 'json.wrf'},
-                //url: '/typeahead/orga/%QUERY?callback=?',
                 url: 'https://hb2.ub.tu-dortmund.de/test/solr/organisation/tsuggest?q=%QUERY',
-                /*transform: function(data){
-                 console.info(data);
-                 return data;
-                 },*/
+                filter: function(data){
+                    return data.response.docs;
+                }
+            },
+            identify: function(obj){return obj.id;}
+        });
+
+        var groups = new Bloodhound({
+            datumTokenizer: function(d){
+                console.log(d);
+                return Bloodhound.tokenizers.whitespace(d.pref_label)
+            },
+            queryTokenizer: Bloodhound.tokenizers.whitespace,
+            remote: {
+                ajax: {datatype: 'jsonp', jsonp: 'json.wrf'},
+                url: 'https://hb2.ub.tu-dortmund.de/test/solr/group/tsuggest?q=%QUERY',
                 filter: function(data){
                     return data.response.docs;
                 }
@@ -200,7 +210,6 @@
         });
 
         var persons = new Bloodhound({
-            //datumTokenizer: Bloodhound.tokenizers.obj.whitespace('pref_label'),
             datumTokenizer: function(d){
                 console.log(d);
                 return Bloodhound.tokenizers.whitespace(d.name)
@@ -208,14 +217,8 @@
             queryTokenizer: Bloodhound.tokenizers.whitespace,
             remote: {
                 ajax: {datatype: 'jsonp', jsonp: 'json.wrf'},
-                //url: '/typeahead/orga/%QUERY?callback=?',
                 url: 'https://hb2.ub.tu-dortmund.de/test/solr/person/tsuggest?q=%QUERY',
-                /*transform: function(data){
-                 console.info(data);
-                 return data;
-                 },*/
                 filter: function(data){
-                    //console.log(data.response.docs)
                     return data.response.docs;
                 }
             },
@@ -223,6 +226,7 @@
         });
 
         organisations.initialize();
+        groups.initialize();
         persons.initialize();
 
         $('.typeahead_orga').click().typeahead({
@@ -233,6 +237,20 @@
             name: 'orga',
             display: 'pref_label',
             source: organisations.ttAdapter(),
+            templates: {
+                empty: 'Nothing',
+                suggestion: Handlebars.compile('{% raw %}<div>{{pref_label}} <small>(id:{{id}}, gnd:{{gnd}})</small></div>{% endraw %}')
+            }
+        });
+
+        $('.typeahead_group').click().typeahead({
+            hint: true,
+            highlight: true,
+            minLength: 2,
+        }, {
+            name: 'group',
+            display: 'pref_label',
+            source: groups.ttAdapter(),
             templates: {
                 empty: 'Nothing',
                 suggestion: Handlebars.compile('{% raw %}<div>{{pref_label}} <small>(id:{{id}}, gnd:{{gnd}})</small></div>{% endraw %}')

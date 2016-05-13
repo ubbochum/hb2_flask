@@ -443,14 +443,35 @@ def persons():
             {
                 'type': 'terms',
                 'field': 'faffiliation',
-                'limit': 20
+                'limit': 10
+            },
+        'fgroup':
+            {
+                'type': 'terms',
+                'field': 'fgroup',
+                'limit': 10
+            },
+        'catalog':
+            {
+                'type': 'terms',
+                'field': 'catalog'
             },
         'editorial_status':
             {
                 'type': 'terms',
                 'field': 'editorial_status',
                 'limit': 20
-            }
+            },
+        'owner':
+            {
+                'type': 'terms',
+                'field': 'owner'
+            },
+        'deskman':
+            {
+                'type': 'terms',
+                'field': 'deskman'
+            },
     }
 
     #persons_solr = Solr(query=query, start=(page - 1) * 10, core='person',
@@ -584,7 +605,44 @@ def _record2solr_doc(form, action):
             # TODO Datenanreicherung und ID-Verknüpfung mit "Organisation" / Wo ist der Kontext in den Bochumer Daten?
             for context in form.data.get(field):
                 logging.info(context)
-                solr_data.setdefault('fakultaet', []).append(context)
+                try:
+                    query = 'id:%s' % context
+                    parent_solr = Solr(core='organisation', query=query, facet='false', fields=['wtf_json'])
+                    parent_solr.request()
+                    if len(parent_solr.results) == 0:
+                        solr_data.setdefault('fakultaet', []).append(context)
+                        flash(
+                            gettext(
+                                'IDs from relation "affiliation" could be found! Ref: %s' % context),
+                            'warning')
+                    for doc in parent_solr.results:
+                        myjson = json.loads(doc.get('wtf_json'))
+                        #logging.info(myjson.get('pref_label'))
+                        label = myjson.get('pref_label')
+                        solr_data.setdefault('fakultaet', []).append(label)
+                except AttributeError as e:
+                    logging.error(e)
+        if field == 'group_context':
+            # TODO Datenanreicherung und ID-Verknüpfung mit "Group" / Wo ist der Kontext in den Bochumer Daten?
+            for context in form.data.get(field):
+                logging.info(context)
+                try:
+                    query = 'id:%s' % context
+                    parent_solr = Solr(core='group', query=query, facet='false', fields=['wtf_json'])
+                    parent_solr.request()
+                    if len(parent_solr.results) == 0:
+                        solr_data.setdefault('group', []).append(context)
+                        flash(
+                            gettext(
+                                'IDs from relation "group" could be found! Ref: %s' % context),
+                            'warning')
+                    for doc in parent_solr.results:
+                        myjson = json.loads(doc.get('wtf_json'))
+                        #logging.info(myjson.get('pref_label'))
+                        label = myjson.get('pref_label')
+                        solr_data.setdefault('group', []).append(label)
+                except AttributeError as e:
+                    logging.error(e)
         if field == 'deskman' and form.data.get(field):
             solr_data.setdefault('deskman', form.data.get(field).strip())
         if field == 'editorial_status':
@@ -827,6 +885,11 @@ def dashboard():
                 'type': 'terms',
                 'field': 'fperson'
             },
+        'fakultaet':
+            {
+                'type': 'terms',
+                'field': 'fakultaet'
+            },
         'publication_status':
             {
                 'type': 'terms',
@@ -978,6 +1041,23 @@ def unlock_orga(orga_id=''):
     return redirect(url_for(redirect_url))
 
 
+@app.route('/unlock/group/<group_id>', methods=['GET'])
+@login_required
+def unlock_group(group_id=''):
+    if current_user.role != 'superadmin':
+        flash(gettext('For SuperAdmins ONLY!!!'))
+        return redirect(url_for('homepage'))
+    if group_id:
+        unlock_solr = Solr(core='group', data=[{'id': group_id, 'locked': {'set': 'false'}}])
+        unlock_solr.update()
+
+    redirect_url='superadmin'
+    if get_redirect_target():
+        redirect_url = get_redirect_target()
+
+    return redirect(url_for(redirect_url))
+
+
 @app.route('/create/from_file', methods=['GET', 'POST'])
 @login_required
 def file_upload():
@@ -1052,12 +1132,27 @@ def orgas():
                 'field': 'fparent',
                 'limit': 20
             },
+        'catalog':
+            {
+                'type': 'terms',
+                'field': 'catalog'
+            },
         'editorial_status':
             {
                 'type': 'terms',
                 'field': 'editorial_status',
                 'limit': 20
-            }
+            },
+        'owner':
+            {
+                'type': 'terms',
+                'field': 'owner'
+            },
+        'deskman':
+            {
+                'type': 'terms',
+                'field': 'deskman'
+            },
     }
 
     orgas_solr = Solr(query=query, start=(page - 1) * 10, core='organisation', sort='changed desc', json_facet=ORGA_FACETS, fquery=filterquery)
@@ -1081,6 +1176,8 @@ def orgas():
 
 def _orga2solr(form):
     tmp = {}
+    if not form.data.get('editorial_status'):
+        form.editorial_status.data = 'new'
     if not form.data.get('owner'):
         tmp.setdefault('owner', ['daten.ub@tu-dortmund.de'])
     else:
@@ -1099,6 +1196,13 @@ def _orga2solr(form):
             tmp.setdefault('created', form.data.get(field).strip().replace(' ', 'T') + 'Z')
         elif field == 'changed':
             tmp.setdefault('changed', form.data.get(field).strip().replace(' ', 'T') + 'Z')
+        elif field == 'deskman' and form.data.get(field):
+            tmp.setdefault('deskman', form.data.get(field).strip())
+        elif field == 'editorial_status':
+            tmp.setdefault('editorial_status', form.data.get(field))
+        elif field == 'catalog':
+            for catalog in form.data.get(field):
+                tmp.setdefault('catalog', catalog.strip())
         elif field == 'destatis':
             for destatis in form.data.get(field):
                 if destatis.get('destatis_label'):
@@ -1153,14 +1257,161 @@ def new_orga():
     form.changed.data = datetime.datetime.now()
     return render_template('linear_form.html', header=lazy_gettext('New Organisation'), site=theme(request.access_route), form=form, action='create', pubtype='organisation')
 
-def _person2solr(form):
+@app.route('/groups')
+def groups():
+    page = int(request.args.get('page', 1))
+    mystart = 0
+    query = '*:*'
+    filterquery = request.values.getlist('filter')
+    GROUP_FACETS = {
+        'destatis_id':
+            {
+                'type': 'terms',
+                'field': 'destatis_id',
+                'limit': 20
+            },
+        'fparent':
+            {
+                'type': 'terms',
+                'field': 'fparent',
+                'limit': 20
+            },
+        'catalog':
+            {
+                'type': 'terms',
+                'field': 'catalog'
+            },
+        'editorial_status':
+            {
+                'type': 'terms',
+                'field': 'editorial_status',
+                'limit': 20
+            },
+        'owner':
+            {
+                'type': 'terms',
+                'field': 'owner'
+            },
+        'deskman':
+            {
+                'type': 'terms',
+                'field': 'deskman'
+            },
+    }
+
+    groups_solr = Solr(query=query, start=(page - 1) * 10, core='group', sort='changed desc', json_facet=GROUP_FACETS, fquery=filterquery)
+    #orgas_solr = Solr(query=query, start=(page - 1) * 10, core='organisation', fquery=filterquery, facet='true', facet_fields=['fparent','destatis_id'])
+    groups_solr.request()
+
+    num_found = groups_solr.count()
+
+    if num_found == 0:
+        flash(gettext('There Are No Working Groups Yet!'))
+        return render_template('groups.html', header=lazy_gettext('Working Groups'), site=theme(request.access_route),
+                               facet_data=groups_solr.facets, results=groups_solr.results,
+                               offset=mystart - 1, query=query, filterquery=filterquery, now=datetime.datetime.now())
+    else:
+        pagination = Pagination(page=page, total=num_found, found=num_found, bs_version=3, search=True,
+                                record_name=lazy_gettext('titles'),
+                                search_msg=lazy_gettext('Showing {start} to {end} of {found} Working Groups'))
+        mystart = 1 + (pagination.page - 1) * pagination.per_page
+    return render_template('groups.html', header=lazy_gettext('Working Groups'), site=theme(request.access_route), facet_data=groups_solr.facets, results=groups_solr.results,
+                           offset=mystart - 1, query=query, filterquery=filterquery, pagination=pagination, now=datetime.datetime.now())
+
+def _group2solr(form):
     tmp = {}
+    if not form.data.get('editorial_status'):
+        form.editorial_status.data = 'new'
     if not form.data.get('owner'):
         tmp.setdefault('owner', ['daten.ub@tu-dortmund.de'])
     else:
         tmp.setdefault('owner', form.data.get('owner'))
     for field in form.data:
-        # logging.info('%s => %s' % (field, form.data.get(field)))
+        if field == 'group_id':
+            tmp.setdefault('group_id', form.data.get(field))
+        elif field == 'alt_label':
+            for alt_label in form.data.get(field):
+                tmp.setdefault('alt_label', []).append(alt_label.data.strip())
+        elif field == 'dwid':
+            tmp.setdefault('account', form.data.get(field))
+        elif field == 'gnd':
+            tmp.setdefault('gnd', form.data.get(field))
+        elif field == 'created':
+            tmp.setdefault('created', form.data.get(field).strip().replace(' ', 'T') + 'Z')
+        elif field == 'changed':
+            tmp.setdefault('changed', form.data.get(field).strip().replace(' ', 'T') + 'Z')
+        elif field == 'deskman' and form.data.get(field):
+            tmp.setdefault('deskman', form.data.get(field).strip())
+        elif field == 'editorial_status':
+            tmp.setdefault('editorial_status', form.data.get(field))
+        elif field == 'catalog':
+            for catalog in form.data.get(field):
+                tmp.setdefault('catalog', catalog.strip())
+        elif field == 'destatis':
+            for destatis in form.data.get(field):
+                if destatis.get('destatis_label'):
+                    tmp.setdefault('destatis_label', []).append(destatis.get('destatis_label').strip())
+                if destatis.get('destatis_id'):
+                    tmp.setdefault('destatis_id', []).append(destatis.get('destatis_id').strip())
+        elif field == 'parent_id' and not form.data.get('parent_label'):
+            try:
+                query = 'id:%s' % form.data.get(field)
+                parent_solr = Solr(core='group', query=query, facet='false', fields=['wtf_json'])
+                parent_solr.request()
+                if len(parent_solr.results) == 0:
+                    flash(
+                        gettext(
+                            'IDs from relation "parent_id" could be found! Ref: %s' % form.data.get(field)),
+                        'warning')
+                for doc in parent_solr.results:
+                    myjson = json.loads(doc.get('wtf_json'))
+                    #logging.info(myjson.get('pref_label'))
+                    label = myjson.get('pref_label')
+                    tmp.setdefault('parent_label', label)
+                    tmp.setdefault('fparent', label)
+                    form.data.setdefault('parent_label', label)
+            except AttributeError as e:
+                logging.error(e)
+        elif field == 'parent_label':
+            tmp.setdefault('fparent', form.data.get(field))
+        else:
+            if form.data.get(field):
+                tmp.setdefault(field, form.data.get(field))
+    wtf_json = json.dumps(form.data)
+    tmp.setdefault('wtf_json', wtf_json)
+    #logging.info(tmp)
+    groups_solr = Solr(core='group', data=[tmp])
+    groups_solr.update()
+
+@app.route('/create/group', methods=['GET', 'POST'])
+@login_required
+def new_group():
+    if current_user.role != 'admin' and current_user.role != 'superadmin':
+        flash(gettext('For Admins ONLY!!!'))
+        return redirect(url_for('homepage'))
+    form = GroupAdminForm()
+
+    if form.validate_on_submit():
+        #logging.info(form.data)
+        _group2solr(form)
+        return redirect(url_for('groups'))
+    form.id.data = uuid.uuid4()
+    form.owner[0].data = current_user.email
+    form.created.data = datetime.datetime.now()
+    form.changed.data = datetime.datetime.now()
+    return render_template('linear_form.html', header=lazy_gettext('New Working Group'), site=theme(request.access_route), form=form, action='create', pubtype='group')
+
+
+def _person2solr(form):
+    tmp = {}
+    if not form.data.get('editorial_status'):
+        form.editorial_status.data = 'new'
+    if not form.data.get('owner'):
+        tmp.setdefault('owner', ['daten.ub@tu-dortmund.de'])
+    else:
+        tmp.setdefault('owner', form.data.get('owner'))
+    for field in form.data:
+        logging.info('%s => %s' % (field, form.data.get(field)))
         if field == 'name' or field == 'former_name':
             tmp.setdefault('name', []).append(form.data.get(field).strip())
         # elif field == 'gnd':
@@ -1181,6 +1432,13 @@ def _person2solr(form):
             tmp.setdefault('created', form.data.get(field).strip().replace(' ', 'T') + 'Z')
         elif field == 'changed':
             tmp.setdefault('changed', form.data.get(field).strip().replace(' ', 'T') + 'Z')
+        elif field == 'editorial_status':
+            tmp.setdefault('editorial_status', form.data.get(field))
+        elif field == 'deskman' and form.data.get(field):
+            tmp.setdefault('deskman', form.data.get(field).strip())
+        elif field == 'catalog':
+            for catalog in form.data.get(field):
+                tmp.setdefault('catalog', catalog.strip())
         elif field == 'research_interest':
             for research_interest in form.data.get(field):
                 tmp.setdefault('research_interest', []).append(research_interest.strip())
@@ -1221,7 +1479,7 @@ def _person2solr(form):
                         if len(parent_solr.results) == 0:
                             flash(
                                 gettext(
-                                    'IDs from relation "affiliation_id" could be found! Ref: %s' % affiliation.get('organisation_id')),
+                                    'IDs from relation "organisation_id" could be found! Ref: %s' % affiliation.get('organisation_id')),
                                 'warning')
                         for doc in parent_solr.results:
                             myjson = json.loads(doc.get('wtf_json'))
@@ -1229,6 +1487,29 @@ def _person2solr(form):
                             label = myjson.get('pref_label')
                             tmp.setdefault('affiliation', []).append(label.strip())
                             tmp.setdefault('faffiliation', []).append(label.strip())
+                    except AttributeError as e:
+                        logging.error(e)
+        elif field == 'group':
+            for group in form.data.get(field):
+                if group.get('label'):
+                    tmp.setdefault('group', []).append(group.get('label').strip())
+                    tmp.setdefault('fgroup', []).append(group.get('label').strip())
+                else:
+                    try:
+                        query = 'id:%s' % group.get('group_id')
+                        parent_solr = Solr(core='group', query=query, facet='false', fields=['wtf_json'])
+                        parent_solr.request()
+                        if len(parent_solr.results) == 0:
+                            flash(
+                                gettext(
+                                    'IDs from relation "group_id" could be found! Ref: %s' % group.get('group_id')),
+                                'warning')
+                        for doc in parent_solr.results:
+                            myjson = json.loads(doc.get('wtf_json'))
+                            #logging.info(myjson.get('pref_label'))
+                            label = myjson.get('pref_label')
+                            tmp.setdefault('group', []).append(label.strip())
+                            tmp.setdefault('fgroup', []).append(label.strip())
                     except AttributeError as e:
                         logging.error(e)
         elif field == 'cv':
@@ -1333,12 +1614,12 @@ def new_record(pubtype='ArticleJournal'):
         return jsonify({'status': 200})
 
     for person in form.person:
-        if current_user.role == 'admin':
+        if current_user.role == 'admin' or current_user.role == 'superadmin':
             person.role.choices = ADMIN_ROLES
         else:
             person.role.choices = USER_ROLES
 
-    if current_user.role == 'admin':
+    if current_user.role == 'admin' or current_user.role == 'superadmin':
         form.pubtype.choices = ADMIN_PUBTYPES
     else:
         form.pubtype.choices = USER_PUBTYPES
@@ -1417,6 +1698,18 @@ def show_orga(orga_id=''):
                            site=theme(request.access_route), action='retrieve', record_id=orga_id,
                            pubtype='organisation', del_redirect=url_for('orgas'))
 
+@app.route('/retrieve/group/<group_id>')
+def show_group(group_id=''):
+    show_group_solr = Solr( query='id:%s' % group_id, core='group', facet='false')
+    show_group_solr.request()
+
+    thedata = json.loads(show_group_solr.results[0].get('wtf_json'))
+    form = GroupAdminForm.from_json(thedata)
+
+    return render_template('group.html', record=form, header=form.data.get('pref_label'),
+                           site=theme(request.access_route), action='retrieve', record_id=group_id,
+                           pubtype='group', del_redirect=url_for('groups'))
+
 @app.route('/update/organisation/<orga_id>', methods=['GET', 'POST'])
 @login_required
 def edit_orga(orga_id=''):
@@ -1452,6 +1745,44 @@ def edit_orga(orga_id=''):
     return render_template('linear_form.html', form=form,
                            header=lazy_gettext('Edit: %(orga)s', orga=form.data.get('pref_label')),
                            locked=True, site=theme(request.access_route), action='update', pubtype='organisation', record_id=orga_id)
+
+
+@app.route('/update/group/<group_id>', methods=['GET', 'POST'])
+@login_required
+def edit_group(group_id=''):
+    if current_user.role != 'admin' and current_user.role != 'superadmin':
+        flash(gettext('For Admins ONLY!!!'))
+        return redirect(url_for('homepage'))
+    lock_record_solr = Solr(core='group', data=[{'id': group_id, 'locked': {'set': 'true'}}])
+    lock_record_solr.update()
+
+    edit_group_solr = Solr(query='id:%s' % group_id, core='group')
+    edit_group_solr.request()
+
+    thedata = json.loads(edit_group_solr.results[0].get('wtf_json'))
+
+    if request.method == 'POST':
+        form = GroupAdminForm()
+    else:
+        form = GroupAdminForm.from_json(thedata)
+
+    if form.validate_on_submit():
+        if form.errors:
+            flash_errors(form)
+            return render_template('linear_form.html', form=form,
+                                   header=lazy_gettext('Edit: %(title)s', title=form.data.get('title')),
+                                   site=theme(request.access_route), action='update')
+        _group2solr(form)
+        unlock_record_solr = Solr(core='group', data=[{'id': group_id, 'locked': {'set': 'false'}}])
+        unlock_record_solr.update()
+        return redirect(url_for('groups'))
+
+    form.changed.data = datetime.datetime.now()
+
+    return render_template('linear_form.html', form=form,
+                           header=lazy_gettext('Edit: %(group)s', orga=form.data.get('pref_label')),
+                           locked=True, site=theme(request.access_route), action='update', pubtype='group', record_id=group_id)
+
 
 @app.route('/update/person/<person_id>', methods=['GET', 'POST'])
 @login_required
@@ -1514,7 +1845,7 @@ def edit_record(record_id='', pubtype=''):
         form = PUBTYPE2FORM.get(pubtype).from_json(thedata)
         #logging.info(form.data)
 
-    if current_user.role == 'admin':
+    if current_user.role == 'admin' or current_user.role != 'superadmin':
         form.pubtype.choices = ADMIN_PUBTYPES
     else:
         form.pubtype.choices = USER_PUBTYPES
@@ -1524,7 +1855,7 @@ def edit_record(record_id='', pubtype=''):
         form.pubtype.data = pubtype
 
     for person in form.person:
-        if current_user.role == 'admin':
+        if current_user.role == 'admin' or current_user.role != 'superadmin':
             person.role.choices = ADMIN_ROLES
         else:
             person.role.choices = USER_ROLES
@@ -1609,13 +1940,33 @@ def delete_orga(orga_id=''):
         # load orga
         # modify status to 'deleted'
         # save orga
-        return redirect(url_for('persons'))
+        return redirect(url_for('orgas'))
     # TODO if superadmin
     elif current_user.role == 'superadmin':
         delete_orga_solr = Solr(core='organisation', del_id=orga_id)
         delete_orga_solr.delete()
         flash(gettext('Organisation %s deleted!' % orga_id))
         return redirect(url_for('orgas'))
+    else:
+        flash(gettext('For SuperAdmins ONLY!!!'))
+        return redirect(url_for('homepage'))
+
+
+@app.route('/delete/group/<group_id>')
+def delete_group(group_id=''):
+    # TODO if admin
+    if current_user.role == 'admin':
+        flash(gettext('Set status of %s to deleted!' % group_id))
+        # load orga
+        # modify status to 'deleted'
+        # save orga
+        return redirect(url_for('groups'))
+    # TODO if superadmin
+    elif current_user.role == 'superadmin':
+        delete_group_solr = Solr(core='group', del_id=group_id)
+        delete_group_solr.delete()
+        flash(gettext('Working Group %s deleted!' % group_id))
+        return redirect(url_for('groups'))
     else:
         flash(gettext('For SuperAdmins ONLY!!!'))
         return redirect(url_for('homepage'))
@@ -1952,6 +2303,10 @@ def _import_orga_data(doc):
     form = OrgaAdminForm.from_json(doc)
     return _orga2solr(form)
 
+def _import_group_data(doc):
+    form = GroupAdminForm.from_json(doc)
+    return _group2solr(form)
+
 @app.route('/import/solr_dump/<filename>', methods=['GET', 'POST'])
 @login_required
 def import_solr_dump(filename=''):
@@ -1998,6 +2353,10 @@ def import_solr_dump(filename=''):
         for mydata in thedata:
             _import_orga_data(mydata)
         target = 'organisations'
+    elif type == 'group':
+        for mydata in thedata:
+            _import_group_data(mydata)
+        target = 'groups'
 
     flash('%s records imported!' % len(thedata), 'success')
     return redirect(target)

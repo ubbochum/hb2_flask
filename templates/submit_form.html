@@ -6,6 +6,12 @@
             {% else %}
             <a href="{% if current_user.role == 'admin' %}../../organisations{% else %}/{% endif %}" class="btn btn-danger">{{ _('Cancel') }}</a>
             {% endif %}
+        {% elif pubtype == 'group' %}
+            {% if locked %}
+            <a href="{{ url_for('unlock_group', group_id=record_id, next='groups') }}" class="btn btn-danger">{{ _('Cancel') }}</a>
+            {% else %}
+            <a href="{% if current_user.role == 'admin' %}../../organisations{% else %}/{% endif %}" class="btn btn-danger">{{ _('Cancel') }}</a>
+            {% endif %}
         {% elif pubtype == 'person' %}
             {% if locked %}
             <a href="{{ url_for('unlock_person', person_id=record_id, next='persons') }}" class="btn btn-danger">{{ _('Cancel') }}</a>
