@@ -39,6 +39,7 @@ MODS_TEST_FILE = ''
 
 SOLR_HOST = '127.0.0.1'
 SOLR_PORT = '8983'
+SOLR_APP = 'solr'
 SOLR_CORE = 'hb2'
 SOLR_EXPORT_FIELD = 'wtf_json'
 SOLR_ROWS = '20'
