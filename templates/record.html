@@ -27,16 +27,16 @@
                     {{ record.data.subtitle }}
                 </dd>
             {% endif %}
-            {% if record.data.title_translated.0.translated_title %}
+            {% if record.data.other_title.0.other_title %}
                 <dt>
-                    {% trans count=record.data.title_translated|length %}
+                    {% trans count=record.data.other_title|length %}
                     Translated Title
                     {% pluralize %}
                     Translated Titles
                     {% endtrans %}
                 </dt>
                 <dd>
-                    {% for title in record.data.title_translated %}
+                    {% for title in record.data.other_title %}
                         {{ title.translated_title }} ({{ lang_map.get(title.language) }})<br/>
                     {% endfor %}
                 </dd>

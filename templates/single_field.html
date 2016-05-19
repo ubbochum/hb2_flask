@@ -13,13 +13,37 @@
             </ul>
         {% endif %}
         {% if field.flags.required %}
-            {{ field(class='form-control',required='required') }}
+            {% if 'title' in field.name %}
+                {{ field(class='form-control typeahead_title',required='required') }}
+            {% elif 'person' in field.name %}
+                {{ field(class='form-control typeahead_pers',required='required') }}
+            {% elif 'corporation' in field.name %}
+                {{ field(class='form-control typeahead_orga',required='required') }}
+            {% elif 'affiliation_context' in field.name %}
+                {{ field(class='form-control typeahead_orga',required='required') }}
+            {% elif 'group_context' in field.name %}
+                {{ field(class='form-control typeahead_group',required='required') }}
+            {% else %}
+                {{ field(class='form-control',required='required') }}
+            {% endif %}
         {% elif field.type == 'BooleanField' %}
             {{ field(class='checkbox') }}
         {% elif field.type == 'FileField' %}
             {{ field }}
         {% else %}
-            {{ field(class='form-control') }}
+            {% if 'title' in field.name %}
+                {{ field(class='form-control typeahead_title') }}
+            {% elif 'person' in field.name %}
+                {{ field(class='form-control typeahead_pers') }}
+            {% elif 'corporation' in field.name %}
+                {{ field(class='form-control typeahead_orga') }}
+            {% elif 'affiliation_context' in field.name %}
+                {{ field(class='form-control typeahead_orga') }}
+            {% elif 'group_context' in field.name %}
+                {{ field(class='form-control typeahead_group') }}
+            {% else %}
+                {{ field(class='form-control') }}
+            {% endif %}
         {% endif %}
         {% if field.description %}<div class="clearfix"></div><p class="help-block" style="margin-top: 8px;">{{ field.description }}</p>{% endif %}
     </div>

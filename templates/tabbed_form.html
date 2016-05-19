@@ -60,11 +60,19 @@
     {% if action == 'update' %}
     <script src="{{ url_for('static', filename='js/socket.io.js') }}"></script>
     {% endif %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.5/handlebars.min.js"></script>
+    {# <script src="https://cdnjs.cloudflare.com/ajax/libs/typeahead.js/0.10.5/typeahead.bundle.min.js"></script> #}
+    <script src="{{ url_for('static', filename='js/typeahead.js') }}"></script>
     <script>
         function scrollto(element){
             $('html, body').animate({scrollTop: $(element).offset().top}, 'slow');
         }
         $(document).on('click', '.add', function (event) {
+            $('.typeahead_orga').typeahead('destroy');
+            $('.typeahead_pers').typeahead('destroy');
+            $('.typeahead_group').typeahead('destroy');
+            $('.typeahead_part_of').typeahead('destroy');
+            $('.typeahead_has_part').typeahead('destroy');
             event.preventDefault();
             var container = $(this).closest('[id$="_container"]');
             var fieldnameparts = container.attr('id').split('-');
@@ -84,13 +92,18 @@
             });
             $(this).replaceWith('<a class="btn btn-sm btn-danger remove" href="#"><i class="fa fa-trash"></i> {{_("Remove this")}}</a></div>');
             container.after(cpy);
-            //$('#' + container_id).find('.col-sm-6 a').after(' <a class="btn btn-sm btn-danger remove" href="#"><i class="fa fa-trash"></i> {{_("Remove this")}}</a>');
+            doTypeahead();
             scrollto('#' + container_id);
         });
         $(document).on('click', '.remove', function (event) {
             $(this).closest('[id*="container"]').remove();
         });
         $(document).on('click', '.add-atomic', function(event){
+            $('.typeahead_orga').typeahead('destroy');
+            $('.typeahead_pers').typeahead('destroy');
+            $('.typeahead_group').typeahead('destroy');
+            $('.typeahead_part_of').typeahead('destroy');
+            $('.typeahead_has_part').typeahead('destroy');
             event.preventDefault();
             var container = $(this).closest('[id$="_container"]');
             var fieldnameparts = container.attr('id').split('-');
@@ -98,21 +111,25 @@
             var cpy = container.clone(true);
             var container_id = cpy.attr('id').replace('-' + (thenum - 1), '-' + thenum);
             cpy.attr('id', container_id);
+            var input;
             cpy.find(':input').each(function(){
                 if ($(this).attr('id')) {
                     var id = $(this).attr('id').replace('-' + (thenum - 1), '-' + thenum);
                     $(this).attr('name', id).attr('id', id).val('').removeAttr('checked');
+                    input = $(this);
                 }
                 else {
                     $(this).remove();
                 }
             });
+            cpy.find('.twitter-typeahead').replaceWith(input);
             cpy.find('label').each(function(){
                 var id = $(this).attr('for').replace('-' + (thenum - 1), '-' + thenum);
                 $(this).attr('for', id);
             });
             $(this).replaceWith('<a class="btn btn-sm btn-danger remove" href="#"><i class="fa fa-trash"></i> {{_("Remove this")}}</a></div>');
             container.after(cpy);
+            doTypeahead();
         });
         function dedupe(idtype, thenode){
             $.getJSON('/dedup/' + idtype + '/' + encodeURIComponent(thenode.val()), function(data){
@@ -174,102 +191,192 @@
             $(this).val(event.originalEvent.dataTransfer.getData('text').split('/').pop());
         })
     </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.5/handlebars.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/typeahead.js/0.10.5/typeahead.bundle.min.js"></script>
     <script>
-        var organisations = new Bloodhound({
-            datumTokenizer: function(d){
-                console.log(d);
-                return Bloodhound.tokenizers.whitespace(d.pref_label)
-            },
-            queryTokenizer: Bloodhound.tokenizers.whitespace,
-            remote: {
-                ajax: {datatype: 'jsonp', jsonp: 'json.wrf'},
-                url: 'https://hb2.ub.tu-dortmund.de/solr/organisation/tsuggest?q=%QUERY',
-                filter: function(data){
-                    return data.response.docs;
+        function doTypeahead() {
+            var titles = new Bloodhound({
+                datumTokenizer: function(d){
+                    console.log(d);
+                    return Bloodhound.tokenizers.whitespace(d.pref_label)
+                },
+                queryTokenizer: Bloodhound.tokenizers.whitespace,
+                remote: {
+                    ajax: {datatype: 'jsonp', jsonp: 'json.wrf'},
+                    url: 'https://hb2.ub.tu-dortmund.de/solr/hb2/tsuggest?q=%QUERY',
+                    filter: function(data){
+                        return data.response.docs;
+                    }
+                },
+                identify: function(obj){return obj.id;}
+            });
+
+            var organisations = new Bloodhound({
+                datumTokenizer: function(d){
+                    console.log(d);
+                    return Bloodhound.tokenizers.whitespace(d.pref_label)
+                },
+                queryTokenizer: Bloodhound.tokenizers.whitespace,
+                remote: {
+                    ajax: {datatype: 'jsonp', jsonp: 'json.wrf'},
+                    url: 'https://hb2.ub.tu-dortmund.de/solr/organisation/tsuggest?q=%QUERY',
+                    filter: function(data){
+                        return data.response.docs;
+                    }
+                },
+                identify: function(obj){return obj.id;}
+            });
+
+            var groups = new Bloodhound({
+                datumTokenizer: function(d){
+                    console.log(d);
+                    return Bloodhound.tokenizers.whitespace(d.pref_label)
+                },
+                queryTokenizer: Bloodhound.tokenizers.whitespace,
+                remote: {
+                    ajax: {datatype: 'jsonp', jsonp: 'json.wrf'},
+                    url: 'https://hb2.ub.tu-dortmund.de/solr/group/tsuggest?q=%QUERY',
+                    filter: function(data){
+                        return data.response.docs;
+                    }
+                },
+                identify: function(obj){return obj.id;}
+            });
+
+            var persons = new Bloodhound({
+                datumTokenizer: function(d){
+                    console.log(d);
+                    return Bloodhound.tokenizers.whitespace(d.name)
+                },
+                queryTokenizer: Bloodhound.tokenizers.whitespace,
+                remote: {
+                    ajax: {datatype: 'jsonp', jsonp: 'json.wrf'},
+                    url: 'https://hb2.ub.tu-dortmund.de/solr/person/tsuggest?q=%QUERY',
+                    filter: function(data){
+                        return data.response.docs;
+                    }
+                },
+                identify: function(obj){return obj.id;}
+            });
+
+            titles.initialize();
+            organisations.initialize();
+            groups.initialize();
+            persons.initialize();
+
+            $('.typeahead_title').typeahead({
+                hint: true,
+                highlight: true,
+                minLength: 2,
+            }, {
+                name: 'title',
+                display: 'title',
+                source: titles.ttAdapter(),
+                templates: {
+                    empty: 'Nothing',
+                    suggestion: Handlebars.compile('{% raw %}<div>{{title}} / {{ fperson }}. <small>{{date}} (id:{{id}})</small></div>{% endraw %}')
                 }
-            },
-            identify: function(obj){return obj.id;}
-        });
+            });
 
-        var groups = new Bloodhound({
-            datumTokenizer: function(d){
-                console.log(d);
-                return Bloodhound.tokenizers.whitespace(d.pref_label)
-            },
-            queryTokenizer: Bloodhound.tokenizers.whitespace,
-            remote: {
-                ajax: {datatype: 'jsonp', jsonp: 'json.wrf'},
-                url: 'https://hb2.ub.tu-dortmund.de/solr/group/tsuggest?q=%QUERY',
-                filter: function(data){
-                    return data.response.docs;
+            $('.typeahead_part_of').typeahead({
+                hint: true,
+                highlight: true,
+                minLength: 2,
+            }, {
+                name: 'is_part_of',
+                display: 'id',
+                source: titles.ttAdapter(),
+                templates: {
+                    empty: 'Nothing',
+                    suggestion: Handlebars.compile('{% raw %}<div>{{title}} / {{ fperson }}. <small>{{date}} (id:{{id}})</small></div>{% endraw %}')
                 }
-            },
-            identify: function(obj){return obj.id;}
-        });
+            });
 
-        var persons = new Bloodhound({
-            datumTokenizer: function(d){
-                console.log(d);
-                return Bloodhound.tokenizers.whitespace(d.name)
-            },
-            queryTokenizer: Bloodhound.tokenizers.whitespace,
-            remote: {
-                ajax: {datatype: 'jsonp', jsonp: 'json.wrf'},
-                url: 'https://hb2.ub.tu-dortmund.de/solr/person/tsuggest?q=%QUERY',
-                filter: function(data){
-                    return data.response.docs;
+            $('.typeahead_has_part').typeahead({
+                hint: true,
+                highlight: true,
+                minLength: 2,
+            }, {
+                name: 'has_part',
+                display: 'id',
+                source: titles.ttAdapter(),
+                templates: {
+                    empty: 'Nothing',
+                    suggestion: Handlebars.compile('{% raw %}<div>{{title}} / {{ fperson }}. <small>{{date}} (id:{{id}})</small></div>{% endraw %}')
                 }
-            },
-            identify: function(obj){return obj.id;}
-        });
+            });
 
-        organisations.initialize();
-        groups.initialize();
-        persons.initialize();
+            $('.typeahead_orga').typeahead({
+                hint: true,
+                highlight: true,
+                minLength: 2,
+            }, {
+                name: 'orga',
+                display: 'pref_label',
+                source: organisations.ttAdapter(),
+                templates: {
+                    empty: 'Nothing',
+                    suggestion: Handlebars.compile('{% raw %}<div>{{pref_label}} <small>(id:{{id}}, gnd:{{gnd}})</small></div>{% endraw %}')
+                }
+            });
 
-        $('.typeahead_orga').typeahead({
-            hint: true,
-            highlight: true,
-            minLength: 2,
-        }, {
-            name: 'orga',
-            display: 'pref_label',
-            source: organisations.ttAdapter(),
-            templates: {
-                empty: 'Nothing',
-                suggestion: Handlebars.compile('{% raw %}<div>{{pref_label}} <small>(id:{{id}}, gnd:{{gnd}})</small></div>{% endraw %}')
+            $('.typeahead_group').typeahead({
+                hint: true,
+                highlight: true,
+                minLength: 2,
+            }, {
+                name: 'group',
+                display: 'pref_label',
+                source: groups.ttAdapter(),
+                templates: {
+                    empty: 'Nothing',
+                    suggestion: Handlebars.compile('{% raw %}<div>{{pref_label}} <small>(id:{{id}}, gnd:{{gnd}})</small></div>{% endraw %}')
+                }
+            });
+
+            $('.typeahead_pers').typeahead({
+                hint: true,
+                highlight: true,
+                minLength: 2,
+            }, {
+                name: 'pers',
+                display: 'name',
+                source: persons.ttAdapter(),
+                templates: {
+                    empty: 'Nothing',
+                    suggestion: Handlebars.compile('{% raw %}<div>{{name}} <small>{{affiliation}} (id:{{id}}, gnd:{{gnd}})</small></div>{% endraw %}')
+                }
+            });
+        }
+
+        doTypeahead();
+
+        $('.typeahead_pers').on('typeahead:selected', function(evt, item) {
+            if (item.gnd) {
+                $(this).closest('[id$="_container"]').find(':input').each(function(){
+                    if ($(this).attr('id') && $(this).attr('id').indexOf('-gnd') >= 1 ) {
+                        $(this).val(item.gnd)
+                    }
+                });
             }
-        });
-
-        $('.typeahead_group').typeahead({
-            hint: true,
-            highlight: true,
-            minLength: 2,
-        }, {
-            name: 'group',
-            display: 'pref_label',
-            source: groups.ttAdapter(),
-            templates: {
-                empty: 'Nothing',
-                suggestion: Handlebars.compile('{% raw %}<div>{{pref_label}} <small>(id:{{id}}, gnd:{{gnd}})</small></div>{% endraw %}')
+        })
+        $('.typeahead_orga').on('typeahead:selected', function(evt, item) {
+            if (item.gnd) {
+                $(this).closest('[id$="_container"]').find(':input').each(function(){
+                    if ($(this).attr('id') && $(this).attr('id').indexOf('-gnd') >= 1 ) {
+                        $(this).val(item.gnd)
+                    }
+                });
             }
-        });
-
-        $('.typeahead_pers').typeahead({
-            hint: true,
-            highlight: true,
-            minLength: 2,
-        }, {
-            name: 'pers',
-            display: 'name',
-            source: persons.ttAdapter(),
-            templates: {
-                empty: 'Nothing',
-                suggestion: Handlebars.compile('{% raw %}<div>{{name}} <small>{{affiliation}} (id:{{id}}, gnd:{{gnd}})</small></div>{% endraw %}')
+        })
+        $('.typeahead_group').on('typeahead:selected', function(evt, item) {
+            if (item.gnd) {
+                $(this).closest('[id$="_container"]').find(':input').each(function(){
+                    if ($(this).attr('id') && $(this).attr('id').indexOf('-gnd') >= 1 ) {
+                        $(this).val(item.gnd)
+                    }
+                });
             }
-        });
+        })
+
     </script>
     <script src="https://togetherjs.com/togetherjs-min.js"></script>
 {% endblock %}

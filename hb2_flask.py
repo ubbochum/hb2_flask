@@ -604,45 +604,47 @@ def _record2solr_doc(form, action):
         if field == 'affiliation_context':
             # TODO Datenanreicherung und ID-Verknüpfung mit "Organisation" / Wo ist der Kontext in den Bochumer Daten?
             for context in form.data.get(field):
-                logging.info(context)
-                try:
-                    query = 'id:%s' % context
-                    parent_solr = Solr(application=secrets.SOLR_APP, core='organisation', query=query, facet='false', fields=['wtf_json'])
-                    parent_solr.request()
-                    if len(parent_solr.results) == 0:
-                        solr_data.setdefault('fakultaet', []).append(context)
-                        flash(
-                            gettext(
-                                'IDs from relation "affiliation" could be found! Ref: %s' % context),
-                            'warning')
-                    for doc in parent_solr.results:
-                        myjson = json.loads(doc.get('wtf_json'))
-                        #logging.info(myjson.get('pref_label'))
-                        label = myjson.get('pref_label')
-                        solr_data.setdefault('fakultaet', []).append(label)
-                except AttributeError as e:
-                    logging.error(e)
+                #logging.info(context)
+                if len(context) > 0:
+                    try:
+                        query = 'id:%s' % context
+                        parent_solr = Solr(application=secrets.SOLR_APP, core='organisation', query=query, facet='false', fields=['wtf_json'])
+                        parent_solr.request()
+                        if len(parent_solr.results) == 0:
+                            solr_data.setdefault('fakultaet', []).append(context)
+                            flash(
+                                gettext(
+                                    'IDs from relation "affiliation" could not be found! Ref: %s' % context),
+                                'warning')
+                        for doc in parent_solr.results:
+                            myjson = json.loads(doc.get('wtf_json'))
+                            #logging.info(myjson.get('pref_label'))
+                            label = myjson.get('pref_label')
+                            solr_data.setdefault('fakultaet', []).append(label)
+                    except AttributeError as e:
+                        logging.error(e)
         if field == 'group_context':
             # TODO Datenanreicherung und ID-Verknüpfung mit "Group" / Wo ist der Kontext in den Bochumer Daten?
             for context in form.data.get(field):
-                logging.info(context)
-                try:
-                    query = 'id:%s' % context
-                    parent_solr = Solr(application=secrets.SOLR_APP, core='group', query=query, facet='false', fields=['wtf_json'])
-                    parent_solr.request()
-                    if len(parent_solr.results) == 0:
-                        solr_data.setdefault('group', []).append(context)
-                        flash(
-                            gettext(
-                                'IDs from relation "group" could be found! Ref: %s' % context),
-                            'warning')
-                    for doc in parent_solr.results:
-                        myjson = json.loads(doc.get('wtf_json'))
-                        #logging.info(myjson.get('pref_label'))
-                        label = myjson.get('pref_label')
-                        solr_data.setdefault('group', []).append(label)
-                except AttributeError as e:
-                    logging.error(e)
+                #logging.info(context)
+                if len(context) > 0:
+                    try:
+                        query = 'id:%s' % context
+                        parent_solr = Solr(application=secrets.SOLR_APP, core='group', query=query, facet='false', fields=['wtf_json'])
+                        parent_solr.request()
+                        if len(parent_solr.results) == 0:
+                            solr_data.setdefault('group', []).append(context)
+                            flash(
+                                gettext(
+                                    'IDs from relation "group" could not be found! Ref: %s' % context),
+                                'warning')
+                        for doc in parent_solr.results:
+                            myjson = json.loads(doc.get('wtf_json'))
+                            #logging.info(myjson.get('pref_label'))
+                            label = myjson.get('pref_label')
+                            solr_data.setdefault('group', []).append(label)
+                    except AttributeError as e:
+                        logging.error(e)
         if field == 'deskman' and form.data.get(field):
             solr_data.setdefault('deskman', form.data.get(field).strip())
         if field == 'editorial_status':
@@ -655,9 +657,10 @@ def _record2solr_doc(form, action):
             solr_data.setdefault('title', form.data.get(field).strip())
             solr_data.setdefault('exacttitle', form.data.get(field).strip())
             solr_data.setdefault('sorttitle', form.data.get(field).strip())
-        if field == 'translated_title':
+        if field == 'other_title':
             for trans_tit in form.data.get(field):
-                solr_data.setdefault('parallel_title', trans_tit.strip())
+                logging.info(trans_tit)
+                # TODO solr_data.setdefault('other_title', trans_tit.strip())
         if field == 'issued':
             if form.data.get(field):
                 solr_data.setdefault('date', form.data.get(field).replace('[','').replace(']','').strip())
@@ -1412,8 +1415,11 @@ def _person2solr(form):
         tmp.setdefault('owner', form.data.get('owner'))
     for field in form.data:
         #logging.info('%s => %s' % (field, form.data.get(field)))
-        if field == 'name' or field == 'former_name':
-            tmp.setdefault('name', []).append(form.data.get(field).strip())
+        #if field == 'name' or field == 'former_name':
+        #    if len(form.data.get(field)) > 0:
+        #        tmp.setdefault('name', []).append(form.data.get(field).strip())
+        if field == 'name':
+            tmp.setdefault('name', form.data.get(field).strip())
         # elif field == 'gnd':
         #     if form.data.get(field):
         #         form.id.data = form.data.get(field).strip()
@@ -2269,8 +2275,8 @@ def export_solr_dump(core=''):
         filename = '%s_%s.json' % (core, int(time.time()))
         export_solr = Solr(application=secrets.SOLR_APP, export_field='wtf_json', core=core)
         export_docs = export_solr.export()
-        target_solr = Solr(application=secrets.SOLR_APP, core='hb2_users', data=[{'id': filename, 'core': core, 'dump': json.dumps(export_docs)}])
-        target_solr.update()
+        #target_solr = Solr(application=secrets.SOLR_APP, core='hb2_users', data=[{'id': filename, 'core': core, 'dump': json.dumps(export_docs)}])
+        #target_solr.update()
 
         return send_file(BytesIO(str.encode(json.dumps(export_docs))), attachment_filename=filename, as_attachment=True,
                          cache_timeout=1, add_etags=True)

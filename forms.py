@@ -555,7 +555,7 @@ class MonographRelationForm(ContainerRelationForm):
     pass
 
 class TranslatedTitleForm(Form):
-    translated_title = StringField(lazy_gettext('Translated Title'), validators=[Optional()], widget=CustomTextInput(placeholder=lazy_gettext('The translated title of the work')))
+    translated_title = StringField(lazy_gettext('Other Title'), validators=[Optional()], widget=CustomTextInput(placeholder=lazy_gettext('translated title, parallel title or EST of the work')))
     language = SelectField(lazy_gettext('Language'), validators=[Optional()], choices=LANGUAGES)
 
 class WorkForm(Form):
@@ -563,7 +563,7 @@ class WorkForm(Form):
     title = StringField(lazy_gettext('Title'), validators=[DataRequired()], widget=CustomTextInput(placeholder=lazy_gettext('The title of the work')))
     subtitle = StringField(lazy_gettext('Subtitle'), validators=[Optional()], widget=CustomTextInput(placeholder=lazy_gettext('The subtitle of the work')))
     title_supplement = StringField(lazy_gettext('Title Supplement'), validators=[Optional()], widget=CustomTextInput(placeholder=lazy_gettext('Additions to the title of the work')))
-    title_translated = FieldList(FormField(TranslatedTitleForm), min_entries=1)
+    other_title = FieldList(FormField(TranslatedTitleForm), min_entries=1)
     person = FieldList(FormField(PersonForm), min_entries=1)
     corporation = FieldList(FormField(CorporationForm), min_entries=1)
     uri = FieldList(StringField(lazy_gettext('URI'), validators=[URL(), Optional()]), min_entries=1, widget=CustomTextInput(placeholder=lazy_gettext('A URI, URL, or URN')))
@@ -673,7 +673,7 @@ class SeriesForm(SerialForm):
     def groups(self):
         yield [
             {'group': [self.pubtype, self.publication_status, self.title, self.subtitle, self.title_supplement,
-                       self.title_translated, self.issued, self.number_of_volumes, self.publisher, self.publisher_place,
+                       self.other_title, self.issued, self.number_of_volumes, self.publisher, self.publisher_place,
                        self.frequency, self.language, self.number_of_pages, self.medium, self.accessed, self.additions, self.note,
                        self.license, self.license_text
                        ],
@@ -698,7 +698,7 @@ class JournalForm(SerialForm):
 
     def groups(self):
         yield [
-            {'group': [self.pubtype, self.publication_status, self.title, self.subtitle, self.journal_abbreviation, self.title_supplement, self.title_translated,
+            {'group': [self.pubtype, self.publication_status, self.title, self.subtitle, self.journal_abbreviation, self.title_supplement, self.other_title,
                        self.issued, self.publisher, self.publisher_place, self.frequency, self.language, self.number_of_pages, self.medium, self.accessed, self.additions, self.note, self.license, self.license_text
                        ],
              'label': lazy_gettext('Basic')},
@@ -759,7 +759,7 @@ class ArticleJournalForm(ArticleForm):
 
     def groups(self):
         yield [
-            {'group': [self.pubtype, self.subtype, self.publication_status, self.title, self.subtitle, self.title_supplement, self.title_translated,
+            {'group': [self.pubtype, self.subtype, self.publication_status, self.title, self.subtitle, self.title_supplement, self.other_title,
                        self.issued, self.language, self.number_of_pages, self.medium, self.accessed, self.additions, self.note, self.license, self.license_text
                        ],
              'label': lazy_gettext('Basic')},
@@ -795,7 +795,7 @@ class ArticleNewspaperForm(ArticleForm):
     def groups(self):
         yield [
             {'group': [self.pubtype, self.subtype, self.publication_status, self.title, self.subtitle, self.title_supplement,
-                       self.title_translated, self.issued, self.language, self.number_of_pages, self.medium, self.accessed,
+                       self.other_title, self.issued, self.language, self.number_of_pages, self.medium, self.accessed,
                        self.additions, self.note, self.license, self.license_text
                        ],
              'label': lazy_gettext('Basic')},
@@ -824,7 +824,7 @@ class SpecialIssueForm(JournalForm):
 
     def groups(self):
         yield [
-            {'group': [self.pubtype, self.subtype, self.publication_status, self.title, self.subtitle, self.journal_abbreviation, self.title_supplement, self.title_translated,
+            {'group': [self.pubtype, self.subtype, self.publication_status, self.title, self.subtitle, self.journal_abbreviation, self.title_supplement, self.other_title,
                        self.issued, self.publisher, self.publisher_place, self.frequency, self.language, self.number_of_pages, self.medium, self.accessed, self.additions, self.note, self.license, self.license_text
                        ],
              'label': lazy_gettext('Basic')},
@@ -868,7 +868,7 @@ class CollectionForm(ContainerForm):
 
     def groups(self):
         yield [
-            {'group': [self.pubtype, self.subtype, self.publication_status, self.title, self.subtitle, self.title_supplement, self.title_translated,
+            {'group': [self.pubtype, self.subtype, self.publication_status, self.title, self.subtitle, self.title_supplement, self.other_title,
                        self.issued, self.edition, self.number_of_volumes, self.publisher, self.publisher_place, self.language, self.number_of_pages, self.medium, self.accessed, self.additions, self.note, self.license, self.license_text
                        ],
              'label': lazy_gettext('Basic')},
@@ -898,7 +898,7 @@ class ConferenceForm(CollectionForm):
 
     def groups(self):
         yield [
-            {'group': [self.pubtype, self.subtype, self.publication_status, self.title, self.subtitle, self.title_supplement, self.title_translated,
+            {'group': [self.pubtype, self.subtype, self.publication_status, self.title, self.subtitle, self.title_supplement, self.other_title,
                        self.issued, self.edition, self.number_of_volumes, self.publisher, self.publisher_place, self.language, self.number_of_pages, self.medium, self.accessed, self.additions, self.note, self.license, self.license_text
                        ],
              'label': lazy_gettext('Basic')},
@@ -929,7 +929,7 @@ class EditionForm(CollectionForm):
 
     def groups(self):
         yield [
-            {'group': [self.pubtype, self.subtype, self.publication_status, self.title, self.subtitle, self.title_supplement, self.title_translated,
+            {'group': [self.pubtype, self.subtype, self.publication_status, self.title, self.subtitle, self.title_supplement, self.other_title,
                        self.issued, self.edition, self.number_of_volumes, self.publisher, self.publisher_place, self.language, self.number_of_pages, self.medium, self.accessed, self.additions, self.note, self.license, self.license_text
                        ],
              'label': lazy_gettext('Basic')},
@@ -956,7 +956,7 @@ class LegalCommentaryForm(CollectionForm):
 
     def groups(self):
         yield [
-            {'group': [self.pubtype, self.subtype, self.publication_status, self.title, self.subtitle, self.title_supplement, self.title_translated, self.standard_abbreviation,
+            {'group': [self.pubtype, self.subtype, self.publication_status, self.title, self.subtitle, self.title_supplement, self.other_title, self.standard_abbreviation,
                        self.issued, self.edition, self.number_of_volumes, self.publisher, self.publisher_place, self.language, self.number_of_pages, self.medium, self.accessed, self.additions, self.note, self.license, self.license_text
                        ],
              'label': lazy_gettext('Basic')},
@@ -1008,7 +1008,7 @@ class ChapterForm(WorkForm):
 
     def groups(self):
         yield [
-            {'group': [self.pubtype, self.subtype, self.publication_status, self.title, self.subtitle, self.title_supplement, self.title_translated,
+            {'group': [self.pubtype, self.subtype, self.publication_status, self.title, self.subtitle, self.title_supplement, self.other_title,
                        self.issued, self.language, self.number_of_pages, self.medium, self.accessed, self.additions, self.note, self.license, self.license_text
                        ],
              'label': lazy_gettext('Basic')},
@@ -1035,7 +1035,7 @@ class ChapterInLegalCommentaryForm(ChapterForm):
 
     def groups(self):
         yield [
-            {'group': [self.pubtype, self.publication_status, self.title, self.subtitle, self.title_supplement, self.title_translated, self.supplement,
+            {'group': [self.pubtype, self.publication_status, self.title, self.subtitle, self.title_supplement, self.other_title, self.supplement,
                        self.issued, self.date_updated, self.language, self.number_of_pages, self.medium, self.accessed, self.additions, self.note, self.license, self.license_text
                        ],
              'label': lazy_gettext('Basic')},
@@ -1065,7 +1065,7 @@ class ChapterInMonographForm(ChapterForm):
 
     def groups(self):
         yield [
-            {'group': [self.pubtype, self.subtype, self.publication_status, self.title, self.subtitle, self.title_supplement, self.title_translated,
+            {'group': [self.pubtype, self.subtype, self.publication_status, self.title, self.subtitle, self.title_supplement, self.other_title,
                        self.issued, self.language, self.number_of_pages, self.medium, self.accessed, self.additions, self.note, self.license, self.license_text
                        ],
              'label': lazy_gettext('Basic')},
@@ -1091,7 +1091,7 @@ class AudioBookForm(PrintedWorkForm):
 
     def groups(self):
         yield [
-            {'group': [self.pubtype, self.publication_status, self.title, self.subtitle, self.title_supplement, self.title_translated,
+            {'group': [self.pubtype, self.publication_status, self.title, self.subtitle, self.title_supplement, self.other_title,
                        self.issued, self.edition, self.publisher, self.publisher_place, self.language, self.number_of_pages, self.medium, self.accessed, self.additions, self.note, self.license, self.license_text
                        ],
              'label': lazy_gettext('Basic')},
@@ -1125,7 +1125,7 @@ class AudioVideoDocumentForm(PrintedWorkForm):
 
     def groups(self):
         yield [
-            {'group': [self.pubtype, self.subtype, self.publication_status, self.title, self.subtitle, self.title_supplement, self.title_translated,
+            {'group': [self.pubtype, self.subtype, self.publication_status, self.title, self.subtitle, self.title_supplement, self.other_title,
                        self.issued, self.edition, self.publisher, self.publisher_place, self.language, self.number_of_pages, self.medium, self.accessed, self.additions, self.note, self.license, self.license_text
                        ],
              'label': lazy_gettext('Basic')},
@@ -1167,7 +1167,7 @@ class InternetDocumentForm(WorkForm):
 
     def groups(self):
         yield [
-            {'group': [self.pubtype, self.subtype, self.publication_status, self.title, self.subtitle, self.title_supplement, self.title_translated,
+            {'group': [self.pubtype, self.subtype, self.publication_status, self.title, self.subtitle, self.title_supplement, self.other_title,
                        self.issued, self.place, self.language, self.number_of_pages, self.number, self.medium, self.accessed, self.last_update, self.additions, self.note, self.license, self.license_text
                        ],
              'label': lazy_gettext('Basic')},
@@ -1205,7 +1205,7 @@ class LectureForm(WorkForm):
 
     def groups(self):
         yield [
-            {'group': [self.pubtype, self.subtype, self.publication_status, self.title, self.subtitle, self.title_supplement, self.title_translated, self.lecture_title,
+            {'group': [self.pubtype, self.subtype, self.publication_status, self.title, self.subtitle, self.title_supplement, self.other_title, self.lecture_title,
                        self.issued, self.place, self.language, self.number_of_pages, self.medium, self.accessed, self.additions, self.note, self.license, self.license_text
                        ],
              'label': lazy_gettext('Basic')},
@@ -1255,7 +1255,7 @@ class MonographForm(PrintedWorkForm):
 
     def groups(self):
         yield [
-            {'group': [self.pubtype, self.subtype, self.publication_status, self.title, self.subtitle, self.title_supplement, self.title_translated,
+            {'group': [self.pubtype, self.subtype, self.publication_status, self.title, self.subtitle, self.title_supplement, self.other_title,
                        self.issued, self.edition, self.number_of_volumes, self.publisher, self.publisher_place, self.language, self.number_of_pages, self.medium, self.accessed, self.additions, self.note, self.license, self.license_text
                        ],
              'label': lazy_gettext('Basic')},
@@ -1304,7 +1304,7 @@ class MultivolumeWorkForm(PrintedWorkForm):
 
     def groups(self):
         yield [
-            {'group': [self.pubtype, self.subtype, self.publication_status, self.title, self.subtitle, self.title_supplement, self.title_translated,
+            {'group': [self.pubtype, self.subtype, self.publication_status, self.title, self.subtitle, self.title_supplement, self.other_title,
                        self.issued, self.edition, self.number_of_volumes, self.publisher, self.publisher_place, self.language, self.number_of_pages, self.medium, self.accessed, self.additions, self.note, self.license, self.license_text
                        ],
              'label': lazy_gettext('Basic')},
@@ -1351,7 +1351,7 @@ class OtherForm(WorkForm):
 
     def groups(self):
         yield [
-            {'group': [self.pubtype, self.subtype, self.publication_status, self.title, self.subtitle, self.title_supplement, self.title_translated,
+            {'group': [self.pubtype, self.subtype, self.publication_status, self.title, self.subtitle, self.title_supplement, self.other_title,
                        self.issued, self.edition, self.place, self.language, self.number_of_pages, self.number, self.medium, self.accessed, self.additions, self.note, self.license, self.license_text
                        ],
              'label': lazy_gettext('Basic')},
@@ -1391,7 +1391,7 @@ class PatentForm(WorkForm):
 
     def groups(self):
         yield [
-            {'group': [self.pubtype, self.publication_status, self.title, self.subtitle, self.title_supplement, self.title_translated,
+            {'group': [self.pubtype, self.publication_status, self.title, self.subtitle, self.title_supplement, self.other_title,
                        self.issued, self.language, self.number_of_pages, self.medium, self.accessed, self.additions, self.note, self.license, self.license_text
                        ],
              'label': lazy_gettext('Basic')},
@@ -1419,7 +1419,7 @@ class PressReleaseForm(WorkForm):
 
     def groups(self):
         yield [
-            {'group': [self.pubtype, self.publication_status, self.title, self.subtitle, self.title_supplement, self.title_translated,
+            {'group': [self.pubtype, self.publication_status, self.title, self.subtitle, self.title_supplement, self.other_title,
                        self.issued, self.place, self.language, self.number_of_pages, self.medium, self.accessed, self.additions, self.note, self.license, self.license_text
                        ],
              'label': lazy_gettext('Basic')},
@@ -1449,7 +1449,7 @@ class RadioTVProgramForm(WorkForm):
 
     def groups(self):
         yield [
-            {'group': [self.pubtype, self.subtype, self.publication_status, self.title, self.subtitle, self.title_supplement, self.title_translated,
+            {'group': [self.pubtype, self.subtype, self.publication_status, self.title, self.subtitle, self.title_supplement, self.other_title,
                        self.issued, self.language, self.number_of_pages, self.medium, self.accessed, self.additions, self.note, self.license, self.license_text
                        ],
              'label': lazy_gettext('Basic')},
@@ -1481,7 +1481,7 @@ class SoftwareForm(PrintedWorkForm):
 
     def groups(self):
         yield [
-            {'group': [self.pubtype, self.publication_status, self.title, self.subtitle, self.title_supplement, self.title_translated,
+            {'group': [self.pubtype, self.publication_status, self.title, self.subtitle, self.title_supplement, self.other_title,
                        self.issued, self.edition, self.publisher, self.publisher_place, self.language, self.number_of_pages, self.operating_system, self.medium, self.accessed, self.additions, self.note, self.license, self.license_text
                        ],
              'label': lazy_gettext('Basic')},
@@ -1519,7 +1519,7 @@ class StandardForm(PrintedWorkForm):
 
     def groups(self):
         yield [
-            {'group': [self.pubtype, self.publication_status, self.title, self.subtitle, self.title_supplement, self.title_translated,
+            {'group': [self.pubtype, self.publication_status, self.title, self.subtitle, self.title_supplement, self.other_title,
                        self.issued, self.edition, self.publisher, self.publisher_place, self.language, self.number_of_pages, self.medium, self.accessed, self.additions, self.note, self.license, self.license_text
                        ],
              'label': lazy_gettext('Basic')},
@@ -1567,7 +1567,7 @@ class ThesisForm(WorkForm):
 
     def groups(self):
         yield [
-            {'group': [self.pubtype, self.subtype, self.publication_status, self.title, self.subtitle, self.title_supplement, self.title_translated,
+            {'group': [self.pubtype, self.subtype, self.publication_status, self.title, self.subtitle, self.title_supplement, self.other_title,
                        self.issued, self.day_of_oral_exam, self.place, self.language, self.number_of_pages, self.medium, self.accessed, self.additions, self.note, self.license, self.license_text
                        ],
              'label': lazy_gettext('Basic')},
