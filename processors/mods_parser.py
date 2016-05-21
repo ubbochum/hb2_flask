@@ -26,8 +26,9 @@ import datetime
 from lxml import etree
 import uuid
 import logging
-import pprint
 import simplejson as json
+from os import listdir
+from os.path import isfile, join
 
 try:
     import site_secrets as secrets
@@ -36,7 +37,7 @@ except ImportError:
 
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s %(levelname)-4s %(message)s',
-                    datefmt='%a, %d %b %Y %H:%M:%S.f%',
+                    datefmt='%a, %d %b %Y %H:%M:%S',
                     )
 
 MODS_NAMESPACE = 'http://www.loc.gov/mods/v3'
@@ -108,11 +109,14 @@ OLD_PUBTYPES_MAP = {
     'ContributionNachwort': 'Chapter#afterword',
     'BookEdited': 'Collection',
     'BookEditedFestschrift': 'Collection#festschrift',
+    'BookEditedMusikdruck': 'Collection#musikdruck',
     'Book': 'Monograph',
     'BookDissertation': 'Monograph#dissertation',
     'BookFestschrift': 'Monograph#festschrift',
     'BookHabilitation': 'Monograph#habilitation',
     'BookMusikdruck': 'Monograph#notated_music',
+    'BookVorwort': 'Chapter#foreword',
+    'BookNachwort': 'Chapter#afterword',
     'UnpublishedWork': 'Other#report',
     'UnpublishedWorkLexikonartikel': 'Other#report#article_article',
     'UnpublishedWorkFestschrift': 'Other#festschrift',
@@ -120,6 +124,7 @@ OLD_PUBTYPES_MAP = {
     'UnpublishedWorkVorlesungsskript': 'Other#lecture_notes',
     'UnpublishedWorkPoster': 'Other#poster',
     'UnpublishedWorkPosterAbstract': 'Other#poster_abstract',
+    'UnpublishedWorkGutachten': 'Other#expert_opinion',
     'Patent': 'Patent',
     'Thesis': 'Thesis',
     'ThesisBachelorarbeit': 'Thesis#bachelor_thesis',
@@ -133,15 +138,15 @@ OLD_PUBTYPES_MAP = {
     'ThesisZweiteStaatsexamensarbeit': 'Thesis#second_state_examination',
     'NewspaperArticle': 'ArticleNewspaper',
     'NewspaperArticleRezension': 'ArticleNewspaper#review',
-    'AudioBook': 'AudioBook',
+    'AudioBook': 'AudioVideoDocument#audio_book',
     'AudioOrVideoDocument': 'AudioVideoDocument',
     'AudioOrVideoDocumentBilddatenbank': 'AudioVideoDocument#image_database',
     'AudioOrVideoDocumentBühnenwerk': 'AudioVideoDocument#dramatic_work',
     'AudioOrVideoDocumentInterview': 'AudioVideoDocument#interview',
     'ContributionInLegalCommentary': 'ChapterInLegalCommentary',
-    'BookVorwort': 'ChapterInMonograph#foreword',
-    'BookNachwort': 'ChapterInMonograph#afterword',
+    'ContributionInLegalCommentaryLexikonartikel': 'ChapterInLegalCommentary#lexicon_article',
     'ConferenceProceedings': 'Conference',
+    'ConferenceProceedingsFestschrift': 'Conference#festschrift',
     'CollectedWorks': 'Edition',
     'CollectedWorksFestschrift': 'Edition#festschrift',
     'CollectedWorksMusikdruck': 'Edition#notated_music',
@@ -204,9 +209,6 @@ with open('mesh_map.json') as mesh_map:
 
 with open('mesh_map.json') as stw_map:
     SUBJECT_MAPS.setdefault('stw', json.load(stw_map))
-
-mc = etree.iterparse(secrets.MODS_TEST_FILE, tag='%smods' % MODS)
-
 
 def oai_elements(name, values):
     if values:
@@ -1069,120 +1071,103 @@ more_parents = []
 solr_json = []
 wtfs = []
 
-for event, record in mc:
-    wtf = {}
-    csl = {}
-    solr = {}
-    old_pubtype = ''
-    oai_dc = etree.Element('%smetadata' % OAI_DC, nsmap=OAI_MAP)
-    # print '%s => %s' % (event, etree.tostring(record))
-    for xpath_expr in CONVERTER_MAP:
-        elems = record.xpath(xpath_expr, namespaces=NSMAP)
-        # if len(elems) == 1:
-        #     logging.info(etree.tostring(elems[0]))
-        #     try:
-        #         wtf.update(CONVERTER_MAP.get(xpath_expr).get('wtf')(elems[0]))
-        #         logging.info('PAAP => %s' % (elems[0].text))
-        #     except AttributeError:
-        #         logging.info('PEEP => %s' % xpath_expr)
-        #         logging.info(record.xpath("./m:recordInfo/m:recordIdentifier", namespaces=NSMAP)[0].text)
-        #         raise
-        #     except TypeError:
-        #         logging.info('POOP => %s' % xpath_expr)
-        #         #logging.info(record.xpath("./m:recordInfo/m:recordIdentifier", namespaces=NSMAP)[0].text)
-        #         pass
-        #     try:
-        #         if any(CONVERTER_MAP.get(xpath_expr).get('csl')(elems[0]).values()):
-        #             csl.update(CONVERTER_MAP.get(xpath_expr).get('csl')(elems[0]))
-        #     except TypeError:
-        #         #logging.info(xpath_expr)
-        #         #logging.info(record.xpath("./m:recordInfo/m:recordIdentifier", namespaces=NSMAP)[0].text)
-        #         #raise
-        #         pass
-        #     try:
-        #         if any(CONVERTER_MAP.get(xpath_expr).get('solr')(elems[0]).values()):
-        #             solr.update(CONVERTER_MAP.get(xpath_expr).get('solr')(elems[0]))
-        #     except TypeError:
-        #         pass
-        # elif len(elems) > 1:
-        try:
-            data = CONVERTER_MAP.get(xpath_expr).get('wtf')(elems)
-            if list(data.values())[0]:
-                wtf.update(data)
-        except TypeError:
-            pass
-        except IndexError:
-            pass
-        except AttributeError:
-            if type(data) == tuple:
-                for d in data:
-                    wtf.update(d)
-            else:
+modsfiles = []
+if len(secrets.MODS_FILES_PATH) > 0:
+    modsfiles = [join(secrets.MODS_FILES_PATH, f) for f in listdir(secrets.MODS_FILES_PATH) if isfile(join(secrets.MODS_FILES_PATH, f))]
+else:
+    modsfiles.append(secrets.MODS_TEST_FILE)
+#logging.info(modsfiles)
+
+for file in modsfiles:
+    logging.info('work on ' + file)
+    mc = etree.iterparse(file, tag='%smods' % MODS)
+
+    for event, record in mc:
+        wtf = {}
+        csl = {}
+        solr = {}
+        old_pubtype = ''
+        oai_dc = etree.Element('%smetadata' % OAI_DC, nsmap=OAI_MAP)
+        for xpath_expr in CONVERTER_MAP:
+            elems = record.xpath(xpath_expr, namespaces=NSMAP)
+            try:
+                data = CONVERTER_MAP.get(xpath_expr).get('wtf')(elems)
+                if list(data.values())[0]:
+                    wtf.update(data)
+            except TypeError:
+                pass
+            except IndexError:
+                pass
+            except AttributeError:
+                if type(data) == tuple:
+                    for d in data:
+                        wtf.update(d)
+                else:
+                    logging.info(xpath_expr)
+                    logging.info(record.xpath("./m:recordInfo/m:recordIdentifier", namespaces=NSMAP)[0].text)
+                    for elem in elems:
+                        logging.info(etree.tostring(elem))
+                    raise
+            try:
+                data = CONVERTER_MAP.get(xpath_expr).get('csl')(elems)
+                if len(list(data.values())) > 0:
+                    csl.update(data)
+            except TypeError:
+                pass
+            except IndexError:
+                pass
+            try:
+                data = CONVERTER_MAP.get(xpath_expr).get('solr')(elems)
+                if len(list(data.values())) > 0:
+                    solr.update(data)
+            except TypeError:
+                pass
+            except IndexError:
+                pass
+
+            try:
+                oai_dc.extend(CONVERTER_MAP.get(xpath_expr).get('oai_dc')[0](CONVERTER_MAP.get(xpath_expr).get('oai_dc')[1],
+                                                                             elems))
+            except TypeError:
+                pass
+            except AttributeError:
                 logging.info(xpath_expr)
                 logging.info(record.xpath("./m:recordInfo/m:recordIdentifier", namespaces=NSMAP)[0].text)
-                for elem in elems:
-                    logging.info(etree.tostring(elem))
                 raise
-        try:
-            data = CONVERTER_MAP.get(xpath_expr).get('csl')(elems)
-            if len(list(data.values())) > 0:
-                csl.update(data)
-        except TypeError:
-            pass
-        except IndexError:
-            pass
-        try:
-            data = CONVERTER_MAP.get(xpath_expr).get('solr')(elems)
-            if len(list(data.values())) > 0:
-                solr.update(data)
-        except TypeError:
-            pass
-        except IndexError:
-            pass
 
-        try:
-            oai_dc.extend(CONVERTER_MAP.get(xpath_expr).get('oai_dc')[0](CONVERTER_MAP.get(xpath_expr).get('oai_dc')[1],
-                                                                         elems))
-        except TypeError:
-            pass
-        except AttributeError:
-            logging.info(xpath_expr)
-            logging.info(record.xpath("./m:recordInfo/m:recordIdentifier", namespaces=NSMAP)[0].text)
-            raise
+        wtf.setdefault('editorial_status', 'imported')
+        wtf.setdefault('owner', ['daten.ub@tu-dortmund.de'])
+        wtf.setdefault('catalog', [secrets.CATALOG])
 
-    wtf.setdefault('editorial_status', 'imported')
-    wtf.setdefault('owner', ['daten.ub@tu-dortmund.de'])
-    wtf.setdefault('catalog', [secrets.CATALOG])
+        if not wtf.get('pubtype'):
+            logging.info('%s: ERROR no pubtype', wtf.get('id'))
+        elif len(wtf.get('pubtype').split('#')) > 1:
+            tmp = wtf.get('pubtype').split('#')
+            wtf['pubtype'] = tmp[0]
+            wtf.setdefault('subtype', tmp[1])
 
-    if not wtf.get('pubtype'):
-        logging.info('%s: ERROR no pubtype', wtf.get('id'))
-    elif len(wtf.get('pubtype').split('#')) > 1:
-        tmp = wtf.get('pubtype').split('#')
-        wtf['pubtype'] = tmp[0]
-        wtf.setdefault('subtype', tmp[1])
+        wtfs.append(wtf)
+        # solr.setdefault('dc', oai_dc)
+        # logging.info('WTF %s' % wtf)
+        # pprint.pprint(oai_dc)
+        # logging.info('OAI_DC %s' % etree.tostring(oai_dc))
+        # logging.info('CSL %s' % csl)
+        # logging.info('SOLR %s' % solr)
+        # pprint.pprint(solr)
 
-    wtfs.append(wtf)
-    # solr.setdefault('dc', oai_dc)
-    # logging.info('WTF %s' % wtf)
-    # pprint.pprint(oai_dc)
-    # logging.info('OAI_DC %s' % etree.tostring(oai_dc))
-    # logging.info('CSL %s' % csl)
-    # logging.info('SOLR %s' % solr)
-    # pprint.pprint(solr)
+        solr.setdefault('pubtype', wtf.get('pubtype'))
+        solr.setdefault('wtf_json', wtf)
+        solr_json.append(solr)
 
-    solr.setdefault('pubtype', wtf.get('pubtype'))
-    solr.setdefault('wtf_json', wtf)
-    solr_json.append(solr)
-
-fo = open("../data/more_parents.json", "w")
+fo = open(secrets.RESULTS_DIR + 'more_parents.json', 'w')
 fo.write(json.dumps(more_parents, indent=4))
 fo.close()
 
-fo = open("../data/parents.json", "w")
+fo = open(secrets.RESULTS_DIR + 'parents.json', 'w')
 fo.write(json.dumps(parents, indent=4))
 fo.close()
 
-fo = open("../data/records.json", "w")
+fo = open(secrets.RESULTS_DIR + 'records.json', 'w')
 fo.write(json.dumps(wtfs, indent=4))
 fo.close()
 

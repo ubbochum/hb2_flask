@@ -33,7 +33,12 @@ DIFFERENT_PROXY_PATH = False
 orcid_sandbox_client_id = ''
 orcid_sandbox_client_secret = ''
 
+CATALOG = ''
+
 MODS_TEST_FILE = ''
+MODS_FILES_PATH = ''
+
+RESULTS_DIR = ''
 
 SOLR_HOST = '127.0.0.1'
 SOLR_PORT = '8983'
