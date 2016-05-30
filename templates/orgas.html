@@ -5,6 +5,18 @@
     {{ super() }}
     {% include 'confirm_delete_modal.html' %}
     <p>{% include 'admin_nav.html' %}</p>
+    <div>
+        <form class="form-inline" role="search" action="{{ url_for('search') }}" method="get">
+            <div class="form-group">
+                <div class="input-group">
+                    <span class="input-group-addon"><i class="fa fa-search"></i></span>
+                    <input type="text" class="form-control" placeholder="Search organisations" name="q">
+                    <input type="hidden" name="core" value="organisation">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-default">{{ _('Go') }}</button>
+        </form>
+    </div>
     {% if results|length > 0 %}<div class="row">
         <div class="col-sm-3" id="facets">
             {{ drill_down.facets(facet_data.catalog, 'catalog', heading='Catalog', target='organisations') }}
@@ -12,8 +24,8 @@
             {{ drill_down.facets(facet_data.destatis_id, 'destatis_id', heading='DESTATIS', target='organisations') }}
             {{ drill_down.simple_filter('gnd', heading='GND', target='organisations') }}
             {{ drill_down.facets(facet_data.editorial_status, 'editorial_status', heading='Editorial Status', target='organisations') }}
-            {{ drill_down.facets(facet_data.deskman, 'deskman', heading='Deskman', target=target) }}
-            {{ drill_down.facets(facet_data.owner, 'owner', heading='Owner') }}
+            {{ drill_down.facets(facet_data.deskman, 'deskman', heading='Deskman', target='organisations') }}
+            {{ drill_down.facets(facet_data.owner, 'owner', heading='Owner', target='organisations') }}
         </div>
         <div class="col-sm-9">
             {{ pagination.info }}

@@ -76,7 +76,10 @@
                 </dt>
                 <dd>
                     {% for person in record.data.person %}
-                        {{ person.name }}{% if person.gnd %} | <a href="http://d-nb.info/gnd/{{ person.gnd }}">{{ _('GND') }}</a>{% endif %}{% if person.orcid %} | <a href="http://orcid.org/{{ person.orcid }}">{{ _('ORCID') }}</a>{% endif %}{% if person.viaf %} | <a href="http://viaf.org/{{ person.viaf }}">{{ _('VIAF') }}</a>{% endif %}{% if person.isni %} | <a href="http://isni.org/isni/{{ person.isni|replace(' ', '') }}">{{ _('ISNI') }}</a>{% endif %}<br/>
+                        {{ person.name }}{% if person.gnd %} | <a href="http://d-nb.info/gnd/{{ person.gnd }}">{{ _('GND') }}</a>{% endif %}{% if person.orcid %} | <a href="http://orcid.org/{{ person.orcid }}">{{ _('ORCID') }}</a>{% endif %}{% if person.viaf %} | <a href="http://viaf.org/{{ person.viaf }}">{{ _('VIAF') }}</a>{% endif %}{% if person.isni %} | <a href="http://isni.org/isni/{{ person.isni|replace(' ', '') }}">{{ _('ISNI') }}</a>{% endif %}
+                        {% if person.tudo %} | <img src="http://www.tu-dortmund.de/favicon.ico">{% endif %}
+                        {% if person.rubi %} | <img src="http://www.rub.de/favicon.ico">{% endif %}
+                        <br/>
                         {% for role in person.role %}
                             {{ role_map.get(role) }}{% if not loop.last %}, {% endif %}
                         {% endfor %}
@@ -608,8 +611,9 @@
     <script>
         function page_redirect(){
             setTimeout(function(){
-                            document.location = '{{ del_redirect }}';
-                        }, 1000);
+                //console.log('{{ del_redirect }}')
+                document.location = '{{ del_redirect }}';
+            }, 1000);
         }
         $('#confirm-delete').on('show.bs.modal', function(event) {
             $(this).find('.btn-ok').attr('href', $(event.relatedTarget).data('href'));

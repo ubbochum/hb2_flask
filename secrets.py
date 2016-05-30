@@ -43,7 +43,7 @@ SOLR_APP = 'solr'
 SOLR_CORE = 'hb2'
 SOLR_EXPORT_FIELD = 'wtf_json'
 SOLR_ROWS = '20'
-SOLR_FACETS = {
+SOLR_SEARCH_FACETS = {
     'pubtype':
         {
             'type': 'terms',
@@ -71,6 +71,213 @@ SOLR_FACETS = {
             'sort': 'index desc'
         },
 }
+SOLR_PERSON_FACETS = {
+    'faffiliation':
+        {
+            'type': 'terms',
+            'field': 'faffiliation',
+            'limit': 10
+        },
+    'fgroup':
+        {
+            'type': 'terms',
+            'field': 'fgroup',
+            'limit': 10
+        },
+    'catalog':
+        {
+            'type': 'terms',
+            'field': 'catalog'
+        },
+}
+SOLR_ORGA_FACETS = {
+    'destatis_id':
+        {
+            'type': 'terms',
+            'field': 'destatis_id',
+            'limit': 20
+        },
+    'fparent':
+        {
+            'type': 'terms',
+            'field': 'fparent',
+            'limit': 20
+        },
+    'catalog':
+        {
+            'type': 'terms',
+            'field': 'catalog'
+        },
+}
+SOLR_GROUP_FACETS = {
+    'destatis_id':
+        {
+            'type': 'terms',
+            'field': 'destatis_id',
+            'limit': 20
+        },
+    'fparent':
+        {
+            'type': 'terms',
+            'field': 'fparent',
+            'limit': 20
+        },
+    'catalog':
+        {
+            'type': 'terms',
+            'field': 'catalog'
+        },
+}
+
+DASHBOARD_FACETS = {
+    'pubtype':
+        {
+            'type': 'terms',
+            'field': 'pubtype',
+            'limit': 20
+        },
+    'fperson':
+        {
+            'type': 'terms',
+            'field': 'fperson'
+        },
+    'fakultaet':
+        {
+            'type': 'terms',
+            'field': 'fakultaet'
+        },
+    'publication_status':
+        {
+            'type': 'terms',
+            'field': 'publication_status'
+        },
+    'editorial_status':
+        {
+            'type': 'terms',
+            'field': 'editorial_status'
+        },
+    'catalog':
+        {
+            'type': 'terms',
+            'field': 'catalog'
+        },
+    'owner':
+        {
+            'type': 'terms',
+            'field': 'owner'
+        },
+    'deskman':
+        {
+            'type': 'terms',
+            'field': 'deskman'
+        },
+}
+DASHBOARD_PERS_FACETS = {
+    'faffiliation':
+        {
+            'type': 'terms',
+            'field': 'faffiliation',
+            'limit': 10
+        },
+    'fgroup':
+        {
+            'type': 'terms',
+            'field': 'fgroup',
+            'limit': 10
+        },
+    'catalog':
+        {
+            'type': 'terms',
+            'field': 'catalog'
+        },
+    'editorial_status':
+        {
+            'type': 'terms',
+            'field': 'editorial_status',
+            'limit': 20
+        },
+    'owner':
+        {
+            'type': 'terms',
+            'field': 'owner'
+        },
+    'deskman':
+        {
+            'type': 'terms',
+            'field': 'deskman'
+        },
+}
+DASHBOARD_ORGA_FACETS = {
+    'destatis_id':
+        {
+            'type': 'terms',
+            'field': 'destatis_id',
+            'limit': 20
+        },
+    'fparent':
+        {
+            'type': 'terms',
+            'field': 'fparent',
+            'limit': 20
+        },
+    'catalog':
+        {
+            'type': 'terms',
+            'field': 'catalog'
+        },
+    'editorial_status':
+        {
+            'type': 'terms',
+            'field': 'editorial_status',
+            'limit': 20
+        },
+    'owner':
+        {
+            'type': 'terms',
+            'field': 'owner'
+        },
+    'deskman':
+        {
+            'type': 'terms',
+            'field': 'deskman'
+        },
+}
+DASHBOARD_GROUP_FACETS = {
+    'destatis_id':
+        {
+            'type': 'terms',
+            'field': 'destatis_id',
+            'limit': 20
+        },
+    'fparent':
+        {
+            'type': 'terms',
+            'field': 'fparent',
+            'limit': 20
+        },
+    'catalog':
+        {
+            'type': 'terms',
+            'field': 'catalog'
+        },
+    'editorial_status':
+        {
+            'type': 'terms',
+            'field': 'editorial_status',
+            'limit': 20
+        },
+    'owner':
+        {
+            'type': 'terms',
+            'field': 'owner'
+        },
+    'deskman':
+        {
+            'type': 'terms',
+            'field': 'deskman'
+        },
+}
+
 
 TRAC_URL = ''
 TRAC_USER = ''

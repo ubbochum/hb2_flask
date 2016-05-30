@@ -286,15 +286,20 @@ def deserialize_json_filter(thejson):
     return json.loads(thejson)
 
 def theme(ip):
-    # logging.info(ip[0])
+    logging.info(ip[0])
     site = ''
     # For the moment we only use the Bochum theme
-    site = 'bochum'
-    # if ip[0].startswith('127.0.0.1' or ip[0].startswith('134.147')):
-    #     site = 'bochum'
-    # elif ip[0].startswith('129.217'):
-    #     site = 'dortmund'
-    # logging.info(site)
+    #site = 'bochum'
+    if ip[0].startswith('127.0.0.1' or ip[0].startswith('134.147')):
+        site = 'bochum'
+    elif ip[0].startswith('129.217'):
+        site = 'dortmund'
+    else:
+        site = 'bochum'
+    # Sonderfall zum Test
+    if ip[0].startswith('129.217.135.159'):
+        site = 'bochum'
+    #logging.info(site)
     return site
 
 def _diff_struct(a, b):
@@ -316,14 +321,12 @@ PUBTYPE2FORM = {
     'Monograph': MonographForm,
     'Patent': PatentForm,
     'Chapter': ChapterForm,
-    'ChapterInMonograph': ChapterInMonographForm,
     'ChapterInLegalCommentary': ChapterInLegalCommentaryForm,
     'Conference': ConferenceForm,
     'Collection': CollectionForm,
     'Other': OtherForm,
     'Thesis': ThesisForm,
     'ArticleNewspaper': ArticleNewspaperForm,
-    'AudioBook': AudioBookForm,
     'AudioVideoDocument': AudioVideoDocumentForm,
     'Edition': EditionForm,
     'InternetDocument': InternetDocumentForm,
@@ -337,6 +340,8 @@ PUBTYPE2FORM = {
     'Software': SoftwareForm,
     'SpecialIssue': SpecialIssueForm,
     'Standard': StandardForm,
+    'Report': ReportForm,
+    'ResearchData': ResearchDataForm,
 }
 
 @app.route('/dedup/<idtype>/<path:id>')
@@ -438,46 +443,12 @@ def persons():
     mystart = 0
     query = '*:*'
     filterquery = request.values.getlist('filter')
-    PERS_FACETS = {
-        'faffiliation':
-            {
-                'type': 'terms',
-                'field': 'faffiliation',
-                'limit': 10
-            },
-        'fgroup':
-            {
-                'type': 'terms',
-                'field': 'fgroup',
-                'limit': 10
-            },
-        'catalog':
-            {
-                'type': 'terms',
-                'field': 'catalog'
-            },
-        'editorial_status':
-            {
-                'type': 'terms',
-                'field': 'editorial_status',
-                'limit': 20
-            },
-        'owner':
-            {
-                'type': 'terms',
-                'field': 'owner'
-            },
-        'deskman':
-            {
-                'type': 'terms',
-                'field': 'deskman'
-            },
-    }
 
     #persons_solr = Solr(query=query, start=(page - 1) * 10, core='person',
     #                    json_facet={'affiliation': {'type': 'term', 'field': 'affiliation'}}, fquery=filterquery)
     #persons_solr = Solr(query=query, start=(page - 1) * 10, core='person', fquery=filterquery, facet='true', facet_fields=['affiliation'])
-    persons_solr = Solr(application=secrets.SOLR_APP, query=query, start=(page - 1) * 10, core='person', sort='changed desc', json_facet=PERS_FACETS, fquery=filterquery)
+    persons_solr = Solr(application=secrets.SOLR_APP, query=query, start=(page - 1) * 10, core='person',
+                        sort='changed desc', json_facet=secrets.DASHBOARD_PERS_FACETS, fquery=filterquery)
     persons_solr.request()
 
     num_found = persons_solr.count()
@@ -513,9 +484,11 @@ def search():
     page = int(request.args.get('page', 1))
     #mypage = page
     query = request.args.get('q', '')#.decode('utf-8')
-    logging.info(query)
+    #logging.info(query)
     if query == '':
         query = '*:*'
+    core = request.args.get('core', 'hb2')#.decode('utf-8')
+    #logging.info(core)
 
     filterquery = request.values.getlist('filter')
     sorting = request.args.get('sort', '')
@@ -524,11 +497,30 @@ def search():
     else:
         sorting = 'fdate desc'
 
-    search_solr = Solr(application=secrets.SOLR_APP, start=(page - 1) * 10, query=query, fquery=filterquery, sort=sorting, json_facet=secrets.SOLR_FACETS)
+    search_solr = None
+    if core == 'hb2':
+        search_solr = Solr(application=secrets.SOLR_APP, core=core, start=(page - 1) * 10, query=query,
+                           fquery=filterquery, sort=sorting, json_facet=secrets.SOLR_SEARCH_FACETS)
+    if core == 'person':
+        search_solr = Solr(application=secrets.SOLR_APP, core=core, start=(page - 1) * 10, query=query,
+                           fquery=filterquery, sort='changed desc', json_facet=secrets.SOLR_PERSON_FACETS)
+    if core == 'organisation':
+        search_solr = Solr(application=secrets.SOLR_APP, core=core, start=(page - 1) * 10, query='pref_label:'  + query,
+                           fquery=filterquery, sort='changed desc', json_facet=secrets.SOLR_ORGA_FACETS)
+    if core == 'group':
+        search_solr = Solr(application=secrets.SOLR_APP, core=core, start=(page - 1) * 10, query='pref_label:'  + query,
+                           fquery=filterquery, sort='changed desc', json_facet=secrets.SOLR_GROUP_FACETS)
     search_solr.request()
     num_found = search_solr.count()
     if num_found == 1:
-        return redirect(url_for('show_record', record_id=search_solr.results[0].get('id'), pubtype=search_solr.results[0].get('pubtype')))
+        if core == 'hb2':
+            return redirect(url_for('show_record', record_id=search_solr.results[0].get('id'), pubtype=search_solr.results[0].get('pubtype')))
+        if core == 'person':
+            return redirect(url_for('show_person', person_id=search_solr.results[0].get('id')))
+        if core == 'organisation':
+            return redirect(url_for('show_orga', orga_id=search_solr.results[0].get('id')))
+        if core == 'group':
+            return redirect(url_for('show_group', group_id=search_solr.results[0].get('id')))
     elif num_found == 0:
         flash(gettext('Your Search Found no Results'))
         return redirect(url_for('homepage'))
@@ -536,11 +528,28 @@ def search():
         pagination = Pagination(page=page, total=num_found, found=num_found, bs_version=3, search=True, record_name=lazy_gettext('titles'), search_msg=lazy_gettext('Showing {start} to {end} of {found} {record_name}'))
         mystart = 1 + (pagination.page - 1) * pagination.per_page
         #myend = mystart + pagination.per_page - 1
-        logging.info(query)
-        return render_template('resultlist.html', records=search_solr.results, pagination=pagination,
-                               facet_data=search_solr.facets, header=lazy_gettext('Resultlist'), target='search',
-                               site=theme(request.access_route), offset=mystart - 1, query=query,
-                               filterquery=filterquery)
+        #logging.info(query)
+        if core == 'hb2':
+            return render_template('resultlist.html', records=search_solr.results, pagination=pagination,
+                                   facet_data=search_solr.facets, header=lazy_gettext('Resultlist'), target='search',
+                                   core=core, site=theme(request.access_route), offset=mystart - 1, query=query,
+                                   filterquery=filterquery)
+        if core == 'person':
+            return render_template('personlist.html', records=search_solr.results, pagination=pagination,
+                                   facet_data=search_solr.facets, header=lazy_gettext('Resultlist'), target='search',
+                                   core=core, site=theme(request.access_route), offset=mystart - 1, query=query,
+                                   filterquery=filterquery)
+        if core == 'organisation':
+            return render_template('orgalist.html', records=search_solr.results, pagination=pagination,
+                                   facet_data=search_solr.facets, header=lazy_gettext('Resultlist'), target='search',
+                                   core=core, site=theme(request.access_route), offset=mystart - 1, query=query,
+                                   filterquery=filterquery)
+        if core == 'group':
+            return render_template('grouplist.html', records=search_solr.results, pagination=pagination,
+                                   facet_data=search_solr.facets, header=lazy_gettext('Resultlist'), target='search',
+                                   core=core, site=theme(request.access_route), offset=mystart - 1, query=query,
+                                   filterquery=filterquery)
+
 
 @csrf.exempt
 @app.route('/apparent_duplicate', methods=['GET', 'POST'])
@@ -579,8 +588,6 @@ def _record2solr_doc(form, action):
         if form.data.get('editorial_status') == 'new':
             form.editorial_status.data = 'in_process'
     solr_data = {}
-    wtf = json.dumps(form.data).replace(' "', '"')
-    solr_data.setdefault('wtf_json', wtf)
     for field in form.data:
         #logging.info('%s => %s' % (field, form.data.get(field)))
         if field == 'id':
@@ -597,54 +604,10 @@ def _record2solr_doc(form, action):
                 solr_data.setdefault('recordChangeDate', form.data.get(field).strip().replace(' ', 'T') + 'Z')
         if field == 'owner':
             for owner in form.data.get(field):
-                solr_data.setdefault('owner', owner.strip())
+                solr_data.setdefault('owner', []).append(owner.strip())
         if field == 'catalog':
             for catalog in form.data.get(field):
-                solr_data.setdefault('catalog', catalog.strip())
-        if field == 'affiliation_context':
-            # TODO Datenanreicherung und ID-Verknüpfung mit "Organisation" / Wo ist der Kontext in den Bochumer Daten?
-            for context in form.data.get(field):
-                #logging.info(context)
-                if len(context) > 0:
-                    try:
-                        query = 'id:%s' % context
-                        parent_solr = Solr(application=secrets.SOLR_APP, core='organisation', query=query, facet='false', fields=['wtf_json'])
-                        parent_solr.request()
-                        if len(parent_solr.results) == 0:
-                            solr_data.setdefault('fakultaet', []).append(context)
-                            flash(
-                                gettext(
-                                    'IDs from relation "affiliation" could not be found! Ref: %s' % context),
-                                'warning')
-                        for doc in parent_solr.results:
-                            myjson = json.loads(doc.get('wtf_json'))
-                            #logging.info(myjson.get('pref_label'))
-                            label = myjson.get('pref_label')
-                            solr_data.setdefault('fakultaet', []).append(label)
-                    except AttributeError as e:
-                        logging.error(e)
-        if field == 'group_context':
-            # TODO Datenanreicherung und ID-Verknüpfung mit "Group" / Wo ist der Kontext in den Bochumer Daten?
-            for context in form.data.get(field):
-                #logging.info(context)
-                if len(context) > 0:
-                    try:
-                        query = 'id:%s' % context
-                        parent_solr = Solr(application=secrets.SOLR_APP, core='group', query=query, facet='false', fields=['wtf_json'])
-                        parent_solr.request()
-                        if len(parent_solr.results) == 0:
-                            solr_data.setdefault('group', []).append(context)
-                            flash(
-                                gettext(
-                                    'IDs from relation "group" could not be found! Ref: %s' % context),
-                                'warning')
-                        for doc in parent_solr.results:
-                            myjson = json.loads(doc.get('wtf_json'))
-                            #logging.info(myjson.get('pref_label'))
-                            label = myjson.get('pref_label')
-                            solr_data.setdefault('group', []).append(label)
-                    except AttributeError as e:
-                        logging.error(e)
+                solr_data.setdefault('catalog', []).append(catalog.strip())
         if field == 'deskman' and form.data.get(field):
             solr_data.setdefault('deskman', form.data.get(field).strip())
         if field == 'editorial_status':
@@ -684,7 +647,59 @@ def _record2solr_doc(form, action):
                     solr_data.setdefault('person', []).append(person.get('name').strip())
                     solr_data.setdefault('fperson', []).append(person.get('name').strip())
                     if person.get('gnd'):
+                        #logging.info('drin: gnd: %s' % person.get('gnd'))
                         solr_data.setdefault('pnd', []).append('%s#%s' % (person.get('gnd').strip(), person.get('name').strip()))
+                        # TODO prüfe, ob eine 'person' mit GND im System ist. Wenn ja, setze affiliation_context, wenn nicht schon belegt.
+                        try:
+                            query = 'id:%s' % person.get('gnd')
+                            gnd_solr = Solr(application=secrets.SOLR_APP, core='person', query=query, facet='false', fields=['wtf_json'])
+                            gnd_solr.request()
+                            if len(gnd_solr.results) == 0:
+                                #logging.info('keine Treffer zu gnd: %s' % person.get('gnd'))
+                                flash(
+                                    gettext(
+                                        'IDs from relation "person" could be found! Ref: %s' % person.get('gnd')),
+                                    'warning')
+                            for idx1, doc in enumerate(gnd_solr.results):
+                                myjson = json.loads(doc.get('wtf_json'))
+                                #logging.info(myjson)
+                                for affiliation in myjson.get('affiliation'):
+                                    affiliation_id = affiliation.get('organisation_id')
+                                    #logging.info(affiliation_id)
+                                    # füge affiliation_context dem wtf_json hinzu
+                                    if not affiliation_id in form.data.get('affiliation_context'):
+                                        form.affiliation_context.append_entry(affiliation_id)
+                                    # Suche nach dem passenden Orga-Record
+                                    query = 'id:%s' % affiliation_id
+                                    parent_solr = Solr(application=secrets.SOLR_APP, core='organisation', query=query, facet='false', fields=['wtf_json'])
+                                    parent_solr.request()
+                                    if len(parent_solr.results) == 0:
+                                        query = 'account:%s' % affiliation_id
+                                        parent_solr = Solr(application=secrets.SOLR_APP, core='organisation', query=query, facet='false', fields=['wtf_json'])
+                                        parent_solr.request()
+                                        if len(parent_solr.results) == 0:
+                                            flash(
+                                                gettext(
+                                                    'IDs from relation "affiliation" could be found! Ref: %s' % affiliation_id),
+                                                'warning')
+                                        for doc in parent_solr.results:
+                                            myjson = json.loads(doc.get('wtf_json'))
+                                            for catalog in myjson.get('catalog'):
+                                                if 'Bochum' in catalog:
+                                                    logging.info("%s, %s: yo! rubi!" % (person.get('name'), person.get('gnd')) )
+                                                    form.person[idx].rubi.data = True
+                                                if 'Dortmund' in catalog:
+                                                    form.person[idx].tudo.data = True
+                                    for doc in parent_solr.results:
+                                        myjson = json.loads(doc.get('wtf_json'))
+                                        for catalog in myjson.get('catalog'):
+                                            if 'Bochum' in catalog:
+                                                logging.info("%s, %s: yo! rubi!" % (person.get('name'), person.get('gnd')) )
+                                                form.person[idx].rubi.data = True
+                                            if 'Dortmund' in catalog:
+                                                form.person[idx].tudo.data = True
+                        except AttributeError as e:
+                            logging.error(e)
                     else:
                         # TODO versuche Daten aus dem'person'-Index zu holen (vgl. is_part_of oder has_part)
                         # die gndid muss dann aber auch dem 'wtf' hinzugefügt werden
@@ -701,6 +716,59 @@ def _record2solr_doc(form, action):
                     else:
                         solr_data.setdefault('gkd', []).append(
                                 '%s#corporation-%s#%s' % (form.data.get('id'), idx, corporation.get('name').strip()))
+        if field == 'affiliation_context':
+            # TODO Datenanreicherung und ID-Verknüpfung mit "Organisation" / Wo ist der Kontext in den Bochumer Daten?
+            for context in form.data.get(field):
+                #logging.info(context)
+                if len(context) > 0:
+                    try:
+                        query = 'id:%s' % context
+                        parent_solr = Solr(application=secrets.SOLR_APP, core='organisation', query=query, facet='false', fields=['wtf_json'])
+                        parent_solr.request()
+                        if len(parent_solr.results) == 0:
+                            query = 'account:%s' % context
+                            parent_solr = Solr(application=secrets.SOLR_APP, core='organisation', query=query, facet='false', fields=['wtf_json'])
+                            parent_solr.request()
+                            if len(parent_solr.results) == 0:
+                                solr_data.setdefault('fakultaet', []).append(context)
+                                flash(
+                                    gettext(
+                                        'IDs from relation "affiliation" could be found! Ref: %s' % context),
+                                    'warning')
+                            for doc in parent_solr.results:
+                                myjson = json.loads(doc.get('wtf_json'))
+                                #logging.info(myjson.get('pref_label'))
+                                label = myjson.get('pref_label')
+                                solr_data.setdefault('fakultaet', []).append(label)
+                        for doc in parent_solr.results:
+                            myjson = json.loads(doc.get('wtf_json'))
+                            #logging.info(myjson.get('pref_label'))
+                            label = myjson.get('pref_label')
+                            solr_data.setdefault('fakultaet', []).append(label)
+                    except AttributeError as e:
+                        logging.error(e)
+        if field == 'group_context':
+            # TODO Datenanreicherung und ID-Verknüpfung mit "Group" / Wo ist der Kontext in den Bochumer Daten?
+            for context in form.data.get(field):
+                #logging.info(context)
+                if len(context) > 0:
+                    try:
+                        query = 'id:%s' % context
+                        parent_solr = Solr(application=secrets.SOLR_APP, core='group', query=query, facet='false', fields=['wtf_json'])
+                        parent_solr.request()
+                        if len(parent_solr.results) == 0:
+                            solr_data.setdefault('group', []).append(context)
+                            flash(
+                                gettext(
+                                    'IDs from relation "group" could not be found! Ref: %s' % context),
+                                'warning')
+                        for doc in parent_solr.results:
+                            myjson = json.loads(doc.get('wtf_json'))
+                            #logging.info(myjson.get('pref_label'))
+                            label = myjson.get('pref_label')
+                            solr_data.setdefault('group', []).append(label)
+                    except AttributeError as e:
+                        logging.error(e)
         if field == 'description':
             solr_data.setdefault('ro_abstract', form.data.get(field).strip())
         if field == 'container_title':
@@ -848,7 +916,8 @@ def _record2solr_doc(form, action):
                                                                                      'title': myjson.get('title'),}))
             except AttributeError as e:
                 logging.error(e)
-
+    wtf = json.dumps(form.data).replace(' "', '"')
+    solr_data.setdefault('wtf_json', wtf)
     return solr_data
 
 def _record2solr(form, action=''):
@@ -876,50 +945,8 @@ def dashboard():
     filterquery = request.values.getlist('filter')
     logging.info(filterquery)
     #Solr(start=(page - 1) * 10, query=query, fquery=filterquery, sort=sorting)
-    DASHBOARD_FACETS = {
-        'pubtype':
-            {
-                'type': 'terms',
-                'field': 'pubtype',
-                'limit': 20
-            },
-        'fperson':
-            {
-                'type': 'terms',
-                'field': 'fperson'
-            },
-        'fakultaet':
-            {
-                'type': 'terms',
-                'field': 'fakultaet'
-            },
-        'publication_status':
-            {
-                'type': 'terms',
-                'field': 'publication_status'
-            },
-        'editorial_status':
-            {
-                'type': 'terms',
-                'field': 'editorial_status'
-            },
-        'catalog':
-            {
-                'type': 'terms',
-                'field': 'catalog'
-            },
-        'owner':
-            {
-                'type': 'terms',
-                'field': 'owner'
-            },
-        'deskman':
-            {
-                'type': 'terms',
-                'field': 'deskman'
-            },
-    }
-    dashboard_solr = Solr(application=secrets.SOLR_APP, start=(page - 1) * 10, query=query, sort='recordCreationDate asc', json_facet=DASHBOARD_FACETS, fquery=filterquery)
+    dashboard_solr = Solr(application=secrets.SOLR_APP, start=(page - 1) * 10, query=query,
+                          sort='recordCreationDate asc', json_facet=secrets.DASHBOARD_FACETS, fquery=filterquery)
     dashboard_solr.request()
 
     num_found = dashboard_solr.count()
@@ -936,7 +963,7 @@ def dashboard():
     return render_template('dashboard.html', records=dashboard_solr.results, facet_data=dashboard_solr.facets,
                            header=lazy_gettext('Dashboard'), site=theme(request.access_route), offset=mystart - 1,
                            query=query, filterquery=filterquery, pagination=pagination, now=datetime.datetime.now(),
-                           target='dashboard', del_redirect='dashboard', numFound=num_found
+                           core='hb2', target='dashboard', del_redirect='dashboard', numFound=num_found
                            )
 
 @app.route('/make_admin/<user_id>')
@@ -1122,43 +1149,9 @@ def orgas():
     mystart = 0
     query = '*:*'
     filterquery = request.values.getlist('filter')
-    ORGA_FACETS = {
-        'destatis_id':
-            {
-                'type': 'terms',
-                'field': 'destatis_id',
-                'limit': 20
-            },
-        'fparent':
-            {
-                'type': 'terms',
-                'field': 'fparent',
-                'limit': 20
-            },
-        'catalog':
-            {
-                'type': 'terms',
-                'field': 'catalog'
-            },
-        'editorial_status':
-            {
-                'type': 'terms',
-                'field': 'editorial_status',
-                'limit': 20
-            },
-        'owner':
-            {
-                'type': 'terms',
-                'field': 'owner'
-            },
-        'deskman':
-            {
-                'type': 'terms',
-                'field': 'deskman'
-            },
-    }
 
-    orgas_solr = Solr(application=secrets.SOLR_APP, query=query, start=(page - 1) * 10, core='organisation', sort='changed desc', json_facet=ORGA_FACETS, fquery=filterquery)
+    orgas_solr = Solr(application=secrets.SOLR_APP, query=query, start=(page - 1) * 10, core='organisation',
+                      sort='changed desc', json_facet=secrets.DASHBOARD_ORGA_FACETS, fquery=filterquery)
     #orgas_solr = Solr(query=query, start=(page - 1) * 10, core='organisation', fquery=filterquery, facet='true', facet_fields=['fparent','destatis_id'])
     orgas_solr.request()
 
@@ -1212,12 +1205,16 @@ def _orga2solr(form):
                     tmp.setdefault('destatis_label', []).append(destatis.get('destatis_label').strip())
                 if destatis.get('destatis_id'):
                     tmp.setdefault('destatis_id', []).append(destatis.get('destatis_id').strip())
-        elif field == 'parent_id' and not form.data.get('parent_label'):
+        elif field == 'parent_label' and (not form.data.get('parent_id') or len(form.data.get('parent_id')) == 0):
+            tmp.setdefault('fparent', form.data.get(field))
+            tmp.setdefault('parent_label', form.data.get(field))
+        elif field == 'parent_id' and (not form.data.get('parent_label') or len(form.data.get('parent_label')) == 0):
             try:
                 query = 'id:%s' % form.data.get(field)
                 parent_solr = Solr(application=secrets.SOLR_APP, core='organisation', query=query, facet='false', fields=['wtf_json'])
                 parent_solr.request()
                 if len(parent_solr.results) == 0:
+                    #logging.info('IDs from relation "parent_id" could be found! Ref: %s' % form.data.get(field))
                     flash(
                         gettext(
                             'IDs from relation "parent_id" could be found! Ref: %s' % form.data.get(field)),
@@ -1228,11 +1225,10 @@ def _orga2solr(form):
                     label = myjson.get('pref_label')
                     tmp.setdefault('parent_label', label)
                     tmp.setdefault('fparent', label)
-                    form.data.setdefault('parent_label', label)
+                    #form.data.setdefault('parent_label', label)
+                    form.parent_label = label
             except AttributeError as e:
                 logging.error(e)
-        elif field == 'parent_label':
-            tmp.setdefault('fparent', form.data.get(field))
         else:
             if form.data.get(field):
                 tmp.setdefault(field, form.data.get(field))
@@ -1266,43 +1262,9 @@ def groups():
     mystart = 0
     query = '*:*'
     filterquery = request.values.getlist('filter')
-    GROUP_FACETS = {
-        'destatis_id':
-            {
-                'type': 'terms',
-                'field': 'destatis_id',
-                'limit': 20
-            },
-        'fparent':
-            {
-                'type': 'terms',
-                'field': 'fparent',
-                'limit': 20
-            },
-        'catalog':
-            {
-                'type': 'terms',
-                'field': 'catalog'
-            },
-        'editorial_status':
-            {
-                'type': 'terms',
-                'field': 'editorial_status',
-                'limit': 20
-            },
-        'owner':
-            {
-                'type': 'terms',
-                'field': 'owner'
-            },
-        'deskman':
-            {
-                'type': 'terms',
-                'field': 'deskman'
-            },
-    }
 
-    groups_solr = Solr(application=secrets.SOLR_APP, query=query, start=(page - 1) * 10, core='group', sort='changed desc', json_facet=GROUP_FACETS, fquery=filterquery)
+    groups_solr = Solr(application=secrets.SOLR_APP, query=query, start=(page - 1) * 10, core='group',
+                       sort='changed desc', json_facet=secrets.DASHBOARD_GROUP_FACETS, fquery=filterquery)
     #orgas_solr = Solr(query=query, start=(page - 1) * 10, core='organisation', fquery=filterquery, facet='true', facet_fields=['fparent','destatis_id'])
     groups_solr.request()
 
@@ -1486,10 +1448,20 @@ def _person2solr(form):
                         parent_solr = Solr(application=secrets.SOLR_APP, core='organisation', query=query, facet='false', fields=['wtf_json'])
                         parent_solr.request()
                         if len(parent_solr.results) == 0:
-                            flash(
-                                gettext(
-                                    'IDs from relation "organisation_id" could be found! Ref: %s' % affiliation.get('organisation_id')),
-                                'warning')
+                            query = 'account:%s' % affiliation.get('organisation_id')
+                            parent_solr = Solr(application=secrets.SOLR_APP, core='organisation', query=query, facet='false', fields=['wtf_json'])
+                            parent_solr.request()
+                            if len(parent_solr.results) == 0:
+                                flash(
+                                    gettext(
+                                        'IDs from relation "organisation_id" could be found! Ref: %s' % affiliation.get('organisation_id')),
+                                    'warning')
+                            for doc in parent_solr.results:
+                                myjson = json.loads(doc.get('wtf_json'))
+                                #logging.info(myjson.get('pref_label'))
+                                label = myjson.get('pref_label')
+                                tmp.setdefault('affiliation', []).append(label.strip())
+                                tmp.setdefault('faffiliation', []).append(label.strip())
                         for doc in parent_solr.results:
                             myjson = json.loads(doc.get('wtf_json'))
                             #logging.info(myjson.get('pref_label'))
@@ -1593,7 +1565,9 @@ def new_record(pubtype='ArticleJournal'):
     #logging.info(form)
 
     if request.is_xhr:
-        form.data = request.form
+        logging.info(request.form)
+        form = PUBTYPE2FORM.get(pubtype)(request.form)
+        logging.info(form)
         #logging.info(request.form.person)
         # Do we have any data already?
         if not form.title.data:
@@ -1860,7 +1834,10 @@ def edit_record(record_id='', pubtype=''):
         form.pubtype.choices = USER_PUBTYPES
 
     if thedata.get('pubtype') != pubtype:
-        flash(Markup(lazy_gettext('<p><i class="fa fa-exclamation-triangle fa-3x"></i> <h3>The following data are incompatible with this publication type</h3></p>')) + _diff_struct(thedata, form.data), 'error')
+        diff = _diff_struct(thedata, form.data)
+        if len(diff) > 0:
+            #flash(Markup(lazy_gettext('<p><i class="fa fa-exclamation-triangle fa-3x"></i> <h3>The following data are incompatible with this publication type</h3></p>')) + _diff_struct(thedata, form.data), 'error')
+            flash(Markup(lazy_gettext('<p><i class="fa fa-exclamation-triangle fa-3x"></i> <h3>The publication type for the following data has changed. Please check the data.</h3></p>')) + diff, 'warning')
         form.pubtype.data = pubtype
 
     for person in form.person:
@@ -1909,13 +1886,13 @@ def delete_record(record_id=''):
         form.deskman.data = current_user.email
         # save record
         _record2solr(form, action='update')
-        return redirect(url_for('dashboard'))
+        return jsonify({'deleted': True})
     # TODO if superadmin
     elif current_user.role == 'superadmin':
         delete_record_solr = Solr(application=secrets.SOLR_APP, core='hb2', del_id=record_id)
         delete_record_solr.delete()
         flash(gettext('Record %s deleted!' % record_id))
-        return redirect(url_for('dashboard'))
+        return jsonify({'deleted': True})
     else:
         flash(gettext('For SuperAdmins ONLY!!!'))
         return redirect(url_for('homepage'))
@@ -1927,15 +1904,24 @@ def delete_person(person_id=''):
     if current_user.role == 'admin':
         flash(gettext('Set status of %s to deleted!' % person_id))
         # load person
+        edit_person_solr = Solr(application=secrets.SOLR_APP, core='person', query='id:%s' % person_id)
+        edit_person_solr.request()
+
+        thedata = json.loads(edit_person_solr.results[0].get('wtf_json'))
+        form = PersonAdminForm.from_json(thedata)
         # modify status to 'deleted'
+        form.editorial_status.data = 'deleted'
+        form.changed.data = datetime.datetime.now()
+        form.deskman.data = current_user.email
         # save person
-        return redirect(url_for('persons'))
+        _person2solr(form, action='update')
+        return jsonify({'deleted': True})
     # TODO if superadmin
     elif current_user.role == 'superadmin':
         delete_person_solr = Solr(application=secrets.SOLR_APP, core='person', del_id=person_id)
         delete_person_solr.delete()
         flash(gettext('Person %s deleted!' % person_id))
-        return redirect(url_for('orgas'))
+        return jsonify({'deleted': True})
     else:
         flash(gettext('For SuperAdmins ONLY!!!'))
         return redirect(url_for('homepage'))
@@ -1947,15 +1933,24 @@ def delete_orga(orga_id=''):
     if current_user.role == 'admin':
         flash(gettext('Set status of %s to deleted!' % orga_id))
         # load orga
+        edit_orga_solr = Solr(application=secrets.SOLR_APP, core='organisation', query='id:%s' % orga_id)
+        edit_orga_solr.request()
+
+        thedata = json.loads(edit_orga_solr.results[0].get('wtf_json'))
+        form = OrgaAdminForm.from_json(thedata)
         # modify status to 'deleted'
+        form.editorial_status.data = 'deleted'
+        form.changed.data = datetime.datetime.now()
+        form.deskman.data = current_user.email
         # save orga
-        return redirect(url_for('orgas'))
+        _orga2solr(form, action='update')
+        return jsonify({'deleted': True})
     # TODO if superadmin
     elif current_user.role == 'superadmin':
         delete_orga_solr = Solr(application=secrets.SOLR_APP, core='organisation', del_id=orga_id)
         delete_orga_solr.delete()
         flash(gettext('Organisation %s deleted!' % orga_id))
-        return redirect(url_for('orgas'))
+        return jsonify({'deleted': True})
     else:
         flash(gettext('For SuperAdmins ONLY!!!'))
         return redirect(url_for('homepage'))
@@ -1966,16 +1961,25 @@ def delete_group(group_id=''):
     # TODO if admin
     if current_user.role == 'admin':
         flash(gettext('Set status of %s to deleted!' % group_id))
-        # load orga
+        # load group
+        edit_orga_solr = Solr(application=secrets.SOLR_APP, core='group', query='id:%s' % group_id)
+        edit_orga_solr.request()
+
+        thedata = json.loads(edit_orga_solr.results[0].get('wtf_json'))
+        form = GroupAdminForm.from_json(thedata)
         # modify status to 'deleted'
-        # save orga
-        return redirect(url_for('groups'))
+        form.editorial_status.data = 'deleted'
+        form.changed.data = datetime.datetime.now()
+        form.deskman.data = current_user.email
+        # save group
+        _group2solr(form, action='update')
+        return jsonify({'deleted': True})
     # TODO if superadmin
     elif current_user.role == 'superadmin':
         delete_group_solr = Solr(application=secrets.SOLR_APP, core='group', del_id=group_id)
         delete_group_solr.delete()
         flash(gettext('Working Group %s deleted!' % group_id))
-        return redirect(url_for('groups'))
+        return jsonify({'deleted': True})
     else:
         flash(gettext('For SuperAdmins ONLY!!!'))
         return redirect(url_for('homepage'))

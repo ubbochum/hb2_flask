@@ -42,7 +42,7 @@ logging.basicConfig (level=logging.INFO,
 class Solr(object):
     def __init__(self, host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, application='solr', handler='select',
                  query='*:*', fquery=[], fields=[], writer='python', start='0', rows='10', facet='false',
-                 facet_fields=secrets.SOLR_FACETS, facet_mincount=0, facet_limit=10, facet_offset=0, sort='score desc',
+                 facet_fields=secrets.SOLR_SEARCH_FACETS, facet_mincount=0, facet_limit=10, facet_offset=0, sort='score desc',
                  terms_fl='', terms_limit=10, terms_prefix='', terms_sort='count', mlt=False, mlt_fields=[],
                  omitHeader='false', query_field='', sort_facet_by_index={}, fuzzy='false',
                  compress=False, facet_sort='count', facet_tree=(), spellcheck='false', spellcheck_collate='false',

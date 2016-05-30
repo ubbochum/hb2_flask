@@ -71,8 +71,10 @@
             $('.typeahead_orga').typeahead('destroy');
             $('.typeahead_pers').typeahead('destroy');
             $('.typeahead_group').typeahead('destroy');
+            $('.typeahead_title').typeahead('destroy');
             $('.typeahead_part_of').typeahead('destroy');
             $('.typeahead_has_part').typeahead('destroy');
+            $('.typeahead_other_version').typeahead('destroy');
             event.preventDefault();
             var container = $(this).closest('[id$="_container"]');
             var fieldnameparts = container.attr('id').split('-');
@@ -102,8 +104,10 @@
             $('.typeahead_orga').typeahead('destroy');
             $('.typeahead_pers').typeahead('destroy');
             $('.typeahead_group').typeahead('destroy');
+            $('.typeahead_title').typeahead('destroy');
             $('.typeahead_part_of').typeahead('destroy');
             $('.typeahead_has_part').typeahead('destroy');
+            $('.typeahead_other_version').typeahead('destroy');
             event.preventDefault();
             var container = $(this).closest('[id$="_container"]');
             var fieldnameparts = container.attr('id').split('-');
@@ -291,6 +295,20 @@
             });
 
             $('.typeahead_has_part').typeahead({
+                hint: true,
+                highlight: true,
+                minLength: 2,
+            }, {
+                name: 'has_part',
+                display: 'id',
+                source: titles.ttAdapter(),
+                templates: {
+                    empty: 'Nothing',
+                    suggestion: Handlebars.compile('{% raw %}<div>{{title}} / {{ fperson }}. <small>{{date}} (id:{{id}})</small></div>{% endraw %}')
+                }
+            });
+
+            $('.typeahead_other_version').typeahead({
                 hint: true,
                 highlight: true,
                 minLength: 2,
