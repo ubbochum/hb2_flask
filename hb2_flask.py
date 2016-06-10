@@ -595,10 +595,13 @@ def _record2solr(form, action, relItems=True):
     solr_data = {}
     has_part = []
     is_part_of = []
+    other_version = []
+    id = ''
     for field in form.data:
         #logging.info('%s => %s' % (field, form.data.get(field)))
         if field == 'id':
             solr_data.setdefault('id', form.data.get(field).strip())
+            id = form.data.get(field).strip()
         if field == 'created':
             if len(form.data.get(field).strip()) == 10:
                 solr_data.setdefault('recordCreationDate', '%sT00:00:00.001Z' % form.data.get(field).strip())
@@ -925,6 +928,7 @@ def _record2solr(form, action, relItems=True):
                     for doc in ov_solr.results:
                         # logging.info(json.loads(doc.get('wtf_json')))
                         myjson = json.loads(doc.get('wtf_json'))
+                        other_version.append(myjson.get('id'))
                         # solr_data.setdefault('other_version', []).append('<a href="/retrieve/%s/%s">%s</a>' % (myjson.get('pubtype'), myjson.get('id'), myjson.get('title')))
                         solr_data.setdefault('other_version', []).append(json.dumps({'pubtype': myjson.get('pubtype'),
                                                                                      'id': myjson.get('id'),
@@ -933,11 +937,11 @@ def _record2solr(form, action, relItems=True):
                 logging.error(e)
     wtf = json.dumps(form.data).replace(' "', '"')
     solr_data.setdefault('wtf_json', wtf)
-    logging.info('has_part: %s' % has_part)
-    logging.info('is_part_of: %s' % is_part_of)
+    # logging.info('has_part: %s' % has_part)
+    # logging.info('is_part_of: %s' % is_part_of)
     record_solr = Solr(application=secrets.SOLR_APP, core='hb2', data=[solr_data])
     record_solr.update()
-    # TODO reload all records listed in relatedItems
+    # reload all records listed in has_part, is_part_of, other_version
     if relItems:
         for record_id in has_part:
             # lock record
@@ -949,7 +953,10 @@ def _record2solr(form, action, relItems=True):
             # load record in form and modify changeDate
             thedata = json.loads(edit_record_solr.results[0].get('wtf_json'))
             form = PUBTYPE2FORM.get(thedata.get('pubtype')).from_json(thedata)
-            # TODO add is_part_of to form
+            # add is_part_of to form
+            is_part_of_form = IsPartOfForm()
+            is_part_of_form.is_part_of.data = id
+            form.is_part_of.append_entry(is_part_of_form.data)
             form.changed.data = str(datetime.datetime.now())
             # save record
             _record2solr(form, action='update', relItems=False)
@@ -966,10 +973,38 @@ def _record2solr(form, action, relItems=True):
             # load record in form and modify changeDate
             thedata = json.loads(edit_record_solr.results[0].get('wtf_json'))
             form = PUBTYPE2FORM.get(thedata.get('pubtype')).from_json(thedata)
-            # TODO add has_part to form
+            # add has_part to form
+            has_part_form = HasPartForm()
+            has_part_form.has_part.data = id
+            form.has_part.append_entry(has_part_form.data)
             form.changed.data = str(datetime.datetime.now())
+            # logging.info(id)
+            # logging.info(form.data)
             # save record
             _record2solr(form, action='update', relItems=False)
+            # unlock record
+            unlock_record_solr = Solr(application=secrets.SOLR_APP, core='hb2', data=[{'id': record_id, 'locked': {'set': 'false'}}])
+            unlock_record_solr.update()
+        for record_id in other_version:
+            # lock record
+            lock_record_solr = Solr(application=secrets.SOLR_APP, core='hb2', data=[{'id': record_id, 'locked': {'set': 'true'}}])
+            lock_record_solr.update()
+            # search record
+            edit_record_solr = Solr(application=secrets.SOLR_APP, core='hb2', query='id:%s' % record_id)
+            edit_record_solr.request()
+            # load record in form and modify changeDate
+            thedata = json.loads(edit_record_solr.results[0].get('wtf_json'))
+            form = PUBTYPE2FORM.get(thedata.get('pubtype')).from_json(thedata)
+            # add is_part_of to form
+            # save record
+            try:
+                other_version_form = OtherVersionForm()
+                other_version_form.other_version.data = id
+                form.other_version.append_entry(other_version_form.data)
+                form.changed.data = str(datetime.datetime.now())
+                _record2solr(form, action='update', relItems=False)
+            except AttributeError as e:
+                flash(gettext('ERROR linking from %s: %s' % (record_id, str(e))), 'error')
             # unlock record
             unlock_record_solr = Solr(application=secrets.SOLR_APP, core='hb2', data=[{'id': record_id, 'locked': {'set': 'false'}}])
             unlock_record_solr.update()
