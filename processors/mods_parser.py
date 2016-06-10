@@ -675,15 +675,13 @@ def get_wtf_abstract(elems):
         if not abstract.get('%shref' % XLINK):
             tmp.setdefault('address', abstract.get('%shref' % XLINK))
         tmp.setdefault('label', '')
-        if not abstract.get('lang'):
+        if abstract.get('lang'):
             tmp.setdefault('language', abstract.get('lang'))
         if abstract.get('shareable') == 'no':
             tmp.setdefault('shareable', False)
         else:
             tmp.setdefault('shareable', True)
-
         wtf_abstracts.append(tmp)
-
     return {'abstract': wtf_abstracts}
 
 
@@ -693,8 +691,8 @@ def get_new_pubtype(old_pubtype):
         new_pubtype = OLD_PUBTYPES_MAP.get(old_pubtype.replace(' ', ''))
     else:
         logging.info('ERROR old pubtype: ' + old_pubtype.replace(' ', ''))
-
     return new_pubtype
+
 
 def get_wtf_affiliation_context(elems):
     contexts = []
@@ -705,6 +703,7 @@ def get_wtf_affiliation_context(elems):
             contexts.append(context.text)
 
     return {'affiliation_context': contexts}
+
 
 def get_value(input):
     value = ''
@@ -722,6 +721,18 @@ def doi2index(elems):
     # TODO: Handle all cases in which the DOI is the source for enrichment
 
     return solr_doi
+
+
+def get_wtf_extent(elems):
+    extent = elems[0].text
+    wtf_extent = {}
+    if ' : ' in extent:
+        wtf_extent.setdefault('number_of_pages', extent.split(' : ')[0])
+        wtf_extent.setdefault('additions', extent.split(' : ')[1])
+    else:
+        wtf_extent.setdefault('number_of_pages', extent)
+    logging.info('extent %s' % wtf_extent)
+    return wtf_extent
 
 
 try:
@@ -932,7 +943,7 @@ try:
 
         # "./m:originInfo[@displayLabel='embargoEnd']": lambda elem : {'': elem.text},
         "./m:physicalDescription/m:extent": {
-            'wtf': lambda elems: {'number_of_pages': elems[0].text},
+            'wtf': get_wtf_extent,
             'csl': lambda elems: {'number-of-pages': elems[0].text},
         },
         # "./m:physicalDescription/form": lambda elem : {'': elem.text},
