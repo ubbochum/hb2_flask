@@ -49,7 +49,14 @@
                         <td>
                             <span class="label label-{% if record.editorial_status == 'new' %}info{% elif record.editorial_status == 'in_process' %}default{% elif record.editorial_status == 'processed' %}primary{% elif record.editorial_status == 'final_editing' %}warning{% elif record.editorial_status == 'finalized' or record.editorial_status == 'imported' %}success{% endif %}">{% if record.locked %} <i class="fa fa-lock"></i> {% endif %}{{ record.editorial_status|capitalize }}</span>
                         </td>
-                        <td><a href="{{ url_for('show_orga', orga_id=record.id) }}">{{ record.pref_label }}</a>{% if record.parent_id %}<br/>{{ _('Parent') }}: <a href="{{ url_for('show_orga', orga_id=record.parent_id) }}">{% if record.parent_label %}{{ record.parent_label }}{% else %}{{ record.parent_id }}{% endif %}</a>{% endif %}</td>
+                        <td>
+                            <a href="{{ url_for('show_orga', orga_id=record.id) }}">{{ record.pref_label }}</a>
+                            {% if record.parent_id %}
+                            <br/>{{ _('Parent') }}: <a href="{{ url_for('show_orga', orga_id=record.parent_id) }}">{% if record.parent_label %}{{ record.parent_label }}{% else %}{{ record.parent_id }}{% endif %}</a>
+                            {% elif record.parent_label %}
+                            <br/>{{ _('Parent') }}: {{ record.parent_label }}
+                            {% endif %}
+                        </td>
                         {#<td>{{ record.account }}</td>#}
                         <td>{{ (now - record.created|mk_time())|humanize() }}</td>
                         <td>{{ (now - record.changed|mk_time())|humanize() }}</td>

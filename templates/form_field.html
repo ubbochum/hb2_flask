@@ -6,9 +6,9 @@
                 <div class="col-sm-2 control-label">{{ subfield.label }}</div>
                 {% if subfield.type != 'BooleanField' %}
                     <div class="col-sm-6">
-                        {% if 'person' in subfield.name and 'name' in subfield.name %}
+                        {% if 'person-' in subfield.name and '-name' in subfield.name %}
                             {{ subfield(class='form-control typeahead_pers') }}
-                        {% elif 'corporation' in subfield.name %}
+                        {% elif 'corporation-' in subfield.name and '-name' in subfield.name %}
                             {{ subfield(class='form-control typeahead_orga') }}
                         {% elif 'affiliation_context' in subfield.name %}
                             {{ subfield(class='form-control typeahead_orga') }}
@@ -29,9 +29,9 @@
                 <div class="col-sm-2 control-label">{{ subfield.label }}</div>
                 {% if subfield.type != 'BooleanField' %}
                     <div class="col-sm-6">
-                        {% if 'person' in subfield.name and 'name' in subfield.name %}
+                        {% if 'person-' in subfield.name and '-name' in subfield.name %}
                             {{ subfield(class='form-control typeahead_pers') }}
-                        {% elif 'corporation' in subfield.name %}
+                        {% elif 'corporation-' in subfield.name and '-name' in subfield.name %}
                             {{ subfield(class='form-control typeahead_orga') }}
                         {% elif 'affiliation_context' in subfield.name %}
                             {{ subfield(class='form-control typeahead_orga') }}

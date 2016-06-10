@@ -37,8 +37,12 @@
                                     {{ subfield(class='form-control typeahead_other_version') }}
                                 {% elif 'person-' in subfield.name and '-name' in subfield.name %}
                                     {{ subfield(class='form-control typeahead_pers') }}
-                                {% elif 'corporation' in subfield.name %}
+                                {% elif 'corporation-' in subfield.name and '-name' in subfield.name %}
                                     {{ subfield(class='form-control typeahead_orga') }}
+                                {% elif 'affiliation-' in subfield.name and '-label' in subfield.name %}
+                                    {{ subfield(class='form-control typeahead_orga') }}
+                                {% elif 'group-' in subfield.name and '-label' in subfield.name %}
+                                    {{ subfield(class='form-control typeahead_group') }}
                                 {% elif 'affiliation_context' in subfield.name %}
                                     {{ subfield(class='form-control typeahead_orga') }}
                                 {% elif 'group_context' in subfield.name %}
@@ -68,8 +72,12 @@
                                     {{ subfield(class='form-control typeahead_other_version') }}
                                 {% elif 'person-' in subfield.name and '-name' in subfield.name %}
                                     {{ subfield(class='form-control typeahead_pers') }}
-                                {% elif '-corporation' in subfield.name %}
+                                {% elif 'corporation-' in subfield.name and '-name' in subfield.name %}
                                     {{ subfield(class='form-control typeahead_orga') }}
+                                {% elif 'affiliation-' in subfield.name and '-label' in subfield.name %}
+                                    {{ subfield(class='form-control typeahead_orga') }}
+                                {% elif 'group-' in subfield.name and '-label' in subfield.name %}
+                                    {{ subfield(class='form-control typeahead_group') }}
                                 {% elif '-affiliation_context' in subfield.name %}
                                     {{ subfield(class='form-control typeahead_orga') }}
                                 {% elif '-group_context' in subfield.name %}
@@ -100,7 +108,7 @@
                         {{ entry(class='form-control typeahead_title',required='required') }}
                     {% elif 'person-' in entry.name %}
                         {{ entry(class='form-control typeahead_pers',required='required') }}
-                    {% elif '-corporation' in entry.name %}
+                    {% elif 'corporation-' in entry.name %}
                         {{ entry(class='form-control typeahead_orga',required='required') }}
                     {% elif '-affiliation_context' in entry.name %}
                         {{ entry(class='form-control typeahead_orga',required='required') }}
@@ -114,7 +122,7 @@
                         {{ entry(class='form-control typeahead_title') }}
                     {% elif 'person-' in entry.name %}
                         {{ entry(class='form-control typeahead_pers') }}
-                    {% elif 'corporation' in entry.name %}
+                    {% elif 'corporation-' in entry.name %}
                         {{ entry(class='form-control typeahead_orga') }}
                     {% elif '-affiliation_context' in entry.name %}
                         {{ entry(class='form-control typeahead_orga') }}

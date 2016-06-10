@@ -25,6 +25,9 @@ key = ''
 contact_mail = ''
 
 APP_PORT = 5005
+# This parameter allows to start the application without CSRF security (set to False).
+# THIS IS NOT RECOMMENDED! (but sometime necessary)
+APP_SECURITY = True
 
 BOOTSTRAP_SERVE_LOCAL = False
 

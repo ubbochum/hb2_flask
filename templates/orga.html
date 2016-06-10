@@ -20,6 +20,14 @@
                         {{ record.data.pref_label }}
                     </dd>
                 {% endif %}
+                {% if record.data.dwid %}
+                    <dt>
+                        {{ _('Local Admin ID') }}
+                    </dt>
+                    <dd>
+                        {{ record.data.dwid }}
+                    </dd>
+                {% endif %}
                 {% if record.data.start_date %}
                     <dt>
                         {{ _('Dates') }}
@@ -67,7 +75,7 @@
                 {% endif %}
                 {% if record.data.changed %}
                     <dt>
-                        {{ _('Record creation date') }}
+                        {{ _('Record change date') }}
                     </dt>
                     <dd>
                         {{ record.data.changed }}
@@ -81,6 +89,8 @@
                         {{ record.data.owner }}
                     </dd>
                 {% endif %}
+                <dt>{{ _('Editorial Status') }}</dt>
+                <dd><span class="label label-{% if record.data.editorial_status == 'new' %}info{% elif record.data.editorial_status == 'in_process' %}default{% elif record.data.editorial_status == 'processed' %}primary{% elif record.data.editorial_status == 'final_editing' %}warning{% elif record.data.editorial_status == 'deleted' %}danger{% elif record.data.editorial_status == 'finalized' or record.data.editorial_status == 'imported' %}success{% endif %}">{% if record.locked %} <i class="fa fa-lock"></i> {% endif %}{{ record.data.editorial_status|capitalize }}</span></dd>
             </dl>
                 {% if config.DEBUG and (current_user.role == 'admin' or current_user.role == 'superadmin') %}
                     <div>

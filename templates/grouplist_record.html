@@ -1,2 +1,2 @@
-<a href="{{ url_for('show_group', group_id=record.id) }}">{{ record.pref_label }}</a>{% if record.gnd %}<br/> GND: {{ record.gnd }}{% endif %}{% if record.orcid %}<br/> ORCID: {{ record.orcid }}{% endif %}<br/>{{ record.fparent }}
+<a href="{{ url_for('show_group', group_id=record.id) }}" target="_blank">{{ record.pref_label }}</a>{% if record.gnd %}<br/> GND: {{ record.gnd }}{% endif %}{% if record.orcid %}<br/> ORCID: {{ record.orcid }}{% endif %}<br/>{{ record.fparent }}
 

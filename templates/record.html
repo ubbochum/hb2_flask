@@ -27,20 +27,6 @@
                     {{ record.data.subtitle }}
                 </dd>
             {% endif %}
-            {% if record.data.other_title.0.other_title %}
-                <dt>
-                    {% trans count=record.data.other_title|length %}
-                    Translated Title
-                    {% pluralize %}
-                    Translated Titles
-                    {% endtrans %}
-                </dt>
-                <dd>
-                    {% for title in record.data.other_title %}
-                        {{ title.translated_title }} ({{ lang_map.get(title.language) }})<br/>
-                    {% endfor %}
-                </dd>
-            {% endif %}
             {% if record.data.journal_abbreviation %}
                 {% if record.data.journal_abbreviation.0 %}
                     <dt>
@@ -64,9 +50,24 @@
                 <dd>
                     {{ record.data.title_supplement }}
                 </dd>
-                <hr/>
             {% endif %}
-            {% if record.data.person.0 or record.data.person.1 %}
+            {% if record.data.other_title and not record.data.other_title.0.translated_title == '' %}
+                <dt>
+                    {% trans count=record.data.other_title|length %}
+                    Other Title
+                    {% pluralize %}
+                    Other Titles
+                    {% endtrans %}
+                </dt>
+                <dd>
+                    {% for title in record.data.other_title %}
+                        {{ title.translated_title }}{% if title.language %} [{{ lang_map.get(title.language) }}]{% endif %}
+                        {% if not loop.last %}<br/>{% endif %}
+                    {% endfor %}
+                </dd>
+            {% endif %}
+            <hr/>
+            {% if record.data.person.0 and not record.data.person.0.name == '' %}
                 <dt>
                     {% trans count=record.data.person|length %}
                     Person
@@ -85,9 +86,12 @@
                         {% endfor %}
                         <br/>
                         {% if person.corresponding_author %}Corresponding {{ role_map.get('aut') }}{% endif %}
-                        <hr/>
+                        {% if not loop.last %}<hr/>{% endif %}
+                        {% if loop.last and record.data.corporation.0.name %}<hr/>{% endif %}
                     {% endfor %}
                 </dd>
+            {% endif %}
+            {% if record.data.person.0 and record.data.corporation.0.name %}
             {% endif %}
             {% if record.data.corporation.0.name %}
                 <dt>
@@ -103,11 +107,122 @@
                         {% for role in corporation.role %}
                             {{ role_map.get(role) }}{% if not loop.last %}, {% endif %}
                         {% endfor %}
-                        <hr/>
+                        {% if not loop.last %}<hr/>{% endif %}
                     {% endfor %}
                 </dd>
-                <hr/>
             {% endif %}
+            <hr/>
+            {% if record.data.abstract %}
+                {% if current_user.role == 'admin' or current_user.role == 'superadmin' %}
+                <dt>{{ _('Description') }}</dt>
+                <dd>
+                    {% for abstract in record.data.abstract %}
+                        {% if abstract.address %}<a href="{{ abstract.address }}">{{ abstract.address }}</a><br/>{% endif %}
+                        {% if abstract.language %}{{ _('Language') }}: {{ abstract.language }}<br/>{% endif %}
+                        {{ abstract.content }}
+                        {% if not loop.last %}<br/><br/>{% endif %}
+                    {% endfor %}
+                </dd>
+                {% endif %}
+            {% endif %}
+            {% if record.data.table_of_contents %}
+                <dt>
+                    {{ _('Table of Contents') }}
+                </dt>
+                <dd>
+                    {% for toc in record.data.table_of_contents %}
+                        {% if toc.uri %}<a href="{{ toc.uri }}">{{ toc.uri }}</a><br/>{% endif %}
+                        {{ toc.toc }}
+                    {% endfor %}
+                </dd>
+            {% endif %}
+            {% if record.data.swd_subject.0.label %}
+                <dt>
+                    {% trans count=record.data.swd_subject|length %}
+                    SWD-Subject
+                    {% pluralize %}
+                    SWD-Subjects
+                    {% endtrans %}
+                </dt>
+                <dd>
+                    {% for subject in record.data.swd_subject %}
+                        {% if subject.uri %}<a href="{{ subject.uri }}">{{ subject.label }}</a>{% else %}{{ subject.label }}{% endif %}{% if not loop.last %}, {% endif %}
+                    {% endfor %}
+                </dd>
+            {% endif %}
+            {% if record.data.ddc_subject.0.label %}
+                <dt>DDC</dt>
+                <dd>
+                    {% for subject in record.data.ddc_subject %}
+                        {% if subject.uri %}<a href="{{ subject.uri }}">{{ subject.label }}</a>{% else %}{{ subject.label }}{% endif %}{% if not loop.last %}, {% endif %}
+                    {% endfor %}
+                </dd>
+            {% endif %}
+            {% if record.data.mesh_subject.0.label %}
+                <dt>MESH</dt>
+                <dd>
+                    {% for subject in record.data.mesh_subject %}
+                        {% if subject.uri %}<a href="{{ subject.uri }}">{{ subject.label }}</a>{% else %}{{ subject.label }}{% endif %}{% if not loop.last %}, {% endif %}
+                    {% endfor %}
+                </dd>
+            {% endif %}
+            {% if record.data.stw_subject.0.label %}
+                <dt>
+                    {% trans count=record.data.stw_subject|length %}
+                    STW-Subject
+                    {% pluralize %}
+                    STW-Subjects
+                    {% endtrans %}
+                </dt>
+                <dd>
+                    {% for subject in record.data.stw_subject %}
+                        {% if subject.uri %}<a href="{{ subject.uri }}">{{ subject.label }}</a>{% else %}{{ subject.label }}{% endif %}{% if not loop.last %}, {% endif %}
+                    {% endfor %}
+                </dd>
+            {% endif %}
+            {% if record.data.lcsh_subject.0.label %}
+                <dt>
+                    {% trans count=record.data.lcsh_subject|length %}
+                    LCSH-Subject
+                    {% pluralize %}
+                    LCSH-Subjects
+                    {% endtrans %}
+                </dt>
+                <dd>
+                    {% for subject in record.data.lcsh_subject %}
+                        {% if subject.uri %}<a href="{{ subject.uri }}">{{ subject.label }}</a>{% else %}{{ subject.label }}{% endif %}{% if not loop.last %}, {% endif %}
+                    {% endfor %}
+                </dd>
+            {% endif %}
+            {% if record.data.keyword %}
+                <dt>
+                    {% trans count=record.data.keyword|length %}
+                    Keyword
+                    {% pluralize %}
+                    Keywords
+                    {% endtrans %}
+                </dt>
+                <dd>
+                    {% for keyword in record.data.keyword %}
+                        {% if keyword.uri %}<a href="{{ keyword.uri }}">{{ keyword.label }}</a>{% else %}{{ keyword }}{% endif %}{% if not loop.last %}, {% endif %}
+                    {% endfor %}
+                </dd>
+            {% endif %}
+            {% if record.data.keyword_geographic %}
+                <dt>
+                    {% trans count=record.data.keyword_geographic|length %}
+                    Geographic Keyword
+                    {% pluralize %}
+                    Geographic Keywords
+                    {% endtrans %}
+                </dt>
+                <dd>
+                    {% for geographic in record.data.keyword_geographic %}
+                        {% if geographic.uri %}<a href="{{ geographic.uri }}">{{ geographic.label }}</a>{% else %}{{ geographic }}{% endif %}{% if not loop.last %}, {% endif %}
+                    {% endfor %}
+                </dd>
+            {% endif %}
+            <hr/>
             {% if record.data.pubtype %}
                 <dt>
                     {{ _('Publication Type') }}
@@ -285,6 +400,9 @@
                                     {% if mypart.page_first and mypart.page_last %}
                                         | {{ _('p.') }} {{ mypart.page_first }}-{{ mypart.page_last }}
                                     {% endif %}
+                                    {% if mypart.page_first and not mypart.page_last %}
+                                        | {{ _('p.') }} {{ mypart.page_first }}
+                                    {% endif %}
                                 </li>
                             {% endwith %}
                         </li>
@@ -302,8 +420,14 @@
                                 {% if mypart.volume %}
                                     {{ _('Vol.') }} {{ mypart.volume }}{% if mypart.issue %}, {{ _('Issue') }} {{ mypart.issue }}{% endif %}
                                 {% endif %}
+                                {% if mypart.issue and not mypart.volume %}
+                                    {{ _('Issue') }} {{ mypart.issue }}
+                                {% endif %}
                                 {% if mypart.page_first and mypart.page_last %}
-                                    {% if mypart.volume %}| {% endif %}{{ _('p.') }} {{ mypart.page_first }}-{{ mypart.page_last }}
+                                    {% if mypart.volume or mypart.issue %}| {% endif %}{{ _('p.') }} {{ mypart.page_first }}-{{ mypart.page_last }}
+                                {% endif %}
+                                {% if mypart.page_first and not mypart.page_last %}
+                                    {% if mypart.volume or mypart.issue %}| {% endif %}{{ _('p.') }} {{ mypart.page_first }}
                                 {% endif %}
                                 {% if mypart.volume or (mypart.page_first and mypart.page_last) %}:{% endif %}
                                 <a href="{{ url_for('show_record', pubtype=mypart.pubtype, record_id=mypart.id) }}">{{ mypart.title }}</a>
@@ -413,25 +537,6 @@
                     {{ record.data.accessed }}
                 </dd>
             {% endif %}
-            {% if record.data.abstract %}
-                {% if record.data.abstract.0.shareable %}
-                    <dt>{{ _('Description') }}</dt>
-                    <dd>
-                        <a href="{{ record.data.abstract.0.address }}">{{ record.data.abstract.0.address }}</a><br/>
-                        {{ _('Language') }}: {{ record.data.abstract.0.language }}<br/>
-                        {{ record.data.abstract.0.content }}
-                    </dd>
-                {% endif %}
-            {% endif %}
-            {% if record.data.table_of_contents %}
-                <dt>
-                    {{ _('Table of Contents') }}
-                </dt>
-                <dd>
-                    <a href="{{ record.data.table_of_contents.0.uri }}">{{ record.data.table_of_contents.0.uri }}</a><br/>
-                    {{ record.data.table_of_contents.0.toc }}
-                </dd>
-            {% endif %}
             {% if record.data.note %}
                 <dt>
                     {{ _('Notes') }}
@@ -464,92 +569,6 @@
                     {{ record.data.medium }}
                 </dd>
             {% endif %}
-            {% if record.data.swd_subject.0.label %}
-                <dt>
-                    {% trans count=record.data.swd_subject|length %}
-                    SWD-Subject
-                    {% pluralize %}
-                    SWD-Subjects
-                    {% endtrans %}
-                </dt>
-                <dd>
-                    {% for subject in record.data.swd_subject %}
-                        {% if subject.uri %}<a href="{{ subject.uri }}">{{ subject.label }}</a>{% else %}{{ subject.label }}{% endif %}{% if not loop.last %}, {% endif %}
-                    {% endfor %}
-                </dd>
-            {% endif %}
-            {% if record.data.ddc_subject.0.label %}
-                <dt>DDC</dt>
-                <dd>
-                    {% for subject in record.data.ddc_subject %}
-                        {% if subject.uri %}<a href="{{ subject.uri }}">{{ subject.label }}</a>{% else %}{{ subject.label }}{% endif %}{% if not loop.last %}, {% endif %}
-                    {% endfor %}
-                </dd>
-            {% endif %}
-            {% if record.data.mesh_subject.0.label %}
-                <dt>MESH</dt>
-                <dd>
-                    {% for subject in record.data.mesh_subject %}
-                        {% if subject.uri %}<a href="{{ subject.uri }}">{{ subject.label }}</a>{% else %}{{ subject.label }}{% endif %}{% if not loop.last %}, {% endif %}
-                    {% endfor %}
-                </dd>
-            {% endif %}
-            {% if record.data.stw_subject.0.label %}
-                <dt>
-                    {% trans count=record.data.stw_subject|length %}
-                    STW-Subject
-                    {% pluralize %}
-                    STW-Subjects
-                    {% endtrans %}
-                </dt>
-                <dd>
-                    {% for subject in record.data.stw_subject %}
-                        {% if subject.uri %}<a href="{{ subject.uri }}">{{ subject.label }}</a>{% else %}{{ subject.label }}{% endif %}{% if not loop.last %}, {% endif %}
-                    {% endfor %}
-                </dd>
-            {% endif %}
-            {% if record.data.lcsh_subject.0.label %}
-                <dt>
-                    {% trans count=record.data.lcsh_subject|length %}
-                    LCSH-Subject
-                    {% pluralize %}
-                    LCSH-Subjects
-                    {% endtrans %}
-                </dt>
-                <dd>
-                    {% for subject in record.data.lcsh_subject %}
-                        {% if subject.uri %}<a href="{{ subject.uri }}">{{ subject.label }}</a>{% else %}{{ subject.label }}{% endif %}{% if not loop.last %}, {% endif %}
-                    {% endfor %}
-                </dd>
-            {% endif %}
-            {% if record.data.keyword %}
-                <dt>
-                    {% trans count=record.data.keyword|length %}
-                    Keyword
-                    {% pluralize %}
-                    Keywords
-                    {% endtrans %}
-                </dt>
-                <dd>
-                    {% for keyword in record.data.keyword %}
-                        {% if keyword.uri %}<a href="{{ keyword.uri }}">{{ keyword.label }}</a>{% else %}{{ keyword }}{% endif %}{% if not loop.last %}, {% endif %}
-                    {% endfor %}
-                </dd>
-            {% endif %}
-            {% if record.data.keyword_geographic %}
-                <dt>
-                    {% trans count=record.data.keyword_geographic|length %}
-                    Geographic Keyword
-                    {% pluralize %}
-                    Geographic Keywords
-                    {% endtrans %}
-                </dt>
-                <dd>
-                    {% for geographic in record.data.keyword_geographic %}
-                        {% if geographic.uri %}<a href="{{ geographic.uri }}">{{ geographic.label }}</a>{% else %}{{ geographic }}{% endif %}{% if not loop.last %}, {% endif %}
-                    {% endfor %}
-                </dd>
-            {% endif %}
             {% if mlt %}
                 <dt>{{ _('Similar Records') }}</dt>
                 <dd>
@@ -561,9 +580,12 @@
                     </ul>
                 </dd>
             {% endif %}
-            {% if current_user.role == 'admin' %}
+            <hr/>
+            {% if current_user.role == 'admin' or current_user.role == 'superadmin' %}
                 <dt>{{ _('Record Information') }}</dt>
                 <dd>{{ _('Created %(created)s by %(owner)s.', created=record.data.created|mk_time|humanize(), owner=record.data.owner) }}{% if record.data.created != record.data.changed %} {{ _('Last changed %(changed)s.', changed=record.data.changed|mk_time|humanize()) }}{% endif %}</dd>
+                <dt>{{ _('Editorial Status') }}</dt>
+                <dd><span class="label label-{% if record.data.editorial_status == 'new' %}info{% elif record.data.editorial_status == 'in_process' %}default{% elif record.data.editorial_status == 'processed' %}primary{% elif record.data.editorial_status == 'final_editing' %}warning{% elif record.data.editorial_status == 'deleted' %}danger{% elif record.data.editorial_status == 'finalized' or record.data.editorial_status == 'imported' %}success{% endif %}">{% if record.locked %} <i class="fa fa-lock"></i> {% endif %}{{ record.data.editorial_status|capitalize }}</span></dd>
             {% endif %}
         </dl>
         {% if config.DEBUG and (current_user.role == 'admin' or current_user.role == 'superadmin') %}

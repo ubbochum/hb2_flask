@@ -34,7 +34,7 @@
                                     {% if item.type == 'FormField' %}
                                     {% include 'form_field.html' %}
                                     {% else %}
-                                    {% if current_user.role != 'admin' or current_user.role != 'superadmin' %}
+                                    {% if current_user.role != 'admin' and current_user.role != 'superadmin' %}
                                         {% if not item.name in form.admin_only %}{{ render_form.render_field(item) }}{% endif %}
                                     {% else %}
                                         {% if not item.name in form.user_only %}{{ render_form.render_field(item) }}{% endif %}
@@ -375,6 +375,13 @@
                     }
                 });
             }
+            if (item.orcid) {
+                $(this).closest('[id$="_container"]').find(':input').each(function(){
+                    if ($(this).attr('id') && $(this).attr('id').indexOf('-orcid') >= 1 ) {
+                        $(this).val(item.orcid)
+                    }
+                });
+            }
         })
         $('.typeahead_orga').on('typeahead:selected', function(evt, item) {
             if (item.gnd) {
@@ -384,11 +391,23 @@
                     }
                 });
             }
+            if (item.id) {
+                $(this).closest('[id$="_container"]').find(':input').each(function(){
+                    if ($(this).attr('id') && $(this).attr('id').indexOf('-organisation_id') >= 1 ) {
+                        $(this).val(item.id)
+                    }
+                });
+            }
         })
         $('.typeahead_group').on('typeahead:selected', function(evt, item) {
             if (item.gnd) {
                 $(this).closest('[id$="_container"]').find(':input').each(function(){
                     if ($(this).attr('id') && $(this).attr('id').indexOf('-gnd') >= 1 ) {
+                        $(this).val(item.gnd)
+                    }
+                });
+                $(this).closest('[id$="_container"]').find(':input').each(function(){
+                    if ($(this).attr('id') && $(this).attr('id').indexOf('-group_id') >= 1 ) {
                         $(this).val(item.gnd)
                     }
                 });

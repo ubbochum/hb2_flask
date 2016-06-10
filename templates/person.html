@@ -17,7 +17,7 @@
                         {{ _('Name') }}
                     </dt>
                     <dd>
-                        {{ record.data.name }}
+                        {% if record.data.salutation == 'm' %}{{ _('Mr.') }}<br/>{% endif %}{% if record.data.salutation == 'f' %}{{ _('Mrs./Ms.') }}<br/>{% endif %}{{ record.data.name }}
                     </dd>
                 {% endif %}
                 <br/>
@@ -42,7 +42,9 @@
                         {{ _('Scopus ID') }}
                     </dt>
                     <dd>
-                        {{ record.data.scopus_id }}
+                        {% for sid in record.data.scopus_id %}
+                            {{ sid }}{% if not loop.last %} | {% endif %}
+                        {% endfor %}
                     </dd>
                 {% endif %}
                 {% if record.data.researcher_id %}
@@ -77,6 +79,22 @@
                         {{ record.data.isni }}
                     </dd>
                 {% endif %}
+                {% if record.data.dwid %}
+                    <dt>
+                        {{ _('Local Admin ID') }}
+                    </dt>
+                    <dd>
+                        {{ record.data.dwid }}
+                    </dd>
+                {% endif %}
+                {% if record.data.email %}
+                    <dt>
+                        {{ _('E-Mail') }}
+                    </dt>
+                    <dd>
+                        {{ record.data.email }}
+                    </dd>
+                {% endif %}
                 <br/>
                 {% if record.data.affiliation %}
                     <dt>
@@ -84,12 +102,47 @@
                     </dt>
                     <dd>
                         {% for affiliation in record.data.affiliation %}
-                            <a href="{{ url_for('show_orga', orga_id=affiliation.organisation_id) }}">{{ affiliation.label }}</a><br/>
+                            <a href="{{ url_for('show_orga', orga_id=affiliation.organisation_id) }}">{% if affiliation.label %}{{ affiliation.label }}{% else %}{{ affiliation.organisation_id }}{% endif %}</a><br/>
                             {% if not loop.last %}<hr/>{% endif %}
                         {% endfor %}
                     </dd>
                 {% endif %}
-                <br/>
+                {% if record.data.group %}
+                    <dt>
+                        {{ _('Working Group') }}
+                    </dt>
+                    <dd>
+                        {% for group in record.data.group %}
+                            <a href="{{ url_for('show_group', group_id=group.group_id) }}">{% if group.label %}{{ group.label }}{% else %}{{ group.group_id }}{% endif %}</a><br/>
+                            {% if not loop.last %}<hr/>{% endif %}
+                        {% endfor %}
+                    </dd>
+                {% endif %}
+                <hr/>
+                {% if record.data.url %}
+                    <br/>
+                    <dt>
+                        {{ _('URL') }}
+                    </dt>
+                    <dd>
+                        {% for url in record.data.url %}
+                            <a href="{{ url.url }}">{{ url.label }}</a>
+                            {% if not loop.last %}<br/>{% endif %}
+                        {% endfor %}
+                    </dd>
+                {% endif %}
+                {% if record.data.research_interest %}
+                    <br/>
+                    <dt>
+                        {{ _('Research Interest') }}
+                    </dt>
+                    <dd>
+                        {% for research_interest in record.data.research_interest %}
+                            {{ research_interest }}{% if not loop.last %} | {% endif %}
+                        {% endfor %}
+                    </dd>
+                {% endif %}
+                <hr/>
                 {% if record.data.id %}
                     <dt>
                         {{ _('ID') }}
@@ -103,7 +156,9 @@
                         {{ _('Status') }}
                     </dt>
                     <dd>
-                        {{ record.data.status }}
+                        {% for status in record.data.status %}
+                            {{ status }}{% if not loop.last %} | {% endif %}
+                        {% endfor %}
                     </dd>
                 {% endif %}
                 {% if record.data.created %}
@@ -130,6 +185,8 @@
                         {{ record.data.owner }}
                     </dd>
                 {% endif %}
+                <dt>{{ _('Editorial Status') }}</dt>
+                <dd><span class="label label-{% if record.data.editorial_status == 'new' %}info{% elif record.data.editorial_status == 'in_process' %}default{% elif record.data.editorial_status == 'processed' %}primary{% elif record.data.editorial_status == 'final_editing' %}warning{% elif record.data.editorial_status == 'deleted' %}danger{% elif record.data.editorial_status == 'finalized' or record.data.editorial_status == 'imported' %}success{% endif %}">{% if record.locked %} <i class="fa fa-lock"></i> {% endif %}{{ record.data.editorial_status|capitalize }}</span></dd>
             </dl>
                 {% if config.DEBUG and (current_user.role == 'admin' or current_user.role == 'superadmin') %}
                     <div>
