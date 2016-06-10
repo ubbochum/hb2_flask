@@ -368,13 +368,17 @@ def get_wtf_tocs(elems):
     wtf_tocs = []
     for toc in elems:
         tmp = {}
-        if len(toc.text) > 0:
+        uri = toc.get('%shref' % XLINK)
+        # logging.info(uri)
+        toc_text = toc.text
+        # logging.info(toc_text)
+        if toc_text:
             tmp.setdefault('toc', toc.text)
-        if toc.get('%shref' % XLINK):
-            tmp.setdefault('uri', toc.get('%shref' % XLINK))
+        if uri:
+            tmp.setdefault('uri', uri)
         if tmp.get('toc') or tmp.get('uri'):
             wtf_tocs.append(tmp)
-
+    # logging.info(wtf_tocs)
     return {'table_of_contents': wtf_tocs}
 
 
@@ -1076,7 +1080,7 @@ if len(secrets.MODS_FILES_PATH) > 0:
     modsfiles = [join(secrets.MODS_FILES_PATH, f) for f in listdir(secrets.MODS_FILES_PATH) if isfile(join(secrets.MODS_FILES_PATH, f))]
 else:
     modsfiles.append(secrets.MODS_TEST_FILE)
-#logging.info(modsfiles)
+logging.info(modsfiles)
 
 for file in modsfiles:
     logging.info('work on ' + file)
