@@ -337,7 +337,7 @@ class ThesisProfileForm(Form):
 class URLProfileForm(Form):
     #url = FieldList(StringField(lazy_gettext('URL'), validators=[URL(), Optional()]), min_entries=1)
     url = StringField(lazy_gettext('URL'), validators=[URL(), Optional()])
-    label = SelectField(lazy_gettext('Label'), choices=[
+    label = SelectField(lazy_gettext('Label'), validators=[Optional()], choices=[
         ('', lazy_gettext('Select a Label for the URL')),
         ('hp', lazy_gettext('Homepage')),
         ('rg', lazy_gettext('ResearchGate')),
@@ -357,7 +357,7 @@ class URLProfileForm(Form):
     ])
 
 class PersonAdminForm(Form):
-    salutation = SelectField(lazy_gettext('Salutation'), choices=[
+    salutation = SelectField(lazy_gettext('Salutation'), validators=[Optional()], choices=[
         ('', lazy_gettext('Select a Salutation')),
         ('m', lazy_gettext('Mr.')),
         ('f', lazy_gettext('Mrs./Ms.')),
