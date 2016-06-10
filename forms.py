@@ -46,7 +46,7 @@ LANGUAGES = [
         ('rus', lazy_gettext('Russian')),
         ('spa', lazy_gettext('Spanish')),
         ('ita', lazy_gettext('Italian')),
-        ('jap', lazy_gettext('Japanese')),
+        ('jpn', lazy_gettext('Japanese')),
         ('lat', lazy_gettext('Latin')),
         ('zhn', lazy_gettext('Chinese')),
         ('dut', lazy_gettext('Dutch')),
