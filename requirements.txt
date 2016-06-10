@@ -23,7 +23,7 @@ Jinja2==2.8
 line-profiler==1.0
 lxml==3.5.0
 MarkupSafe==0.23
-orcid==0.5.1
+orcid==0.6.0
 pyisbn==1.0.1
 python-dateutil==2.4.2
 python-engineio==0.8.8
