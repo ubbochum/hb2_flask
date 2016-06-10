@@ -410,9 +410,9 @@ def get_wtf_hosts(elems):
                     if part.tag == '%sextent' % MODS:
                         for extent in part:
                             if extent.tag == '%slist' % MODS:
-                                tmp.setdefault('page_first', str(extent.text).split("–")[0])
+                                tmp.setdefault('page_first', str(extent.text).split("–")[0].replace('[','').replace(']',''))
                                 if len(str(extent.text).split("–")) > 1:
-                                    tmp.setdefault('page_last', str(extent.text).split("–")[1])
+                                    tmp.setdefault('page_last', str(extent.text).split("–")[1].replace('[','').replace(']',''))
                                     # logging.info(tmp)
         # logging.info('---')
         # logging.info(tmp)
@@ -640,8 +640,8 @@ def get_wtf_series(elems):
                     if part.tag == '%sextent' % MODS:
                         for extent in part:
                             if extent.tag == '%slist' % MODS:
-                                tmp.setdefault('page_first', str(extent.text).split("–")[0])
-                                tmp.setdefault('page_last', str(extent.text).split("–")[1])
+                                tmp.setdefault('page_first', str(extent.text).split("–")[0].replace('[','').replace(']',''))
+                                tmp.setdefault('page_last', str(extent.text).split("–")[1].replace('[','').replace(']',''))
         tmp.setdefault('pubtype', 'Series')
         if not tmp.get('is_part_of'):
             tmp.setdefault('is_part_of', str(uuid.uuid4()))
@@ -672,7 +672,7 @@ def get_wtf_abstract(elems):
     for abstract in elems:
         tmp = {}
         tmp.setdefault('content', abstract.text)
-        if not abstract.get('%shref' % XLINK):
+        if abstract.get('%shref' % XLINK):
             tmp.setdefault('address', abstract.get('%shref' % XLINK))
         tmp.setdefault('label', '')
         if abstract.get('lang'):
@@ -731,7 +731,7 @@ def get_wtf_extent(elems):
         wtf_extent.setdefault('additions', extent.split(' : ')[1])
     else:
         wtf_extent.setdefault('number_of_pages', extent)
-    logging.info('extent %s' % wtf_extent)
+    # logging.info('extent %s' % wtf_extent)
     return wtf_extent
 
 
