@@ -919,7 +919,7 @@ try:
             'wtf': lambda elem: {'edition': elem[0].text}
         },
         "./m:originInfo/m:place/m:placeTerm[@type='text']": {
-            'wtf': lambda elems: {'place_of_application': elems[0].text} if record.xpath(
+            'wtf': lambda elems: {'place_of_application': elems[0].text, 'place': elems[0].text} if record.xpath(
                                       "./m:originInfo/m:dateOther[@encoding='iso8601']", namespaces=NSMAP) else
                                   {'publisher_place': elems[0].text, 'place': elems[0].text},
             'csl': lambda elems: {'publisher_place': elems[0].text},
@@ -927,7 +927,7 @@ try:
             # 'oai_dc': (oai_elements, 'publisher_place')
         },
         "./m:originInfo/m:place/m:placeTerm[@type='code']": {
-            'wtf': lambda elems: {'place_of_application': elems[0].text} if record.xpath(
+            'wtf': lambda elems: {'place_of_application': elems[0].text, 'place': elems[0].text} if record.xpath(
                                       "./m:originInfo/m:dateOther[@encoding='iso8601']", namespaces=NSMAP) else
                                   {'publisher_place': elems[0].text, 'place': elems[0].text},
             'csl': lambda elems: {'publisher_place': elems[0].text},
