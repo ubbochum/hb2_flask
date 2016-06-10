@@ -631,9 +631,9 @@ def _record2solr(form, action, relItems=True):
             solr_data.setdefault('exacttitle', form.data.get(field).strip())
             solr_data.setdefault('sorttitle', form.data.get(field).strip())
         if field == 'other_title':
-            for trans_tit in form.data.get(field):
-                logging.info(trans_tit)
-                # TODO solr_data.setdefault('other_title', trans_tit.strip())
+            for other_tit in form.data.get(field):
+                # logging.info(other_tit)
+                solr_data.setdefault('parallel_title', other_tit.strip())
         if field == 'issued':
             if form.data.get(field):
                 solr_data.setdefault('date', form.data.get(field).replace('[','').replace(']','').strip())

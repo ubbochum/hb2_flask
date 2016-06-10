@@ -610,8 +610,8 @@ class ContainerRelationForm(IsPartOfForm):
 class MonographRelationForm(ContainerRelationForm):
     pass
 
-class TranslatedTitleForm(Form):
-    translated_title = StringField(lazy_gettext('Other Title'), validators=[Optional()], widget=CustomTextInput(placeholder=lazy_gettext('translated title, parallel title or EST of the work')))
+class OtherTitleForm(Form):
+    other_title = StringField(lazy_gettext('Other Title'), validators=[Optional()], widget=CustomTextInput(placeholder=lazy_gettext('translated title, parallel title or EST of the work')))
     language = SelectField(lazy_gettext('Language'), validators=[Optional()], choices=LANGUAGES)
 
 class WorkForm(Form):
@@ -619,7 +619,7 @@ class WorkForm(Form):
     title = StringField(lazy_gettext('Title'), validators=[DataRequired()], widget=CustomTextInput(placeholder=lazy_gettext('The title of the work')))
     subtitle = StringField(lazy_gettext('Subtitle'), validators=[Optional()], widget=CustomTextInput(placeholder=lazy_gettext('The subtitle of the work')))
     title_supplement = StringField(lazy_gettext('Title Supplement'), validators=[Optional()], widget=CustomTextInput(placeholder=lazy_gettext('Additions to the title of the work')))
-    other_title = FieldList(FormField(TranslatedTitleForm), min_entries=1)
+    other_title = FieldList(FormField(OtherTitleForm), min_entries=1)
     person = FieldList(FormField(PersonForm), min_entries=1)
     corporation = FieldList(FormField(CorporationForm), min_entries=1)
     uri = FieldList(StringField(lazy_gettext('URI'), validators=[URL(), Optional()]), min_entries=1, widget=CustomTextInput(placeholder=lazy_gettext('A URI, URL, or URN')))
