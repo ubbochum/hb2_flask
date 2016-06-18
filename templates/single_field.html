@@ -35,6 +35,8 @@
                 {{ field(class='form-control typeahead_title') }}
             {% elif 'person' in field.name %}
                 {{ field(class='form-control typeahead_pers') }}
+            {% elif field.name == 'name' %}
+                {{ field(class='form-control typeahead_pers') }}
             {% elif 'corporation' in field.name %}
                 {{ field(class='form-control typeahead_orga') }}
             {% elif 'affiliation_context' in field.name %}

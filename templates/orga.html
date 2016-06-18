@@ -25,7 +25,9 @@
                         {{ _('Local Admin ID') }}
                     </dt>
                     <dd>
-                        {{ record.data.dwid }}
+                        {% for dwid in record.data.dwid %}
+                            <a href="{{ url_for('show_orga', orga_id=dwid) }}">{{ dwid }}</a>{% if not loop.last %} | {% endif %}
+                        {% endfor %}
                     </dd>
                 {% endif %}
                 {% if record.data.start_date %}
@@ -56,7 +58,7 @@
                         <a href="{{ url_for('show_orga', orga_id=record.data.parent_id) }}">{% if record.data.parent_label %}{{ record.data.parent_label }}{% else %}{{ record.data.parent_id }}{% endif %}</a><br/>
                     </dd>
                 {% endif %}
-                <br/>
+                <hr/>
                 {% if record.data.id %}
                     <dt>
                         {{ _('ID') }}

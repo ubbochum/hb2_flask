@@ -14,6 +14,7 @@
                 <li class="divider"></li>
                 {% if current_user.role == 'admin' or current_user.role == 'superadmin' %}
                 <li><a href="{{ url_for('new_person') }}">{{ _('Person') }}</a></li>
+                <li><a href="{{ url_for('new_person_from_gnd') }}">{{ _('Person from GND') }}</a></li>
                 <li><a href="{{ url_for('new_orga') }}">{{ _('Organisation') }}</a></li>
                 {% endif %}
                 <li><a href="{{ url_for('new_group') }}">{{ _('Working Group') }}</a></li>

@@ -24,6 +24,7 @@ key = ''
 
 contact_mail = ''
 
+APP_BASE_URL = ''
 APP_PORT = 5005
 # This parameter allows to start the application without CSRF security (set to False).
 # THIS IS NOT RECOMMENDED! (but sometime necessary)
@@ -37,6 +38,16 @@ DIFFERENT_PROXY_PATH = False
 
 orcid_sandbox_client_id = ''
 orcid_sandbox_client_secret = ''
+orcid_scopes = [
+    '/authenticate',
+    '/read-limited',
+    '/orcid-works/create',
+    '/orcid-works/update',
+    '/affiliations/create',
+    '/affiliations/update',
+    '/orcid-bio/external-identifiers/create',
+    '/orcid-bio/update',
+]
 
 MODS_TEST_FILE = ''
 
@@ -198,6 +209,18 @@ DASHBOARD_PERS_FACETS = {
             'type': 'terms',
             'field': 'editorial_status',
             'limit': 20
+        },
+    'personal_status':
+        {
+            'type': 'terms',
+            'field': 'personal_status',
+            'limit': 20
+        },
+    'dwid':
+        {
+            'type': 'terms',
+            'field': 'dwid',
+            'limit': 10
         },
     'owner':
         {

@@ -172,7 +172,7 @@ PROJECT_TYPES = [
 ]
 
 CARRIER = [
-    ('', lazy_gettext('Select a Project Type')),
+    ('', lazy_gettext('Select a Carrier')),
     ('AudioDisc', lazy_gettext('Audio disc')),
     ('Audiocassette', lazy_gettext('Audiocassette')),
     ('AudiotapeReel', lazy_gettext('Audiotape reel')),
@@ -356,6 +356,11 @@ class URLProfileForm(Form):
         ('mi', lazy_gettext('Other')),
     ])
 
+
+class PersonFromGndForm(Form):
+    gnd = StringField(lazy_gettext('GND'), validators=[DataRequired(), Regexp('(1|10)\d{7}[0-9X]|[47]\d{6}-\d|[1-9]\d{0,7}-[0-9X]|3\d{7}[0-9X]')], description=Markup(lazy_gettext('<a href="https://portal.d-nb.de/opac.htm?method=showOptions#top" target="_blank">Find in GND</a>')))
+
+
 class PersonAdminForm(Form):
     salutation = SelectField(lazy_gettext('Salutation'), validators=[Optional()], choices=[
         ('', lazy_gettext('Select a Salutation')),
@@ -398,6 +403,7 @@ class PersonAdminForm(Form):
         ('', lazy_gettext('Select a Status')),
         ('alumnus', lazy_gettext('Alumnus')),
         ('assistant_lecturer', lazy_gettext('Assistant Lecturer')),
+        ('callcenter', lazy_gettext('Callcenter')),
         ('ranking', lazy_gettext('Relevant for Ranking')),
         ('external', lazy_gettext('External Staff')),
         ('manually_added', lazy_gettext('Manually added')),
@@ -470,7 +476,8 @@ class OrgaAdminForm(Form):
     id = StringField(lazy_gettext('Organisation ID'), description=lazy_gettext('An Organisation ID such as GND, ISNI, Ringgold or a URI'), validators=[DataRequired()])
     # Die folgende Zeile erzeugt btgl. des Solr-Schemas nicht konsistente Daten!
     #account = FieldList(FormField(AccountForm), min_entries=1)
-    dwid = StringField(lazy_gettext('Verwaltungs-ID'), validators=[Optional()])
+    dwid = FieldList(StringField(lazy_gettext('Verwaltungs-ID')), min_entries=1)
+    gnd = StringField(lazy_gettext('GND'), validators=[Optional(), Regexp('(1|10)\d{7}[0-9X]|[47]\d{6}-\d|[1-9]\d{0,7}-[0-9X]|3\d{7}[0-9X]')], description=Markup(lazy_gettext('<a href="https://portal.d-nb.de/opac.htm?method=showOptions#top" target="_blank">Find in GND</a>')))
     parent_id = StringField(lazy_gettext('Parent ID'))
     parent_label = StringField(lazy_gettext('Parent Label'))
     start_date = StringField(lazy_gettext('Start Date'))

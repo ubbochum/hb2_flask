@@ -1,4 +1,4 @@
 <a href="{{ url_for('show_person', person_id=record.id) }}" target="_blank">{{ record.name[0] }}</a>{% if record.gnd %}<br/> GND: {{ record.gnd }}{% endif %}{% if record.orcid %}<br/> ORCID: {{ record.orcid }}{% endif %}<br/>
 {% if record.faffiliation %}
     {% for affiliation in record.faffiliation %}{{ affiliation }}{% if not loop.last %}; {% endif %}{% endfor %}
-{% endif %},
+{% endif %}

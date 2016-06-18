@@ -6,7 +6,8 @@
     <div class="row">
         <div class="col-sm-4" id="facets">
             {% if facet_data%}
-                {{ drill_down.facets(facet_data.fperson, 'fperson', heading='Person', target=target) }}
+                {{ drill_down.facets(facet_data.catalog, 'catalog', heading='Catalog', target=target) }}
+                {{ drill_down.facets(facet_data.pubtype, 'pubtype', heading='Publication type', target=target) }}
                 {{ drill_down.facets(facet_data.fdate, 'fdate', heading='Publication Date', target=target) }}
                 {{ drill_down.facets(facet_data.language, 'language', heading='Language', target=target) }}
             {% endif %}

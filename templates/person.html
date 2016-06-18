@@ -96,7 +96,7 @@
                     </dd>
                 {% endif %}
                 <br/>
-                {% if record.data.affiliation %}
+                {% if record.data.affiliation and record.data.affiliation[0].organisation_id %}
                     <dt>
                         {{ _('Affiliation') }}
                     </dt>
@@ -107,7 +107,7 @@
                         {% endfor %}
                     </dd>
                 {% endif %}
-                {% if record.data.group %}
+                {% if record.data.group and record.data.group[0].group_id %}
                     <dt>
                         {{ _('Working Group') }}
                     </dt>
@@ -189,6 +189,14 @@
                 <dt>{{ _('Editorial Status') }}</dt>
                 <dd><span class="label label-{% if record.data.editorial_status == 'new' %}info{% elif record.data.editorial_status == 'in_process' %}default{% elif record.data.editorial_status == 'processed' %}primary{% elif record.data.editorial_status == 'final_editing' %}warning{% elif record.data.editorial_status == 'deleted' %}danger{% elif record.data.editorial_status == 'finalized' or record.data.editorial_status == 'imported' %}success{% endif %}">{% if record.locked %} <i class="fa fa-lock"></i> {% endif %}{{ record.data.editorial_status|capitalize }}</span></dd>
                 <hr/>
+                {% if record.data.data_supplied %}
+                    <dt>
+                        {{ _('Data supplied') }}
+                    </dt>
+                    <dd>
+                        {{ record.data.data_supplied }}
+                    </dd>
+                {% endif %}
                 {% if record.data.id %}
                     <dt>
                         {{ _('Note') }}
