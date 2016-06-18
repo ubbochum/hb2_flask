@@ -705,6 +705,12 @@ def get_wtf_affiliation_context(elems):
     return {'affiliation_context': contexts}
 
 
+def other_title(elems):
+    other_titles = []
+    for title in elems:
+        other_titles.append({'other_title': title.text, 'language': ''})
+    return {'other_title': other_titles}
+
 def get_value(input):
     value = ''
     # logging.info(input)
@@ -1072,8 +1078,8 @@ try:
         },
         # "./m:titleInfo[@displayLabel='Paragraph(en)']": lambda elem : {'': elem.text},
         "./m:titleInfo[@type='translated']/m:title": {
-            'wtf': lambda elems: {'title_translated': elems[0].text},
-            'solr': lambda elems: {'title_translated': elems[0].text},
+            'wtf': other_title,
+            'solr': lambda elems: {'other_title': elems[0].text},
         },
         # "./m:titleInfo[@type='uniform']": lambda elem : {'': elem.text},
         # "./m:typeOfResource": lambda elem : {'': elem.text},
