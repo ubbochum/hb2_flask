@@ -49,7 +49,12 @@ orcid_scopes = [
     '/orcid-bio/update',
 ]
 
+CATALOG = ''
+
 MODS_TEST_FILE = ''
+MODS_FILES_PATH = ''
+
+RESULTS_DIR = ''
 
 SOLR_HOST = '127.0.0.1'
 SOLR_PORT = '8983'
