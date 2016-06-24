@@ -51,7 +51,7 @@
                     {{ record.data.title_supplement }}
                 </dd>
             {% endif %}
-            {% if record.data.other_title and not record.data.other_title.0.translated_title == '' %}
+            {% if record.data.other_title and not record.data.other_title[0].other_title == '' %}
                 <dt>
                     {% trans count=record.data.other_title|length %}
                     Other Title
@@ -61,7 +61,7 @@
                 </dt>
                 <dd>
                     {% for title in record.data.other_title %}
-                        {{ title.translated_title }}{% if title.language %} [{{ lang_map.get(title.language) }}]{% endif %}
+                        {{ title.other_title }}{% if title.language %} [{{ lang_map.get(title.language) }}]{% endif %}
                         {% if not loop.last %}<br/>{% endif %}
                     {% endfor %}
                 </dd>
@@ -91,8 +91,6 @@
                     {% endfor %}
                 </dd>
             {% endif %}
-            {% if record.data.person.0 and record.data.corporation.0.name %}
-            {% endif %}
             {% if record.data.corporation.0.name %}
                 <dt>
                     {% trans count=record.data.corporation|length %}
@@ -111,21 +109,29 @@
                     {% endfor %}
                 </dd>
             {% endif %}
-            <hr/>
-            {% if record.data.abstract %}
+            {% if record.data.person[0].name or record.data.corporation[0].name %}
+                <hr/>
+            {% endif %}
+            {% if record.data.abstract and (record.data.abstract[0].content or record.data.abstract[0].address) %}
                 {% if current_user.role == 'admin' or current_user.role == 'superadmin' %}
                 <dt>{{ _('Description') }}</dt>
                 <dd>
                     {% for abstract in record.data.abstract %}
                         {% if abstract.address %}<a href="{{ abstract.address }}">{{ abstract.address }}</a><br/>{% endif %}
-                        {% if abstract.language %}{{ _('Language') }}: {{ abstract.language }}<br/>{% endif %}
+                        {% if abstract.language and abstract.language != 'None' %}{{ _('Language') }}: {{ abstract.language }}<br/>{% endif %}
                         {{ abstract.content }}
                         {% if not loop.last %}<br/><br/>{% endif %}
                     {% endfor %}
                 </dd>
                 {% endif %}
             {% endif %}
-            {% if record.data.table_of_contents %}
+            {% if record.data.claims %}
+                <dt>{{ _('Claims') }}</dt>
+                <dd>
+                    {{ record.data.claims }}
+                </dd>
+            {% endif %}
+            {% if record.data.table_of_contents and (record.data.table_of_contents[0].toc or record.data.table_of_contents[0].uri) %}
                 <dt>
                     {{ _('Table of Contents') }}
                 </dt>
@@ -194,7 +200,7 @@
                     {% endfor %}
                 </dd>
             {% endif %}
-            {% if record.data.keyword %}
+            {% if record.data.keyword and record.data.keyword[0] != "" %}
                 <dt>
                     {% trans count=record.data.keyword|length %}
                     Keyword
@@ -208,7 +214,7 @@
                     {% endfor %}
                 </dd>
             {% endif %}
-            {% if record.data.keyword_geographic %}
+            {% if record.data.keyword_geographic and record.data.keyword_geographic[0] != "" %}
                 <dt>
                     {% trans count=record.data.keyword_geographic|length %}
                     Geographic Keyword
@@ -219,6 +225,20 @@
                 <dd>
                     {% for geographic in record.data.keyword_geographic %}
                         {% if geographic.uri %}<a href="{{ geographic.uri }}">{{ geographic.label }}</a>{% else %}{{ geographic }}{% endif %}{% if not loop.last %}, {% endif %}
+                    {% endfor %}
+                </dd>
+            {% endif %}
+            {% if record.data.keyword_temporal and record.data.keyword_temporal[0] != "" %}
+                <dt>
+                    {% trans count=record.data.keyword_temporal|length %}
+                    Temporal Keyword
+                    {% pluralize %}
+                    Temporal Keywords
+                    {% endtrans %}
+                </dt>
+                <dd>
+                    {% for temporal in record.data.keyword_temporal %}
+                        {% if temporal.uri %}<a href="{{ temporal.uri }}">{{ temporal.label }}</a>{% else %}{{ temporal }}{% endif %}{% if not loop.last %}, {% endif %}
                     {% endfor %}
                 </dd>
             {% endif %}
@@ -318,12 +338,21 @@
                 </dd>
             {% endif %}
             {% if record.data.number_of_pages %}
-                <dt>
-                    {{ _('Number of Pages') }}
-                </dt>
-                <dd>
-                    {{ record.data.number_of_pages }} {{ _('p.') }}
-                </dd>
+                {% if record.data.pubtype == 'AudioVideoDocument' %}
+                    <dt>
+                        {{ _('Duration') }}
+                    </dt>
+                    <dd>
+                        {{ record.data.number_of_pages }} {{ _('min.') }}
+                    </dd>
+                {% else %}
+                    <dt>
+                        {{ _('Number of Pages') }}
+                    </dt>
+                    <dd>
+                        {{ record.data.number_of_pages }} {{ _('p.') }}
+                    </dd>
+                {% endif %}
             {% endif %}
             {% if record.data.additions %}
                 <dt>
@@ -349,12 +378,20 @@
                     {{ record.data.application_number }}
                 </dd>
             {% endif %}
+            {% if record.data.bibliographic_ipc %}
+                <dt>
+                    {{ _('Bibliographic IPC') }}
+                </dt>
+                <dd>
+                    {{ record.data.bibliographic_ipc }}
+                </dd>
+            {% endif %}
             {% if record.data.date_application %}
                 <dt>
                     {{ _('Date of application') }}
                 </dt>
                 <dd>
-                    {{ record.data.date_application }}
+                    {{ record.data.date_application.split(' ')[0] }}
                 </dd>
             {% endif %}
             {% if record.data.place_of_application %}
@@ -365,7 +402,7 @@
                     {{ record.data.place_of_application }}
                 </dd>
             {% endif %}
-            {% if record.data.priority_date %}
+            {% if record.data.priority_date and record.data.priority_date[0] != "" %}
                 <dt>
                     {% trans count=record.data.priority_date|length %}
                     Priority date
@@ -545,12 +582,12 @@
                     {{ record.data.note }}
                 </dd>
             {% endif %}
-            {% if record.data.license %}
+            {% if record.data.license and record.data.license != 'None' %}
                 <dt>
                     {{ _('License') }}
                 </dt>
                 <dd>
-                    {{ record.data.license }}
+                    {{ license_map.get(record.data.license) }}
                 </dd>
             {% endif %}
             {% if record.data.license_text %}
@@ -561,7 +598,7 @@
                     {{ record.data.license_text }}
                 </dd>
             {% endif %}
-            {% if record.data.medium %}
+            {% if record.data.medium and record.data.medium != 'None' %}
                 <dt>
                     {{ _('Medium') }}
                 </dt>

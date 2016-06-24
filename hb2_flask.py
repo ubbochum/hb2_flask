@@ -30,8 +30,6 @@ from io import BytesIO
 
 import requests
 from requests import RequestException
-#import pickle
-import humanize
 import simplejson as json
 import wtforms_json
 import orcid
@@ -43,7 +41,6 @@ from flask.ext.paginate import Pagination
 from flask_humanize import Humanize
 from flask.ext.login import LoginManager, UserMixin, current_user, login_user, logout_user, login_required, make_secure_token
 from flask.ext.socketio import SocketIO, emit
-#from flask_debugtoolbar import DebugToolbarExtension
 from flask_wtf.csrf import CsrfProtect
 from flask_redis import Redis
 from urllib import parse
@@ -54,16 +51,17 @@ from multiprocessing import Pool
 from solr_handler import Solr
 from processors import mods_processor
 from forms import *
+import ast
 
 try:
     import site_secrets as secrets
 except ImportError:
     import secrets
 
-logging.basicConfig (level=logging.INFO,
+logging.basicConfig(level=logging.INFO,
     format='%(asctime)s %(levelname)-4s %(message)s',
-    datefmt='%a, %d %b %Y %H:%M:%S',
-)
+    datefmt='%a, %d %b %Y %H:%M:%S')
+
 
 class ReverseProxied(object):
     def __init__(self, app):
@@ -82,19 +80,19 @@ class ReverseProxied(object):
             environ['wsgi.url_scheme'] = scheme
         return self.app(environ, start_response)
 
+
 app = Flask(__name__)
 
 if secrets.DIFFERENT_PROXY_PATH:
     app.wsgi_app = ReverseProxied(app.wsgi_app)
 
 app.debug = True
-#app.testing = True
 app.secret_key = secrets.key
-#toolbar = DebugToolbarExtension(app)
 
 app.config['DEBUG_TB_INTERCEPT_REDIRECTS '] = False
-app.config['REDIS_HOST'] = '/tmp/redis.sock'
-redis_store = Redis(app)
+
+Redis(app, 'REDIS_CONSOLIDATE_PERSONS')
+Redis(app, 'REDIS_REPLACE_URIS')
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -142,6 +140,8 @@ PUBTYPE2TEXT = {
     'Patent': lazy_gettext('Patent'),
     'PressRelease': lazy_gettext('Press Release'),
     'RadioTVProgram': lazy_gettext('Radio or TV Program'),
+    'Report': lazy_gettext('Report'),
+    'ResearchData': lazy_gettext('Research Data'),
     'Series': lazy_gettext('Series'),
     'Software': lazy_gettext('Software'),
     'SpecialIssue': lazy_gettext('Special Issue'),
@@ -150,13 +150,14 @@ PUBTYPE2TEXT = {
 }
 
 SUBTYPE2TEXT = {
-    'article_lexicon': lazy_gettext('Article in Lexicon'),
+    'lexicon_article': lazy_gettext('Article in Lexicon'),
     'abstract': lazy_gettext('Abstract'),
     'afterword': lazy_gettext('Afterword'),
     'bachelor_thesis': lazy_gettext('Bachelor Thesis'),
     'diploma_thesis': lazy_gettext('Diploma Thesis'),
     'dissertation': lazy_gettext('Dissertation'),
     'dramatic_work': lazy_gettext('Dramatic Work'),
+    'expert_opinion': lazy_gettext('Expert Opinion'),
     'festschrift': lazy_gettext('Festschrift'),
     'first_state_examination': lazy_gettext('1st State Examination'),
     'habilitation': lazy_gettext('Habilitation'),
@@ -176,6 +177,35 @@ SUBTYPE2TEXT = {
     'sermon': lazy_gettext('Sermon'),
 }
 
+PUBTYPE2FORM = {
+    'ArticleJournal': ArticleJournalForm,
+    'MultivolumeWork': MultivolumeWorkForm,
+    'Monograph': MonographForm,
+    'Patent': PatentForm,
+    'Chapter': ChapterForm,
+    'ChapterInLegalCommentary': ChapterInLegalCommentaryForm,
+    'Conference': ConferenceForm,
+    'Collection': CollectionForm,
+    'Other': OtherForm,
+    'Thesis': ThesisForm,
+    'ArticleNewspaper': ArticleNewspaperForm,
+    'AudioVideoDocument': AudioVideoDocumentForm,
+    'Edition': EditionForm,
+    'InternetDocument': InternetDocumentForm,
+    'Journal': JournalForm,
+    'Lecture': LectureForm,
+    'LegalCommentary': LegalCommentaryForm,
+    'Newspaper': NewspaperForm,
+    'PressRelease': PressReleaseForm,
+    'RadioTVProgram': RadioTVProgramForm,
+    'Series': SeriesForm,
+    'Software': SoftwareForm,
+    'SpecialIssue': SpecialIssueForm,
+    'Standard': StandardForm,
+    'Report': ReportForm,
+    'ResearchData': ResearchDataForm,
+}
+
 ROLE_MAP = {
     'abr': lazy_gettext('Abridger'),
     'act': lazy_gettext('Actor'),
@@ -183,12 +213,13 @@ ROLE_MAP = {
     'aft': lazy_gettext('Author of Afterword'),
     'arr': lazy_gettext('Arranger'),
     'aui': lazy_gettext('Author of Introduction'),
-    'brd': lazy_gettext('Sender'),
+    'brd': lazy_gettext('Broadcaster'),
     'chr': lazy_gettext('Choreographer'),
     'cmp': lazy_gettext('Composer'),
     'ctb': lazy_gettext('Contributor'),
     'cst': lazy_gettext('Costume Designer'),
     'cwt': lazy_gettext('Commentator for written text'),
+    'dgg': lazy_gettext('Degree Granting Institution'),
     'drt': lazy_gettext('Director'),
     'edt': lazy_gettext('Editor'),
     'elg': lazy_gettext('Electrician'),
@@ -261,10 +292,68 @@ LANGUAGE_MAP = {
     'bos': lazy_gettext('Bosnian'),
 }
 
+URL_TYPE_MAP = {
+    'hp': lazy_gettext('Homepage'),
+    'rg': lazy_gettext('ResearchGate'),
+    'ri': lazy_gettext('ResearcherID'),
+    'an': lazy_gettext('AcademiaNet'),
+    'ae': lazy_gettext('Academia.edu'),
+    'wp': lazy_gettext('Wikipedia'),
+    'xi': lazy_gettext('Xing'),
+    'li': lazy_gettext('LinkedIn'),
+    'bl': lazy_gettext('Blog'),
+    'fb': lazy_gettext('Facebook'),
+    'tw': lazy_gettext('Twitter'),
+    'ic': lazy_gettext('identi.ca'),
+    'zt': lazy_gettext('Zotero'),
+    'md': lazy_gettext('Mendeley'),
+    'mi': lazy_gettext('Other'),
+}
+
+LICENSE_MAP = {
+    'cc_zero': lazy_gettext('Creative Commons Zero - Public Domain'),
+    'cc_by': lazy_gettext('Creative Commons Attribution'),
+    'cc_by_sa': lazy_gettext('Creative Commons Attribution Share Alike'),
+    'cc_by_nd': lazy_gettext('Creative Commons Attribution No Derivatives')
+}
+
+PERS_STATUS_MAP = {
+    'alumnus': lazy_gettext('Alumnus'),
+    'assistant_lecturer': lazy_gettext('Assistant Lecturer'),
+    'callcenter': lazy_gettext('Callcenter'),
+    'ranking': lazy_gettext('Relevant for Ranking'),
+    'external': lazy_gettext('External Staff'),
+    'manually_added': lazy_gettext('Manually added'),
+    'official': lazy_gettext('Official'),
+    'official_ns': lazy_gettext('Official, Non-Scientific'),
+    'research_school': lazy_gettext('Doctoral Candidate'),
+    'principal_investigator': lazy_gettext('Principal Investigator'),
+    'professor': lazy_gettext('Professor'),
+    'emeritus': lazy_gettext('Emeritus'),
+    'teaching_assistant': lazy_gettext('Teaching Assistant'),
+    'tech_admin': lazy_gettext('Technical and Administrative Staff'),
+}
+
+LANGUAGES = {
+    'de': 'German',
+    'de_DE': 'German',
+    'en': 'English',
+    'en_GB': 'English',
+    'en_US': 'English'
+}
+
+@humanize_filter.localeselector
+@babel.localeselector
+def get_locale():
+    return request.accept_languages.best_match(LANGUAGES.keys())
+    # return 'de_DE'
+
+
 @app.template_filter('rem_form_count')
 def rem_form_count_filter(mystring):
-    '''Remove trailing form counts to display only categories in FormField/FieldList combinations.'''
+    """Remove trailing form counts to display only categories in FormField/FieldList combinations."""
     return FORM_COUNT_RE.sub('', mystring)
+
 
 @app.template_filter('mk_time')
 def mk_time_filter(mytime):
@@ -273,39 +362,39 @@ def mk_time_filter(mytime):
     except ValueError:
         return datetime.datetime.strptime(mytime, '%Y-%m-%dT%H:%M:%S.%fZ')
 
+
 @app.template_filter('last_split')
 def last_split_filter(category):
     return category.rsplit('-', 1)[1]
+
 
 # Just a temporary hack...
 @app.template_filter('get_name')
 def get_name(record):
     return json.loads(record.get('wtf_json')).get('name')
 
+
 @app.template_filter('filter_remove')
 def filter_remove_filter(fqstring, category):
     re.compile()
+
 
 @app.template_filter('deserialize_json')
 def deserialize_json_filter(thejson):
     return json.loads(thejson)
 
+
 def theme(ip):
-    logging.info(ip[0])
-    site = ''
-    # For the moment we only use the Bochum theme
-    #site = 'bochum'
+    # logging.info(ip[0])
     if ip[0].startswith('127.0.0.1' or ip[0].startswith('134.147')):
-        site = 'bochum'
+        return 'bochum'
     elif ip[0].startswith('129.217'):
-        site = 'dortmund'
+        return 'dortmund'
+    elif ip[0].startswith('129.217.135.159'):
+        return 'bochum'
     else:
-        site = 'bochum'
-    # Sonderfall zum Test
-    if ip[0].startswith('129.217.135.159'):
-        site = 'bochum'
-    #logging.info(site)
-    return site
+        return 'bochum'
+
 
 def _diff_struct(a, b):
     diffs = ''
@@ -320,41 +409,42 @@ def _diff_struct(a, b):
                 pass
     return diffs
 
-PUBTYPE2FORM = {
-    'ArticleJournal': ArticleJournalForm,
-    'MultivolumeWork': MultivolumeWorkForm,
-    'Monograph': MonographForm,
-    'Patent': PatentForm,
-    'Chapter': ChapterForm,
-    'ChapterInLegalCommentary': ChapterInLegalCommentaryForm,
-    'Conference': ConferenceForm,
-    'Collection': CollectionForm,
-    'Other': OtherForm,
-    'Thesis': ThesisForm,
-    'ArticleNewspaper': ArticleNewspaperForm,
-    'AudioVideoDocument': AudioVideoDocumentForm,
-    'Edition': EditionForm,
-    'InternetDocument': InternetDocumentForm,
-    'Journal': JournalForm,
-    'Lecture': LectureForm,
-    'LegalCommentary': LegalCommentaryForm,
-    'Newspaper': NewspaperForm,
-    'PressRelease': PressReleaseForm,
-    'RadioTVProgram': RadioTVProgramForm,
-    'Series': SeriesForm,
-    'Software': SoftwareForm,
-    'SpecialIssue': SpecialIssueForm,
-    'Standard': StandardForm,
-    'Report': ReportForm,
-    'ResearchData': ResearchDataForm,
-}
+
+@app.route('/redis/test')
+@login_required
+def redis_test():
+    if secrets.APP_SECURITY:
+        if current_user.role != 'superadmin':
+            flash(gettext('For SuperAdmins ONLY!!!'))
+            return redirect(url_for('homepage'))
+    try:
+        storage_consolidate_persons = app.extensions['redis']['REDIS_CONSOLIDATE_PERSONS']
+        storage_replace_uris = app.extensions['redis']['REDIS_REPLACE_URIS']
+
+        storage_consolidate_persons.hset('test_key', 'test_id', 'test_value')  # use pipelining for consolidate persons
+        storage_replace_uris.hset('test_key', 'test_id', 'test_value')
+
+        report = storage_consolidate_persons.hgetall('test_key')
+        uris = storage_replace_uris.hgetall('test_key')
+
+        logging.info(storage_consolidate_persons.dbsize())
+        logging.info(storage_replace_uris.dbsize())
+        storage_consolidate_persons.flushdb()
+        storage_replace_uris.flushdb()
+        logging.info(storage_consolidate_persons.dbsize())
+        logging.info(storage_replace_uris.dbsize())
+
+        return '%s / %s' % (report, uris)
+
+    except Exception as e:
+        logging.info('REDIS ERROR: %s' % e)
+        return 'failed'
 
 
 @app.route('/dedup/<idtype>/<path:id>')
 def dedup(idtype='', id=''):
     resp = {'duplicate': False}
     dedup_solr = Solr(application=secrets.SOLR_APP, fquery=['%s:%s' % (idtype, id)], facet='false')
-    #dedup_solr = Solr(fquery=[idtype + ':%22' + id + '%22'])
     dedup_solr.request()
     logging.info(dedup_solr.count())
     if dedup_solr.count() > 0:
@@ -362,13 +452,6 @@ def dedup(idtype='', id=''):
         resp['duplicate'] = True
 
     return jsonify(resp)
-
-
-@humanize_filter.localeselector
-@babel.localeselector
-def get_locale():
-    #return request.accept_languages.best_match(LANGUAGES.keys())
-    return 'de_DE'
 
 
 @app.route('/')
@@ -379,10 +462,8 @@ def homepage():
     page = int(request.args.get('page', 1))
     records = []
     num_found = 0
-    index_solr = ''
     mystart = 0
     if current_user.is_authenticated:
-        #index_solr = Solr(start=(page - 1) * 10, fquery=['pndid:%s' % current_user.gndid], facet='false')
         index_solr = Solr(application=secrets.SOLR_APP, start=(page - 1) * 10, query='owner:"' + current_user.email + '"', facet='false')
         index_solr.request()
         num_found = index_solr.count()
@@ -398,9 +479,9 @@ def homepage():
                            records=records, pagination=pagination, offset=mystart - 1)
 
 
-@app.route('/search/external/gbv', methods=['GET','POST'])
+@app.route('/search/external/gbv', methods=['GET', 'POST'])
 def search_gbv():
-    '''Retrieve GBV records by ISBN'''
+    """Retrieve GBV records by ISBN"""
     isbns = []
     if request.method == 'POST':
         logging.info(request.data)
@@ -410,15 +491,14 @@ def search_gbv():
         isbns = request.args.get('isbns', '').split('|')
     for isbn in isbns:
         mods = etree.parse('http://sru.gbv.de/gvk?version=1.1&operation=searchRetrieve&query=pica.isb=%s&maximumRecords=10&recordSchema=mods' % isbn)
-        #requests.post('https://dev.ub.tu-dortmund.de/h2/app/publish', data=etree.tostring(mods), headers={'Content-type': 'application/xml'})
         logging.info(etree.tostring(mods))
         logging.info(mods_processor.convert(mods, 'hagena1z'))
     return 'poop'
 
 
-@app.route('/search/external/crossref', methods=['GET','POST'])
+@app.route('/search/external/crossref', methods=['GET', 'POST'])
 def search_crossref():
-    '''Retrieve CrossRef records by DOI'''
+    """Retrieve CrossRef records by DOI"""
     dois = []
     if request.method == 'POST':
         logging.info(request.data)
@@ -428,10 +508,9 @@ def search_crossref():
         dois = request.args.get('doi', '').split('|')
     for doi in dois:
         json = requests.get('http://api.crossref.org/works/%s' % doi).json()
-        #requests.post('https://dev.ub.tu-dortmund.de/h2/app/publish', data=etree.tostring(mods), headers={'Content-type': 'application/xml'})
         logging.info(json)
-        #logging.info(mods_processor.convert(mods, 'hagena1z'))
     return 'poop'
+
 
 @app.route('/retrieve/external/wos/<path:doi>')
 def fetch_wos(doi):
@@ -457,9 +536,6 @@ def persons():
     query = '*:*'
     filterquery = request.values.getlist('filter')
 
-    #persons_solr = Solr(query=query, start=(page - 1) * 10, core='person',
-    #                    json_facet={'affiliation': {'type': 'term', 'field': 'affiliation'}}, fquery=filterquery)
-    #persons_solr = Solr(query=query, start=(page - 1) * 10, core='person', fquery=filterquery, facet='true', facet_fields=['affiliation'])
     persons_solr = Solr(application=secrets.SOLR_APP, query=query, start=(page - 1) * 10, core='person',
                         sort='changed desc', json_facet=secrets.DASHBOARD_PERS_FACETS, fquery=filterquery)
     persons_solr.request()
@@ -482,9 +558,11 @@ def persons():
                            offset=mystart - 1, query=query, filterquery=filterquery, pagination=pagination,
                            now=datetime.datetime.now(), del_redirect='persons')
 
+
 @app.route('/units')
 def units():
     return 'Not Implemented Yet'
+
 
 @app.route('/serials')
 def serials():
@@ -493,15 +571,13 @@ def serials():
 
 @app.route('/search')
 def search():
-    pagination = ''
     page = int(request.args.get('page', 1))
-    #mypage = page
-    query = request.args.get('q', '')#.decode('utf-8')
-    #logging.info(query)
+    query = request.args.get('q', '')
+    # logging.info(query)
     if query == '':
         query = '*:*'
-    core = request.args.get('core', 'hb2')#.decode('utf-8')
-    #logging.info(core)
+    core = request.args.get('core', 'hb2')
+    # logging.info(core)
 
     filterquery = request.values.getlist('filter')
     sorting = request.args.get('sort', '')
@@ -540,8 +616,6 @@ def search():
     else:
         pagination = Pagination(page=page, total=num_found, found=num_found, bs_version=3, search=True, record_name=lazy_gettext('titles'), search_msg=lazy_gettext('Showing {start} to {end} of {found} {record_name}'))
         mystart = 1 + (pagination.page - 1) * pagination.per_page
-        #myend = mystart + pagination.per_page - 1
-        #logging.info(query)
         if core == 'hb2':
             return render_template('resultlist.html', records=search_solr.results, pagination=pagination,
                                    facet_data=search_solr.facets, header=lazy_gettext('Resultlist'), target='search',
@@ -573,8 +647,8 @@ def apparent_dup():
         data = {}
         data.setdefault('id', request.form.get('id'))
         data.setdefault('apparent_dup', {}).setdefault('set', request.form.get('apparent_dup'))
-        #requests.post('http://%s:%s/solr/%s/update' % (secrets.SOLR_HOST, secrets.SOLR_PORT, secrets.SOLR_CORE),
-                      #headers={'Content-type': 'application/json'}, data=json.dumps(data))
+        # requests.post('http://%s:%s/solr/%s/update' % (secrets.SOLR_HOST, secrets.SOLR_PORT, secrets.SOLR_CORE),
+        #              headers={'Content-type': 'application/json'}, data=json.dumps(data))
         app_dup_solr = Solr(application=secrets.SOLR_APP, core='hb2', data=[data])
         app_dup_solr.update()
     return jsonify(data)
@@ -582,12 +656,7 @@ def apparent_dup():
 
 @app.route('/store/mods', methods=['POST'])
 def store_mods():
-    '''Store a collection of MODS records in Solr and SolRDF'''
-
-
-@app.route('/contact')
-def contact():
-    return redirect('mailto:bibliographie-ub.rub.de')
+    """Store a collection of MODS records in Solr and SolRDF"""
 
 
 def flash_errors(form):
@@ -606,7 +675,7 @@ def _record2solr(form, action, relItems=True):
     other_version = []
     id = ''
     for field in form.data:
-        #logging.info('%s => %s' % (field, form.data.get(field)))
+        # logging.info('%s => %s' % (field, form.data.get(field)))
         if field == 'id':
             solr_data.setdefault('id', form.data.get(field).strip())
             id = form.data.get(field).strip()
@@ -666,25 +735,26 @@ def _record2solr(form, action, relItems=True):
                     solr_data.setdefault('person', []).append(person.get('name').strip())
                     solr_data.setdefault('fperson', []).append(person.get('name').strip())
                     if person.get('gnd'):
-                        #logging.info('drin: gnd: %s' % person.get('gnd'))
+                        # logging.info('drin: gnd: %s' % person.get('gnd'))
                         solr_data.setdefault('pnd', []).append('%s#%s' % (person.get('gnd').strip(), person.get('name').strip()))
-                        # TODO prüfe, ob eine 'person' mit GND im System ist. Wenn ja, setze affiliation_context, wenn nicht schon belegt.
+                        # prüfe, ob eine 'person' mit GND im System ist. Wenn ja, setze affiliation_context, wenn nicht
+                        # schon belegt.
                         try:
                             query = 'id:%s' % person.get('gnd')
                             gnd_solr = Solr(application=secrets.SOLR_APP, core='person', query=query, facet='false', fields=['wtf_json'])
                             gnd_solr.request()
                             if len(gnd_solr.results) == 0:
-                                #logging.info('keine Treffer zu gnd: %s' % person.get('gnd'))
+                                # logging.info('keine Treffer zu gnd: %s' % person.get('gnd'))
                                 flash(
                                     gettext(
                                         'IDs from relation "person" could not be found! Ref: %s' % person.get('gnd')),
                                     'warning')
                             for idx1, doc in enumerate(gnd_solr.results):
                                 myjson = json.loads(doc.get('wtf_json'))
-                                #logging.info(myjson)
+                                # logging.info(myjson)
                                 for affiliation in myjson.get('affiliation'):
                                     affiliation_id = affiliation.get('organisation_id')
-                                    #logging.info(affiliation_id)
+                                    # logging.info(affiliation_id)
                                     # füge affiliation_context dem wtf_json hinzu
                                     if not affiliation_id in form.data.get('affiliation_context'):
                                         form.affiliation_context.append_entry(affiliation_id)
@@ -735,10 +805,15 @@ def _record2solr(form, action, relItems=True):
                     else:
                         solr_data.setdefault('gkd', []).append(
                                 '%s#corporation-%s#%s' % (form.data.get('id'), idx, corporation.get('name').strip()))
+                if corporation.get('role'):
+                    if 'RadioTVProgram' in form.data.get('pubtype') and corporation.get('role')[0] == 'edt':
+                        form.corporation[idx].role.data = 'brd'
+                    if 'Thesis' in form.data.get('pubtype') and corporation.get('role')[0] == 'ctb':
+                        form.corporation[idx].role.data = 'dgg'
         if field == 'affiliation_context':
             # TODO Datenanreicherung und ID-Verknüpfung mit "Organisation" / Wo ist der Kontext in den Bochumer Daten?
             for context in form.data.get(field):
-                #logging.info(context)
+                # logging.info(context)
                 if len(context) > 0:
                     try:
                         query = 'id:%s' % context
@@ -756,12 +831,12 @@ def _record2solr(form, action, relItems=True):
                                     'warning')
                             for doc in parent_solr.results:
                                 myjson = json.loads(doc.get('wtf_json'))
-                                #logging.info(myjson.get('pref_label'))
+                                # logging.info(myjson.get('pref_label'))
                                 label = myjson.get('pref_label')
                                 solr_data.setdefault('fakultaet', []).append(label)
                         for doc in parent_solr.results:
                             myjson = json.loads(doc.get('wtf_json'))
-                            #logging.info(myjson.get('pref_label'))
+                            # logging.info(myjson.get('pref_label'))
                             label = myjson.get('pref_label')
                             solr_data.setdefault('fakultaet', []).append(label)
                     except AttributeError as e:
@@ -769,7 +844,7 @@ def _record2solr(form, action, relItems=True):
         if field == 'group_context':
             # TODO Datenanreicherung und ID-Verknüpfung mit "Group" / Wo ist der Kontext in den Bochumer Daten?
             for context in form.data.get(field):
-                #logging.info(context)
+                # logging.info(context)
                 if len(context) > 0:
                     try:
                         query = 'id:%s' % context
@@ -783,7 +858,7 @@ def _record2solr(form, action, relItems=True):
                                 'warning')
                         for doc in parent_solr.results:
                             myjson = json.loads(doc.get('wtf_json'))
-                            #logging.info(myjson.get('pref_label'))
+                            # logging.info(myjson.get('pref_label'))
                             label = myjson.get('pref_label')
                             solr_data.setdefault('group', []).append(label)
                     except AttributeError as e:
@@ -798,8 +873,6 @@ def _record2solr(form, action, relItems=True):
         if field == 'ISSN':
             try:
                 for issn in form.data.get(field):
-                    #solr_data.setdefault('issn', issn.strip())
-                    #solr_data.setdefault('isxn', issn.strip())
                     solr_data.setdefault('issn', []).append(issn.strip())
                     solr_data.setdefault('isxn', []).append(issn.strip())
             except AttributeError as e:
@@ -808,8 +881,6 @@ def _record2solr(form, action, relItems=True):
         if field == 'ISBN':
             try:
                 for isbn in form.data.get(field):
-                    #solr_data.setdefault('isbn', isbn.strip())
-                    #solr_data.setdefault('isxn', isbn.strip())
                     solr_data.setdefault('isbn', []).append(isbn.strip())
                     solr_data.setdefault('isxn', []).append(isbn.strip())
             except AttributeError as e:
@@ -818,8 +889,6 @@ def _record2solr(form, action, relItems=True):
         if field == 'ISMN':
             try:
                 for ismn in form.data.get(field):
-                    #solr_data.setdefault('ismn', ismn.strip())
-                    #solr_data.setdefault('isxn', ismn.strip())
                     solr_data.setdefault('ismn', []).append(ismn.strip())
                     solr_data.setdefault('isxn', []).append(ismn.strip())
             except AttributeError as e:
@@ -909,7 +978,7 @@ def _record2solr(form, action, relItems=True):
                                                                                 'page_last': myjson.get('is_part_of')[0].get('page_last', ''),
                                                                                 'volume': myjson.get('is_part_of')[0].get('volume', ''),
                                                                                 'issue': myjson.get('is_part_of')[0].get('issue', '')}))
-                    #logging.info(solr_data.get('has_part'))
+                    # logging.info(solr_data.get('has_part'))
             except AttributeError as e:
                 logging.error(e)
         if field == 'other_version' and len(form.data.get(field)) > 0:
@@ -962,16 +1031,22 @@ def _record2solr(form, action, relItems=True):
             # load record in form and modify changeDate
             thedata = json.loads(edit_record_solr.results[0].get('wtf_json'))
             form = PUBTYPE2FORM.get(thedata.get('pubtype')).from_json(thedata)
-            # add is_part_of to form
-            try:
-                is_part_of_form = IsPartOfForm()
-                is_part_of_form.is_part_of.data = id
-                form.is_part_of.append_entry(is_part_of_form.data)
-                form.changed.data = str(datetime.datetime.now())
-                # save record
-                _record2solr(form, action='update', relItems=False)
-            except AttributeError as e:
-                flash(gettext('ERROR linking from %s: %s' % (record_id, str(e))), 'error')
+            # TODO add is_part_of to form if not exists
+            exists = False
+            for ipo in form.data.get('is_part_of'):
+                if ipo.get('is_part_of') == id:
+                    exists = True
+                    break
+            if exists:
+                try:
+                    is_part_of_form = IsPartOfForm()
+                    is_part_of_form.is_part_of.data = id
+                    form.is_part_of.append_entry(is_part_of_form.data)
+                    form.changed.data = str(datetime.datetime.now())
+                    # save record
+                    _record2solr(form, action='update', relItems=False)
+                except AttributeError as e:
+                    flash(gettext('ERROR linking from %s: %s' % (record_id, str(e))), 'error')
             # unlock record
             unlock_record_solr = Solr(application=secrets.SOLR_APP, core='hb2', data=[{'id': record_id, 'locked': {'set': 'false'}}])
             unlock_record_solr.update()
@@ -985,7 +1060,7 @@ def _record2solr(form, action, relItems=True):
             # load record in form and modify changeDate
             thedata = json.loads(edit_record_solr.results[0].get('wtf_json'))
             form = PUBTYPE2FORM.get(thedata.get('pubtype')).from_json(thedata)
-            # add has_part to form
+            # TODO add has_part to form
             try:
                 has_part_form = HasPartForm()
                 has_part_form.has_part.data = id
@@ -1008,7 +1083,7 @@ def _record2solr(form, action, relItems=True):
             # load record in form and modify changeDate
             thedata = json.loads(edit_record_solr.results[0].get('wtf_json'))
             form = PUBTYPE2FORM.get(thedata.get('pubtype')).from_json(thedata)
-            # add is_part_of to form
+            # TODO add is_part_of to form
             try:
                 other_version_form = OtherVersionForm()
                 other_version_form.other_version.data = id
@@ -1028,7 +1103,7 @@ def _record2solr(form, action, relItems=True):
 def orcid2name(orcid_id=''):
     if orcid_id:
         bio = requests.get('https://pub.orcid.org/%s/orcid-bio/' % orcid_id, headers={'Accept': 'application/json'}).json()
-        #logging.info(bio.get('orcid-profile').get('orcid-bio').get('personal-details').get('family-name'))
+        # logging.info(bio.get('orcid-profile').get('orcid-bio').get('personal-details').get('family-name'))
     return jsonify({'name': '%s, %s' % (bio.get('orcid-profile').get('orcid-bio').get('personal-details').get('family-name').get('value'), bio.get('orcid-profile').get('orcid-bio').get('personal-details').get('given-names').get('value'))})
 
 
@@ -1092,7 +1167,6 @@ def dashboard():
     query = '*:*'
     filterquery = request.values.getlist('filter')
     logging.info(filterquery)
-    #Solr(start=(page - 1) * 10, query=query, fquery=filterquery, sort=sorting)
     dashboard_solr = Solr(application=secrets.SOLR_APP, start=(page - 1) * 10, query=query,
                           sort='recordCreationDate desc', json_facet=secrets.DASHBOARD_FACETS, fquery=filterquery)
     dashboard_solr.request()
@@ -1106,7 +1180,6 @@ def dashboard():
                                 record_name=lazy_gettext('titles'),
                                 search_msg=lazy_gettext('Showing {start} to {end} of {found} {record_name}'))
         mystart = 1 + (pagination.page - 1) * pagination.per_page
-        # myend = mystart + pagination.per_page - 1
 
     return render_template('dashboard.html', records=dashboard_solr.results, facet_data=dashboard_solr.facets,
                            header=lazy_gettext('Dashboard'), site=theme(request.access_route), offset=mystart - 1,
@@ -1130,6 +1203,7 @@ def make_admin(user_id=''):
         flash(gettext('You did not supply an ID!'), 'danger')
         return redirect(url_for('superadmin'))
 
+
 @app.route('/make_superadmin/<user_id>')
 @login_required
 def make_superadmin(user_id=''):
@@ -1144,6 +1218,7 @@ def make_superadmin(user_id=''):
     else:
         flash(gettext('You did not supply an ID!'), 'danger')
         return redirect(url_for('superadmin'))
+
 
 @app.route('/superadmin', methods=['GET'])
 @login_required
@@ -1171,6 +1246,7 @@ def superadmin():
                            import_records=solr_dumps.results, offset=mystart - 1, pagination=pagination,
                            del_redirect='superadmin', form=form, site=theme(request.access_route))
 
+
 @app.route('/unlock/<record_id>', methods=['GET'])
 @login_required
 def unlock(record_id=''):
@@ -1187,6 +1263,7 @@ def unlock(record_id=''):
 
     return redirect(url_for(redirect_url))
 
+
 @app.route('/unlock/person/<person_id>', methods=['GET'])
 @login_required
 def unlock_person(person_id=''):
@@ -1202,6 +1279,7 @@ def unlock_person(person_id=''):
         redirect_url = get_redirect_target()
 
     return redirect(url_for(redirect_url))
+
 
 @app.route('/unlock/organisation/<orga_id>', methods=['GET'])
 @login_required
@@ -1242,7 +1320,7 @@ def unlock_group(group_id=''):
 def file_upload():
     form = FileUploadForm()
     if form.validate_on_submit():
-        #logging.info(form.file.data.headers)
+        # logging.info(form.file.data.headers)
         if 'tu-dortmund' in current_user.email:
             upload_resp = requests.post(secrets.REDMINE_URL + 'uploads.json', headers={'Content-type': 'application/octet-stream', 'X-Redmine-API-Key': secrets.REDMINE_KEY}, data=form.file.data.stream.read())
             logging.info(upload_resp.status_code)
@@ -1284,13 +1362,15 @@ def file_upload():
             logging.info(admin_record)
             ticket = trac.ticket.create('Datendatei: %s' % form.file.data.filename, admin_record, attrs, True)
             attachment = trac.ticket.putAttachment(str(ticket), form.file.data.filename, 'Datei zur Dateneingabe', form.file.data.stream.read(), True)
-            #return redirect('http://bibliographie-trac.ub.rub.de/ticket/' + str(ticket))
+            # return redirect('http://bibliographie-trac.ub.rub.de/ticket/' + str(ticket))
         flash(gettext('Thank you for uploading your data! We will now edit them and make them available as soon as possible.'))
     return render_template('file_upload.html', header=lazy_gettext('Dashboard'), site=theme(request.access_route), form=form)
+
 
 @app.route('/containers')
 def containers():
     return 'poop'
+
 
 @app.route('/organisations')
 def orgas():
@@ -1301,7 +1381,6 @@ def orgas():
 
     orgas_solr = Solr(application=secrets.SOLR_APP, query=query, start=(page - 1) * 10, core='organisation',
                       sort='changed desc', json_facet=secrets.DASHBOARD_ORGA_FACETS, fquery=filterquery)
-    #orgas_solr = Solr(query=query, start=(page - 1) * 10, core='organisation', fquery=filterquery, facet='true', facet_fields=['fparent','destatis_id'])
     orgas_solr.request()
 
     num_found = orgas_solr.count()
@@ -1318,6 +1397,7 @@ def orgas():
         mystart = 1 + (pagination.page - 1) * pagination.per_page
     return render_template('orgas.html', header=lazy_gettext('Organisations'), site=theme(request.access_route), facet_data=orgas_solr.facets, results=orgas_solr.results,
                            offset=mystart - 1, query=query, filterquery=filterquery, pagination=pagination, now=datetime.datetime.now())
+
 
 def _orga2solr(form, gnd=True):
     # if gnd then get existing record from solr and update dwid data
@@ -1407,7 +1487,7 @@ def _orga2solr(form, gnd=True):
                         'warning')
                 for doc in parent_solr.results:
                     myjson = json.loads(doc.get('wtf_json'))
-                    #logging.info(myjson.get('pref_label'))
+                    # logging.info(myjson.get('pref_label'))
                     label = myjson.get('pref_label')
                     tmp.setdefault('parent_label', label)
                     tmp.setdefault('fparent', label)
@@ -1419,7 +1499,7 @@ def _orga2solr(form, gnd=True):
                 tmp.setdefault(field, form.data.get(field))
     wtf_json = json.dumps(form.data)
     tmp.setdefault('wtf_json', wtf_json)
-    #logging.info(tmp)
+    # logging.info(tmp)
     try:
         orga_solr = Solr(application=secrets.SOLR_APP, core='organisation', data=[tmp])
         orga_solr.update()
@@ -1436,7 +1516,7 @@ def new_orga():
     form = OrgaAdminForm()
 
     if form.validate_on_submit():
-        #logging.info(form.data)
+        # logging.info(form.data)
         _orga2solr(form)
         return redirect(url_for('orgas'))
     form.id.data = uuid.uuid4()
@@ -1444,6 +1524,7 @@ def new_orga():
     form.created.data = datetime.datetime.now()
     form.changed.data = datetime.datetime.now()
     return render_template('linear_form.html', header=lazy_gettext('New Organisation'), site=theme(request.access_route), form=form, action='create', pubtype='organisation')
+
 
 @app.route('/groups')
 def groups():
@@ -1454,7 +1535,6 @@ def groups():
 
     groups_solr = Solr(application=secrets.SOLR_APP, query=query, start=(page - 1) * 10, core='group',
                        sort='changed desc', json_facet=secrets.DASHBOARD_GROUP_FACETS, fquery=filterquery)
-    #orgas_solr = Solr(query=query, start=(page - 1) * 10, core='organisation', fquery=filterquery, facet='true', facet_fields=['fparent','destatis_id'])
     groups_solr.request()
 
     num_found = groups_solr.count()
@@ -1471,6 +1551,7 @@ def groups():
         mystart = 1 + (pagination.page - 1) * pagination.per_page
     return render_template('groups.html', header=lazy_gettext('Working Groups'), site=theme(request.access_route), facet_data=groups_solr.facets, results=groups_solr.results,
                            offset=mystart - 1, query=query, filterquery=filterquery, pagination=pagination, now=datetime.datetime.now())
+
 
 def _group2solr(form):
     tmp = {}
@@ -1520,7 +1601,7 @@ def _group2solr(form):
                         'warning')
                 for doc in parent_solr.results:
                     myjson = json.loads(doc.get('wtf_json'))
-                    #logging.info(myjson.get('pref_label'))
+                    # logging.info(myjson.get('pref_label'))
                     label = myjson.get('pref_label')
                     tmp.setdefault('parent_label', label)
                     tmp.setdefault('fparent', label)
@@ -1535,7 +1616,7 @@ def _group2solr(form):
                 tmp.setdefault(field, form.data.get(field))
     wtf_json = json.dumps(form.data)
     tmp.setdefault('wtf_json', wtf_json)
-    #logging.info(tmp)
+    # logging.info(tmp)
     groups_solr = Solr(application=secrets.SOLR_APP, core='group', data=[tmp])
     groups_solr.update()
 
@@ -1549,7 +1630,7 @@ def new_group():
     form = GroupAdminForm()
 
     if form.validate_on_submit():
-        #logging.info(form.data)
+        # logging.info(form.data)
         _group2solr(form)
         return redirect(url_for('groups'))
     form.id.data = uuid.uuid4()
@@ -1568,8 +1649,8 @@ def _person2solr(form):
     else:
         tmp.setdefault('owner', form.data.get('owner'))
     for field in form.data:
-        #logging.info('%s => %s' % (field, form.data.get(field)))
-        #if field == 'name' or field == 'former_name':
+        # logging.info('%s => %s' % (field, form.data.get(field)))
+        # if field == 'name' or field == 'former_name':
         #    if len(form.data.get(field)) > 0:
         #        tmp.setdefault('name', []).append(form.data.get(field).strip())
         if field == 'name':
@@ -1656,13 +1737,13 @@ def _person2solr(form):
                                         'warning')
                                 for doc in parent_solr.results:
                                     myjson = json.loads(doc.get('wtf_json'))
-                                    #logging.info(myjson.get('pref_label'))
+                                    # logging.info(myjson.get('pref_label'))
                                     label = myjson.get('pref_label')
                                     tmp.setdefault('affiliation', []).append(label.strip())
                                     tmp.setdefault('faffiliation', []).append(label.strip())
                             for doc in parent_solr.results:
                                 myjson = json.loads(doc.get('wtf_json'))
-                                #logging.info(myjson.get('pref_label'))
+                                # logging.info(myjson.get('pref_label'))
                                 label = myjson.get('pref_label')
                                 tmp.setdefault('affiliation', []).append(label.strip())
                                 tmp.setdefault('faffiliation', []).append(label.strip())
@@ -1686,7 +1767,7 @@ def _person2solr(form):
                                     'warning')
                             for doc in parent_solr.results:
                                 myjson = json.loads(doc.get('wtf_json'))
-                                #logging.info(myjson.get('pref_label'))
+                                # logging.info(myjson.get('pref_label'))
                                 label = myjson.get('pref_label')
                                 tmp.setdefault('group', []).append(label.strip())
                                 tmp.setdefault('fgroup', []).append(label.strip())
@@ -1868,13 +1949,13 @@ def new_by_search():
 def new_record(pubtype='ArticleJournal'):
     form = PUBTYPE2FORM.get(pubtype)()
 
-    #logging.info(form)
+    # logging.info(form)
 
     if request.is_xhr:
         logging.info(request.form)
         form = PUBTYPE2FORM.get(pubtype)(request.form)
         logging.info(form)
-        #logging.info(request.form.person)
+        # logging.info(request.form.person)
         # Do we have any data already?
         if not form.title.data:
             solr_data = {}
@@ -1894,8 +1975,6 @@ def new_record(pubtype='ArticleJournal'):
                     solr_data.setdefault('pubtype', form.data.get(field).strip())
                 if field == 'editorial_status':
                     solr_data.setdefault('editorial_status', form.data.get(field).strip())
-            #solr = requests.post('http://127.0.0.1:8983/solr/hb2/update/json?commit=true', data=json.dumps([solr_data]),
-                                 #headers={'Content-type': 'application/json'})
             record_solr = Solr(application=secrets.SOLR_APP, core='hb2', data=[solr_data])
             record_solr.update()
         else:
@@ -1914,16 +1993,16 @@ def new_record(pubtype='ArticleJournal'):
         form.pubtype.choices = USER_PUBTYPES
 
     if form.validate_on_submit():
-        #logging.info(form)
-        #logging.info(form.person.name)
+        # logging.info(form)
+        # logging.info(form.person.name)
         if form.errors:
             flash_errors(form)
             return render_template('tabbed_form.html', form=form, header=lazy_gettext('New Record'),
                                    site=theme(request.access_route), action='create', pubtype=pubtype)
         _record2solr(form, action='create')
-        #return redirect(url_for('dashboard'))
-        #logging.info(form.data)
-        #logging.info(form.data.get('id').strip())
+        # return redirect(url_for('dashboard'))
+        # logging.info(form.data)
+        # logging.info(form.data.get('id').strip())
         return show_record(pubtype, form.data.get('id').strip())
 
     if request.args.get('subtype'):
@@ -1934,13 +2013,14 @@ def new_record(pubtype='ArticleJournal'):
     form.owner[0].data = current_user.email
     form.pubtype.data = pubtype
 
-    #for person in form.person:
+    # for person in form.person:
     #    if current_user.role == 'admin':
     #        person.role.choices = ADMIN_ROLES
     #    else:
     #        person.role.choices = USER_ROLES
 
     return render_template('tabbed_form.html', form=form, header=lazy_gettext('New Record'), site=theme(request.access_route), pubtype=pubtype, action='create', record_id=form.id.data)
+
 
 @app.route('/retrieve/<pubtype>/<record_id>')
 def show_record(pubtype, record_id=''):
@@ -1959,11 +2039,13 @@ def show_record(pubtype, record_id=''):
         locked = show_record_solr.results[0].get('locked')
         form = PUBTYPE2FORM.get(pubtype).from_json(thedata)
 
-        return render_template('record.html', record=form, header=form.data.get('title'), site=theme(request.access_route),
-                               action='retrieve', record_id=record_id, del_redirect=url_for('dashboard'), pubtype=pubtype,
-                               role_map=ROLE_MAP, lang_map=LANGUAGE_MAP, pubtype_map=PUBTYPE2TEXT, subtype_map=SUBTYPE2TEXT,
-                               locked=locked, is_part_of=is_part_of, has_part=has_part, other_version=other_version
-    )
+        return render_template('record.html', record=form, header=form.data.get('title'),
+                               site=theme(request.access_route), action='retrieve', record_id=record_id,
+                               del_redirect=url_for('dashboard'), pubtype=pubtype, role_map=ROLE_MAP,
+                               lang_map=LANGUAGE_MAP, pubtype_map=PUBTYPE2TEXT, subtype_map=SUBTYPE2TEXT,
+                               license_map=LICENSE_MAP, locked=locked, is_part_of=is_part_of, has_part=has_part,
+                               other_version=other_version)
+
 
 @app.route('/retrieve/person/<person_id>')
 def show_person(person_id=''):
@@ -1980,8 +2062,11 @@ def show_person(person_id=''):
         thedata = json.loads(show_person_solr.results[0].get('wtf_json'))
         form = PersonAdminForm.from_json(thedata)
 
-        return render_template('person.html', record=form, header=form.data.get('name'), site=theme(request.access_route),
-                               action='retrieve', record_id=person_id, pubtype='person', del_redirect=url_for('persons'))
+        return render_template('person.html', record=form, header=form.data.get('name'),
+                               site=theme(request.access_route), action='retrieve', record_id=person_id,
+                               pubtype='person', del_redirect=url_for('persons'),
+                               url_map=URL_TYPE_MAP, pers_status_map=PERS_STATUS_MAP)
+
 
 @app.route('/retrieve/organisation/<orga_id>')
 def show_orga(orga_id=''):
@@ -2010,6 +2095,7 @@ def show_orga(orga_id=''):
                                site=theme(request.access_route), action='retrieve', record_id=orga_id,
                                pubtype='organisation', del_redirect=url_for('orgas'))
 
+
 @app.route('/retrieve/group/<group_id>')
 def show_group(group_id=''):
     show_group_solr = Solr(application=secrets.SOLR_APP, query='id:%s' % group_id, core='group', facet='false')
@@ -2025,6 +2111,7 @@ def show_group(group_id=''):
         return render_template('group.html', record=form, header=form.data.get('pref_label'),
                                site=theme(request.access_route), action='retrieve', record_id=group_id,
                                pubtype='group', del_redirect=url_for('groups'))
+
 
 @app.route('/update/organisation/<orga_id>', methods=['GET', 'POST'])
 @login_required
@@ -2096,7 +2183,7 @@ def edit_group(group_id=''):
     form.changed.data = datetime.datetime.now()
 
     return render_template('linear_form.html', form=form,
-                           header=lazy_gettext('Edit: %(group)s', orga=form.data.get('pref_label')),
+                           header=lazy_gettext('Edit: %(group)s', group=form.data.get('pref_label')),
                            locked=True, site=theme(request.access_route), action='update', pubtype='group', record_id=group_id)
 
 
@@ -2115,12 +2202,15 @@ def edit_person(person_id=''):
     edit_person_solr = Solr(application=secrets.SOLR_APP, query='%s:%s' % (idfield, person_id), core='person', facet='false')
     edit_person_solr.request()
 
-    thedata = json.loads(edit_person_solr.results[0].get('wtf_json'))
-
     if request.method == 'POST':
         form = PersonAdminForm()
     else:
-        form = PersonAdminForm.from_json(thedata)
+        if len(edit_person_solr.results) == 0:
+            flash('The requested person %s was not found!' % person_id, category='warning')
+            return redirect(url_for('persons'))
+        else:
+            thedata = json.loads(edit_person_solr.results[0].get('wtf_json'))
+            form = PersonAdminForm.from_json(thedata)
 
     logging.info(form.data)
     if form.validate_on_submit():
@@ -2143,6 +2233,10 @@ def edit_person(person_id=''):
 @app.route('/update/<pubtype>/<record_id>', methods=['GET', 'POST'])
 @login_required
 def edit_record(record_id='', pubtype=''):
+
+    cptask = request.args.get('cptask', False)
+    logging.info('cptask = %s' % cptask)
+
     lock_record_solr = Solr(application=secrets.SOLR_APP, core='hb2', data=[{'id': record_id, 'locked': {'set': 'true'}}])
     lock_record_solr.update()
 
@@ -2196,6 +2290,15 @@ def edit_record(record_id='', pubtype=''):
     form.changed.data = datetime.datetime.now()
     form.deskman.data = current_user.email
 
+    # if cptask: delete redis record for record_id
+    if cptask:
+        try:
+            storage_consolidate_persons = app.extensions['redis']['REDIS_CONSOLIDATE_PERSONS']
+            storage_consolidate_persons.delete(record_id)
+        except Exception as e:
+            logging.info('REDIS ERROR: %s' % e)
+            flash('Could not delete task for %s' % record_id, 'danger')
+
     return render_template('tabbed_form.html', form=form, header=lazy_gettext('Edit: %(title)s',
                                                                          title=form.data.get('title')),
                            locked=True, site=theme(request.access_route), action='update',
@@ -2247,7 +2350,7 @@ def delete_person(person_id=''):
         form.changed.data = str(datetime.datetime.now())
         form.deskman.data = current_user.email
         # save person
-        _person2solr(form, action='update')
+        _person2solr(form)
         return jsonify({'deleted': True})
     # TODO if superadmin
     elif current_user.role == 'superadmin':
@@ -2276,7 +2379,7 @@ def delete_orga(orga_id=''):
         form.changed.data = str(datetime.datetime.now())
         form.deskman.data = current_user.email
         # save orga
-        _orga2solr(form, action='update')
+        _orga2solr(form)
         return jsonify({'deleted': True})
     # TODO if superadmin
     elif current_user.role == 'superadmin':
@@ -2305,7 +2408,7 @@ def delete_group(group_id=''):
         form.changed.data = str(datetime.datetime.now())
         form.deskman.data = current_user.email
         # save group
-        _group2solr(form, action='update')
+        _group2solr(form)
         return jsonify({'deleted': True})
     # TODO if superadmin
     elif current_user.role == 'superadmin':
@@ -2345,101 +2448,37 @@ def duplicates():
 @app.route(('/consolidate/persons'))
 def consolidate_persons():
     if secrets.APP_SECURITY:
-        if current_user.role != 'superadmin':
-            flash(gettext('For SuperAdmins ONLY!!!'))
+        if current_user.role != 'admin' and current_user.role != 'superadmin':
+            flash(gettext('For Admins ONLY!!!'))
             return redirect(url_for('homepage'))
-    # TODO: Deduplizierung nach Nachname, 1. Buchsctabe des Vornamens
-    # TODO: Vorname und Nachname sind gleich, aber GNDs unterschiedlich => Ist das ueberhaupt ein TODO?
-    # TODO: Nachname ist gleich und wenn Vorname in den Daten nur ein Buchstabe oder wenn echter Vorname, dann die ersten beiden Buchstaben vergleichen
-    results = {}
-    #new_titles = Solr(fquery=['editorial_status:new'], facet='false', rows=2000000, fields=['fperson', 'pnd', 'id', 'title', 'pubtype'])
-    new_titles = Solr(application=secrets.SOLR_APP, fquery=['pubtype:Monograph'], facet='false', rows=2000000, fields=['fperson', 'pnd', 'id', 'title', 'pubtype'])
-    new_titles.request()
+    # Die ursprünglich hier definierte Funktion ist aus Gründen der Perfomance in ein separates Skript ausgelagert
+    # worden. Diese kann nun zb. einmal täglich ausgeführt werden. Die Ergebnisse landen in einer Redis-Instanz.
+    # Hier werden nun die Ergebnisse aus dieser Redis-Instanz geholt und angezeigt.
 
-    for doc in new_titles.results:
-        logging.info(doc)
-        if doc.get('pnd'):
-            for gnd in doc.get('pnd'):
-                if len(gnd.split('#')) == 3: # Dummy-GND
-                    try:
-                        for person in doc.get('fperson'):
-                            results.setdefault(person, {}).setdefault('docs', []).append(
-                                {'id': doc.get('id'),
-                                 'title': doc.get('title'),
-                                 'pubtype': doc.get('pubtype')
-                                 })
-                            lastname, firstname = person.split(', ')
-                            firstnames = []
-                            terms = []
-                            if ' ' in firstname:
-                                firstnames = firstname.split(' ')
-                            else:
-                                firstnames.append(firstname.replace('.', ''))
-                            terms.append('name:%s~' % lastname)
-                            for fn in firstnames:
-                                terms.append('name:%s~' % fn)
-                            logging.info('1) ' + str(terms))
-                            person_check = Solr(application=secrets.SOLR_APP, core='person', query='+AND+'.join(terms), facet='false')
-                            person_check.request()
-                            candidate_list = person_check.results
-                            if person_check.count() > 0:
-                                logging.info('2) ' + str(candidate_list))
-                                for candidates in candidate_list:
-                                    for candidate in candidates.get('name'):
-                                        logging.info('3) ' + candidate)
-                                        if person == candidate:
-                                            logging.info('4) %s => %s' % (person, candidate))
-                                            results.setdefault(person, {}).setdefault('matches', []).append(
-                                                {'id': candidates.get('id'),
-                                                 'gnd': candidates.get('gnd'),
-                                                 'orcid': candidates.get('orcid'),
-                                                 'affiliation': candidates.get('affiliation'),
-                                                 'probability': 100,
-                                                 'name': candidate})
-                            else:
-                                recheck_solr = Solr(application=secrets.SOLR_APP, core='person', query='name:%s' % lastname, facet='false')
-                                recheck_solr.request()
-                                ln_candidates = recheck_solr.results
-                                if recheck_solr.count() > 0:
-                                    for ln_candidate in ln_candidates:
-                                        for ln_cn in ln_candidate.get('name'):
-                                            if len(firstnames[0]) > 2:
-                                                probability = fuzz.ratio(person, ln_cn)
-                                                results.setdefault(person, {}).setdefault('matches', []).append(
-                                                    {'id': ln_candidate.get('id'),
-                                                     'gnd': ln_candidate.get('gnd'),
-                                                     'orcid': ln_candidate.get('orcid'),
-                                                     'affiliation': ln_candidate.get('affiliation'),
-                                                     'probability': probability,
-                                                     'name': ln_cn})
+    try:
+        storage_consolidate_persons = app.extensions['redis']['REDIS_CONSOLIDATE_PERSONS']
 
-                                else:
-                                    results.setdefault(person, {}).setdefault('matches', [])
+        results = []
+        for key in storage_consolidate_persons.keys('*'):
+            thedata = storage_consolidate_persons.get(key)
+            results.append(ast.literal_eval(thedata.decode('UTF-8')))
 
-                    except TypeError:
-                        logging.info('x) ' + str(doc.get('fperson')))
-                        raise
-                    except IndexError:
-                        logging.info('y) %s not found' % person)
-                    except ValueError:
-                        pass
-        else:
-            # logging.info(doc)
-            # try:
-            #     for person in doc.get('fperson'):
-            #         person_check = Solr(core='person', query='name:%s' % person, facet='false', fuzzy='true')
-            #         person_check.request()
-            #         if person in person_check.results[0].get('name'):
-            #             logging.info('2) %s => %s' % (person, person_check.results[0].get('name')))
-            # except TypeError:
-            #     logging.info('2) ' + str(doc.get('fperson')))
-            # except IndexError:
-            #     logging.info('2) %s not found' % person)
-            pass
-    return render_template('consolidate_persons.html', results=results, header=lazy_gettext('Consolidate Persons'), site=theme(request.access_route))
+        # logging.info(results)
+        # return 'TASKS to consolidate persons: %s / %s' % (len(results), json.dumps(results[0], indent=4))
+        return render_template('consolidate_persons.html', results=results, count=len(results) ,header=lazy_gettext('Consolidate Persons'), site=theme(request.access_route))
+
+    except Exception as e:
+        logging.info('REDIS ERROR: %s' % e)
+        return 'failed to read data'
+
+
+
 ########################################################################################################################
+
+
 class UserNotFoundError(Exception):
     pass
+
 
 class User(UserMixin):
     def __init__(self, id, role='', name='', email='', accesstoken='', gndid=''):
@@ -2476,15 +2515,18 @@ class User(UserMixin):
         except UserNotFoundError:
             return None
 
+
 class LoginForm(Form):
     username = StringField(lazy_gettext('Username'))
     password = PasswordField(lazy_gettext('Password'))
     wayf = HiddenField(lazy_gettext('Where Are You From?'))
 
+
 def is_safe_url(target):
     ref_url = parse.urlparse(request.host_url)
     test_url = parse.urlparse(parse.urljoin(request.host_url, target))
     return test_url.scheme in ('http', 'https') and ref_url.netloc == test_url.netloc
+
 
 def get_redirect_target():
     for target in request.values.get('next'), request.referrer:
@@ -2493,28 +2535,31 @@ def get_redirect_target():
         if is_safe_url(target):
             return target
 
+
 def redirect_back(endpoint, **values):
     target = request.form['next']
     if not target or not is_safe_url(target):
         target = url_for(endpoint, **values)
     return redirect(target)
 
+
 @login_manager.user_loader
 def load_user(id):
     return User.get(id)
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         user = User(request.form.get('username'))
-        #user_info = user.get_user(request.form.get('username'))
+        # user_info = user.get_user(request.form.get('username'))
         next = get_redirect_target()
         if request.form.get('wayf') == 'bochum':
             authuser = requests.post('https://api.ub.rub.de/ldap/authenticate/',
                                      data={'nocheck': 'true',
                                            'userid': base64.b64encode(request.form.get('username').encode('ascii')),
                                            'passwd': base64.b64encode(request.form.get('password').encode('ascii'))}).json()
-            #logging.info(authuser)
+            # logging.info(authuser)
             if authuser.get('email'):
                 user_solr = Solr(application=secrets.SOLR_APP, core='hb2_users', query='id:%s' % authuser.get('id'), facet='false')
                 user_solr.request()
@@ -2543,20 +2588,20 @@ def login():
                 flash(gettext("Username and Password Don't Match"), 'danger')
                 return redirect('login')
         elif request.form.get('wayf') == 'dortmund':
-            #010188
+            # 010188
             authuser = requests.post('https://api.ub.tu-dortmund.de/paia/auth/login',
                                      data={
                                          'username': request.form.get('username').encode('ascii'),
                                          'password': request.form.get('password').encode('ascii'),
                                          'grant_type': 'password',
                                      }, headers={'Accept': 'application/json', 'Content-type': 'application/json'}).json()
-            #logging.info(authuser)
+            # logging.info(authuser)
             if authuser.get('access_token'):
                 user_info = requests.get('https://api.ub.tu-dortmund.de/paia/core/%s' % authuser.get('patron'), headers={
                     'Accept': 'application/json',
                     'Authorization': '%s %s' % (authuser.get('token_type'), authuser.get('access_token'))
                 }).json()
-                #logging.info(user_info)
+                # logging.info(user_info)
                 user_solr = Solr(application=secrets.SOLR_APP, core='hb2_users', query='accesstoken:%s' % authuser.get('access_token'), facet='false')
                 user_solr.request()
                 if user_solr.count() == 0:
@@ -2569,7 +2614,7 @@ def login():
                     else:
                         tmp.setdefault('role', user.role)
                     tmp.setdefault('accesstoken', authuser.get('access_token'))
-                    #logging.info(tmp)
+                    # logging.info(tmp)
                     user.name = user_info.get('name')
                     user.email = user_info.get('email')
                     user.accesstoken = authuser.get('access_token')
@@ -2583,7 +2628,7 @@ def login():
 
     form = LoginForm()
     next = get_redirect_target()
-    #return render_template('login.html', form=form, header='Sign In', next=next, orcid_sandbox_client_id=orcid_sandbox_client_id)
+    # return render_template('login.html', form=form, header='Sign In', next=next, orcid_sandbox_client_id=orcid_sandbox_client_id)
     return render_template('login.html', form=form, header='Sign In', next=next, site=theme(request.access_route))
 
 
@@ -2596,12 +2641,6 @@ def logout():
 ORCID_RE = re.compile('\d{4}-\d{4}-\d{4}-\d{4}')
 
 
-def flash_errors(form):
-    for field, errors in form.errors.items():
-        for error in errors:
-            flash('Error in the %s field: %s' % (getattr(form, field).label.text, error), 'error')
-
-
 @socketio.on('lock', namespace='/hb2')
 def lock_message(message):
     print('Locked ' + message.get('data'))
@@ -2611,11 +2650,11 @@ def lock_message(message):
 @socketio.on('unlock', namespace='/hb2')
 def unlock_message(message):
     print(message)
-    #resp = requests.get('http://127.0.0.1:8983/solr/hb2/query?q=id:%s&fl=editorial_status&omitHeader=true' % message.get('data')).json()
-    #status = resp.get('response').get('docs')[0].get('editorial_status')
-    #print(status)
+    # resp = requests.get('http://127.0.0.1:8983/solr/hb2/query?q=id:%s&fl=editorial_status&omitHeader=true' % message.get('data')).json()
+    # status = resp.get('response').get('docs')[0].get('editorial_status')
+    # print(status)
     print('Unlocked ' + message.get('data'))
-    #emit('unlocked', {'data': {'id': message.get('data'), 'status': status}}, broadcast=True)
+    # emit('unlocked', {'data': {'id': message.get('data'), 'status': status}}, broadcast=True)
     emit('unlocked', {'data': message.get('data')}, broadcast=True)
 
 
@@ -2639,13 +2678,14 @@ def export_solr_dump(core=''):
         filename = '%s_%s.json' % (core, int(time.time()))
         export_solr = Solr(application=secrets.SOLR_APP, export_field='wtf_json', core=core)
         export_docs = export_solr.export()
-        #target_solr = Solr(application=secrets.SOLR_APP, core='hb2_users', data=[{'id': filename, 'core': core, 'dump': json.dumps(export_docs)}])
-        #target_solr.update()
+        # target_solr = Solr(application=secrets.SOLR_APP, core='hb2_users', data=[{'id': filename, 'core': core, 'dump': json.dumps(export_docs)}])
+        # target_solr.update()
         return send_file(BytesIO(str.encode(json.dumps(export_docs))), attachment_filename=filename, as_attachment=True,
                          cache_timeout=1, add_etags=True)
     else:
         flash('Cannot export hb2_users this way!', 'error')
         return redirect('superadmin')
+
 
 @app.route('/import/solr_dumps')
 @login_required
@@ -2720,8 +2760,8 @@ def import_solr_dump(filename=''):
             else:
                 thedata = json.loads(form.file.data.stream.read())
 
-    #pool = Pool(4)
-    #solr_data.append(pool.map(_import_data, thedata))
+    # pool = Pool(4)
+    # solr_data.append(pool.map(_import_data, thedata))
     target = 'dashboard'
     if type == 'publication':
         for mydata in thedata:
@@ -2764,6 +2804,18 @@ def show_related_item(relation='', record_ids=''):
     relation_solr.request()
 
     return jsonify({'relation': relation, 'docs': relation_solr.results})
+
+
+@app.route('/contact')
+def contact():
+    site = theme(request.access_route)
+    if site == 'bochum':
+        return redirect('mailto:bibliographie-ub.rub.de')
+    elif site == 'dortmund':
+        return redirect('http://www.ub.tu-dortmund.de/mail.html')
+    else:
+        return redirect('mailto:bibliographie-ub.rub.de')
+
 
 # if __name__ == '__main__':
 #     app.run()

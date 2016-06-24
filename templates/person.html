@@ -20,6 +20,14 @@
                         {% if record.data.salutation == 'm' %}{{ _('Mr.') }}<br/>{% endif %}{% if record.data.salutation == 'f' %}{{ _('Mrs./Ms.') }}<br/>{% endif %}{{ record.data.name }}
                     </dd>
                 {% endif %}
+                {% if record.data.former_name %}
+                    <dt>
+                        {{ _('Former Name') }}
+                    </dt>
+                    <dd>
+                        {{ record.data.former_name }}
+                    </dd>
+                {% endif %}
                 <br/>
                 {% if record.data.gnd %}
                     <dt>
@@ -126,7 +134,7 @@
                     </dt>
                     <dd>
                         {% for url in record.data.url %}
-                            <a href="{{ url.url }}">{{ url.label }}</a>
+                            <a href="{{ url.url }}">{{ url_map.get(url.label) }}</a>
                             {% if not loop.last %}<br/>{% endif %}
                         {% endfor %}
                     </dd>
@@ -158,7 +166,7 @@
                     </dt>
                     <dd>
                         {% for status in record.data.status %}
-                            {{ status }}{% if not loop.last %} | {% endif %}
+                            {{ pers_status_map.get(status) }}{% if not loop.last %} | {% endif %}
                         {% endfor %}
                     </dd>
                 {% endif %}

@@ -58,6 +58,11 @@ SOLR_CORE = 'hb2'
 SOLR_EXPORT_FIELD = 'wtf_json'
 SOLR_ROWS = '20'
 SOLR_SEARCH_FACETS = {
+    'catalog':
+        {
+            'type': 'terms',
+            'field': 'catalog'
+        },
     'pubtype':
         {
             'type': 'terms',
@@ -304,6 +309,12 @@ DASHBOARD_GROUP_FACETS = {
         },
 }
 
+REDIS_CONSOLIDATE_PERSONS_URL = 'redis://localhost:6379/0'
+REDIS_CONSOLIDATE_PERSONS_HOST = 'localhost'
+REDIS_CONSOLIDATE_PERSONS_PORT = 6379
+REDIS_CONSOLIDATE_PERSONS_DB = 0
+
+REDIS_REPLACE_URIS_URL = 'redis://localhost:6379/1'
 
 TRAC_URL = ''
 TRAC_USER = ''

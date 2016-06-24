@@ -2,6 +2,9 @@
 {% block site_content %}
     {{ super() }}
     <p>{% include 'admin_nav.html' %}</p>
+    <div>
+        <b>{{ _('Tasks found') }}: {{ count }}</b>
+    </div>
     <table class="table table-bordered">
     <thead>
         <tr>
@@ -10,30 +13,34 @@
         </tr>
     </thead>
     <tbody>
-    {% for person, candidate in results.items() %}
+    {% for result in results %}
         <tr>
             <td>
-                <b>{{ person }}</b><br/>
-                <ul class="list-unstyled">
-                    {% for doc in candidate.docs %}
-                        <li><a href="{{ url_for('edit_record', record_id=doc.id, pubtype=doc.pubtype) }}" target="_blank">{{ doc.title }}</a></li>
-                    {% endfor %}
-                </ul>
+                <a href="{{ url_for('edit_record', record_id=result.id, pubtype=result.pubtype) }}?cptask=true" target="_blank">{{ result.title }}</a><br/>
             </td>
             <td>
-                <ul class="list-unstyled">
-                {% for match in candidate.matches %}
-                    {% if match.probability > 0 %}
+                <ul>
+                    {% for person in result.persons %}
                         <li>
-                            {{ match.name }} {% if match.affiliation %}| {% for affiliation in match.affiliation %}{{ affiliation }}{% if not loop.last %}; {% endif %}{% endfor %}{% endif %} | <b>{{ _('Probability') }}: {{ match.probability }}%</b>
-                            {% if match.gnd or match.orcid %}
-                                <br/>
-                                {% if match.gnd %}<b>{{ _('GND') }}:</b> <a id="{{ match.gnd }}" href="http://d-nb.info/gnd/{{ match.gnd }}">{{ match.gnd }}</a> <button class="btn clipboard" data-clipboard-text="{{ match.gnd }}" data-clipboard-action="copy"><i class="octicon octicon-clippy"></i></button>{% endif %}
-                                {% if match.orcid %} | <b>{{ _('ORCID') }}:</b> <a id="{{ match.orcid }}" href="https://orcid.org/{{ match.orcid }}">{{ match.orcid }}</a> <button class="btn clipboard" data-clipboard-text="{{ match.orcid }}" data-clipboard-action="copy"><i class="octicon octicon-clippy"></i></button>{% endif %}
+                            <b>{{ person.name }}</b><br/>
+                            {% if person.candidates and person.candidates[0] %}
+                            <ul class="list-unstyled">
+                                {% for match in person.candidates %}
+                                <li>
+                                {{ match.name }} {% if match.affiliation %}| {% for affiliation in match.affiliation %}{{ affiliation }}{% if not loop.last %}; {% endif %}{% endfor %}{% endif %} | <b>{{ _('Probability') }}: {{ match.probability }}%</b>
+                                {% if match.gnd or match.orcid %}
+                                    <br/>
+                                    {% if match.gnd %}<b>{{ _('GND') }}:</b> <a id="{{ match.gnd }}" href="http://d-nb.info/gnd/{{ match.gnd }}">{{ match.gnd }}</a> <button class="btn clipboard" data-clipboard-text="{{ match.gnd }}" data-clipboard-action="copy"><i class="octicon octicon-clippy"></i></button>{% endif %}
+                                    {% if match.orcid %} | <b>{{ _('ORCID') }}:</b> <a id="{{ match.orcid }}" href="https://orcid.org/{{ match.orcid }}">{{ match.orcid }}</a> <button class="btn clipboard" data-clipboard-text="{{ match.orcid }}" data-clipboard-action="copy"><i class="octicon octicon-clippy"></i></button>{% endif %}
+                                {% endif %}
+                                </li>
+                                {% endfor %}
+                            </ul>
+                            {% else %}
+                            {{ _('No candidates found') }}
                             {% endif %}
                         </li>
-                    {% endif %}
-                {% endfor %}
+                    {% endfor %}
                 </ul>
             </td>
         </tr>

@@ -29,7 +29,7 @@
                             class="fa fa-search-plus"></i> {{ _('Search') }}</a></li>
                 </ul>
             </div> #}
-            {% if current_user.role == 'superadmin' %}
+            {% if current_user.role == 'admin' or current_user.role == 'superadmin' %}
             <a href="{{ url_for('consolidate_persons') }}" type="button" class="btn btn-default"><i class="fa fa-users"></i> {{ _('Consolidate Persons') }}</a>
             {% endif %}
         </div>
