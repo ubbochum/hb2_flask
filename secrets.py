@@ -113,6 +113,12 @@ SOLR_PERSON_FACETS = {
             'type': 'terms',
             'field': 'catalog'
         },
+    'personal_status':
+        {
+            'type': 'terms',
+            'field': 'personal_status',
+            'limit': 15
+        },
 }
 SOLR_ORGA_FACETS = {
     'destatis_id':

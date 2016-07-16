@@ -22,7 +22,8 @@
             {{ drill_down.facets(facet_data.catalog, 'catalog', heading='Catalog', target='persons') }}
             {{ drill_down.facets(facet_data.faffiliation, 'faffiliation', heading='Affiliation', target='persons') }}
             {{ drill_down.facets(facet_data.fgroup, 'fgroup', heading='Working Groups', target='persons') }}
-            {{ drill_down.facets(facet_data.dwid, 'dwid', heading='Administration ID', target='persons') }}
+            {{ drill_down.boolean_filter('tudo', heading='TUDO Member', target='persons') }}
+            {{ drill_down.boolean_filter('rubi', heading='RUB Member', target='persons') }}
             {{ drill_down.simple_filter('gnd', heading='GND', target='persons') }}
             {{ drill_down.simple_filter('orcid', heading='ORCID', target='persons') }}
             {{ drill_down.facets(facet_data.editorial_status, 'editorial_status', heading='Editorial Status', target='persons') }}

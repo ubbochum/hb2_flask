@@ -8,6 +8,7 @@
 {% if multifield[0] %}
     {% if multifield[0].type == 'FormField' %}
     {% for enclosure in multifield %}
+    {% if enclosure.name|rem_form_count not in form.admin_only %}
     <div id="{{ enclosure.name }}_container" class="multi_enclosure">
     <div class="col-sm-2 control-label">{{ enclosure.name|capitalize|rem_form_count|replace('_', ' ') }}</div>
     <div class="col-sm-6" style="margin: 0 0 12px -10px;;">
@@ -98,50 +99,55 @@
         {% endfor %}
         {#<span style="margin-left:15px;text-transform:uppercase;"><a class="btn btn-sm btn-default" href="#" data-field="{{ multifield[0].name }}"><i class="fa fa-plus"></i> {{_('Add another')}}</a></span>#}
         </div>
+    {% endif %}
     {% endfor %}
     {% else %}
-        {% for entry in multifield.entries %}<div class="form-group" id="{{ entry.name }}_container">
-            <div class="col-sm-2 control-label">{{ entry.label }}</div>
-            <div class="col-sm-6">
-                {% if entry.flags.required %}
-                    {% if '-title' in entry.name %}
-                        {{ entry(class='form-control typeahead_title',required='required') }}
-                    {% elif 'person-' in entry.name %}
-                        {{ entry(class='form-control typeahead_pers',required='required') }}
-                    {% elif 'corporation-' in entry.name %}
-                        {{ entry(class='form-control typeahead_orga',required='required') }}
-                    {% elif '-affiliation_context' in entry.name %}
-                        {{ entry(class='form-control typeahead_orga',required='required') }}
-                    {% elif '-group_context' in entry.name %}
-                        {{ entry(class='form-control typeahead_group',required='required') }}
+        {% for entry in multifield.entries %}
+            {% if entry.name|rem_form_count not in form.admin_only %}
+            <div class="form-group" id="{{ entry.name }}_container">
+                <div class="col-sm-2 control-label">{{ entry.label }}</div>
+                <div class="col-sm-6">
+                    {% if entry.flags.required %}
+                        {% if '-title' in entry.name %}
+                            {{ entry(class='form-control typeahead_title',required='required') }}
+                        {% elif 'person-' in entry.name %}
+                            {{ entry(class='form-control typeahead_pers',required='required') }}
+                        {% elif 'corporation-' in entry.name %}
+                            {{ entry(class='form-control typeahead_orga',required='required') }}
+                        {% elif '-affiliation_context' in entry.name %}
+                            {{ entry(class='form-control typeahead_orga',required='required') }}
+                        {% elif '-group_context' in entry.name %}
+                            {{ entry(class='form-control typeahead_group',required='required') }}
+                        {% else %}
+                            {{ entry(class='form-control',required='required') }}
+                        {% endif %}
                     {% else %}
-                        {{ entry(class='form-control',required='required') }}
+                        {% if '-title' in entry.name %}
+                            {{ entry(class='form-control typeahead_title') }}
+                        {% elif 'person-' in entry.name %}
+                            {{ entry(class='form-control typeahead_pers') }}
+                        {% elif 'corporation-' in entry.name %}
+                            {{ entry(class='form-control typeahead_orga') }}
+                        {% elif '-affiliation_context' in entry.name %}
+                            {{ entry(class='form-control typeahead_orga') }}
+                        {% elif '-group_context' in entry.name %}
+                            {{ entry(class='form-control typeahead_group') }}
+                        {% else %}
+                            {{ entry(class='form-control') }}
+                        {% endif %}
                     {% endif %}
-                {% else %}
-                    {% if '-title' in entry.name %}
-                        {{ entry(class='form-control typeahead_title') }}
-                    {% elif 'person-' in entry.name %}
-                        {{ entry(class='form-control typeahead_pers') }}
-                    {% elif 'corporation-' in entry.name %}
-                        {{ entry(class='form-control typeahead_orga') }}
-                    {% elif '-affiliation_context' in entry.name %}
-                        {{ entry(class='form-control typeahead_orga') }}
-                    {% elif '-group_context' in entry.name %}
-                        {{ entry(class='form-control typeahead_group') }}
+                </div>
+                <div class="col-sm-1">
+                    {% if loop.last %}
+                        <a class="btn btn-sm btn-default add-atomic" href="#"><i class="fa fa-plus"></i> {{_('Add another')}}</a>
                     {% else %}
-                        {{ entry(class='form-control') }}
+                        <a class="btn btn-sm btn-danger remove" href="#"><i class="fa fa-trash"></i> {{_('Remove this')}}</a>
                     {% endif %}
-                {% endif %}
+                </div>
+                <div class="clearfix"></div>
             </div>
-            <div class="col-sm-1">
-                {% if loop.last %}
-                    <a class="btn btn-sm btn-default add-atomic" href="#"><i class="fa fa-plus"></i> {{_('Add another')}}</a>
-                {% else %}
-                    <a class="btn btn-sm btn-danger remove" href="#"><i class="fa fa-trash"></i> {{_('Remove this')}}</a>
-                {% endif %}
-            </div>
-            <div class="clearfix"></div>
-        </div>{% endfor %}
+            {% endif %}
+        {% endfor %}
     {% endif %}
     {% endif %}
 {% endmacro %}

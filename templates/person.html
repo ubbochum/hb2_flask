@@ -17,7 +17,11 @@
                         {{ _('Name') }}
                     </dt>
                     <dd>
-                        {% if record.data.salutation == 'm' %}{{ _('Mr.') }}<br/>{% endif %}{% if record.data.salutation == 'f' %}{{ _('Mrs./Ms.') }}<br/>{% endif %}{{ record.data.name }}
+                        {% if record.data.salutation == 'm' %}{{ _('Mr.') }}<br/>{% endif %}
+                        {% if record.data.salutation == 'f' %}{{ _('Mrs./Ms.') }}<br/>{% endif %}
+                        {{ record.data.name }}
+                        {% if record.data.tudo %} | <img src="http://www.tu-dortmund.de/favicon.ico">{% endif %}
+                        {% if record.data.rubi %} | <img src="http://www.rub.de/favicon.ico">{% endif %}
                     </dd>
                 {% endif %}
                 {% if record.data.former_name %}
@@ -127,7 +131,7 @@
                     </dd>
                 {% endif %}
                 <hr/>
-                {% if record.data.url %}
+                {% if record.data.url and record.data.url[0].label != "None" %}
                     <br/>
                     <dt>
                         {{ _('URL') }}

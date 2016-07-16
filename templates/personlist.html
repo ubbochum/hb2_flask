@@ -11,7 +11,7 @@
                 {{ drill_down.facets(facet_data.fgroup, 'fgroup', heading='Working Groups', target=target) }}
                 {{ drill_down.simple_filter('gnd', heading='GND', target=target) }}
                 {{ drill_down.simple_filter('orcid', heading='ORCID', target=target) }}
-                {{ drill_down.facets(facet_data.personal_status, 'personal_status', heading='Personal Status', target='persons') }}
+                {{ drill_down.facets(facet_data.personal_status, 'personal_status', heading='Personal Status', target=target) }}
             {% endif %}
         </div>
         <div class="col-sm-8">

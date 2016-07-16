@@ -63,23 +63,23 @@ OAI_MAP = {
 }
 
 FREQUENCY_MAP = {
-    'Completely Irregular': 'completely_irregular',
+    'Completely irregular': 'completely_irregular',
     'Annual': 'annual',
     'Quarterly': 'quarterly',
     'Semiannual': 'semiannual',
     'Monthly': 'monthly',
     'Bimonthly': 'bimonthly',
-    'Three Times a Year': 'three_times_a_year',
+    'Three times a year': 'three_times_a_year',
     'Semimonthly': 'semimonthly',
     'Biannial': 'biennial',
     '15 issues a year': 'fifteen_issues_a_year',
-    'Continuously Updated': 'continuously_updated',
+    'Continuously updated': 'continuously_updated',
     'Daily': 'daily',
     'Semiweekly': 'semiweekly',
-    'Three Times a Week': 'three_times_a_week',
+    'Three times a week': 'three_times_a_week',
     'Weekly': 'weekly',
     'Biweekly': 'biweekly',
-    'Three Times a Month': 'three_times_a_month',
+    'Three times a month': 'three_times_a_month',
     'Triennial': 'triennial',
 }
 
@@ -384,9 +384,12 @@ def get_wtf_tocs(elems):
 
 def get_wtf_hosts(elems):
     wtf_hosts = []
+    has_title = False
     for host in elems:
         tmp = {}
         for item in host:
+            if item.tag == '%stitleInfo' % MODS:
+                has_title = True
             if item.tag == '%srecordInfo' % MODS:
                 for info in item:
                     if info.tag == '%srecordIdentifier' % MODS:
@@ -416,19 +419,20 @@ def get_wtf_hosts(elems):
                                     # logging.info(tmp)
         # logging.info('---')
         # logging.info(tmp)
-        if not tmp.get('pubtype'):
-            tmp.setdefault('pubtype', 'Journal')
-        if not tmp.get('volume'):
-            tmp.setdefault('volume', '')
-        if not tmp.get('issue'):
-            tmp.setdefault('issue', '')
-        if not tmp.get('is_part_of'):
-            tmp.setdefault('is_part_of', str(uuid.uuid4()))
-        # logging.info('hosts')
-        # logging.info(tmp)
-        wtf_hosts.append(tmp)
+        if has_title:
+            if not tmp.get('pubtype'):
+                tmp.setdefault('pubtype', 'Journal')
+            if not tmp.get('volume'):
+                tmp.setdefault('volume', '')
+            if not tmp.get('issue'):
+                tmp.setdefault('issue', '')
+            if not tmp.get('is_part_of'):
+                tmp.setdefault('is_part_of', str(uuid.uuid4()))
+            # logging.info('hosts')
+            # logging.info(tmp)
+            wtf_hosts.append(tmp)
 
-        get_wtf_parents(elems, tmp.get('is_part_of'), 'Journal')
+            get_wtf_parents(elems, tmp.get('is_part_of'), 'Journal')
 
     return {'is_part_of': wtf_hosts}
 
@@ -821,6 +825,11 @@ try:
             'solr': doi2index,
             'oai_dc': (oai_elements, 'identifier')
         },
+        "./m:identifier[@type='isi']": {
+            'wtf': lambda elems: {'WOSID': elems[0].text},
+            'csl': lambda elems: {'WOSID': elems[0].text},
+            'oai_dc': (oai_elements, 'identifier')
+        },
         "./m:identifier[@type='isbn']": {
             'wtf': lambda elems: {'ISBN': [elem.text for elem in elems]},
             'csl': lambda elems: {'isbn': [elem.text for elem in elems]},
@@ -890,7 +899,9 @@ try:
         "./m:name[@type='corporate']": {
             'solr': get_solr_corporates
         },
-        # "./m:note": lambda elem : {'': elem.text},
+        "./m:note[not(@displayLabel)]": {
+            'wtf': lambda elem: {'note': elems[0].text}
+        },
         "./m:note[@displayLabel='Ansprüche']": {
             'wtf': lambda elem: {'claims': elems[0].text}
         },

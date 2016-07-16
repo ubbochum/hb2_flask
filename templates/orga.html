@@ -58,6 +58,18 @@
                         <a href="{{ url_for('show_orga', orga_id=record.data.parent_id) }}">{% if record.data.parent_label %}{{ record.data.parent_label }}{% else %}{{ record.data.parent_id }}{% endif %}</a><br/>
                     </dd>
                 {% endif %}
+                {% if record.data.children %}
+                    <dt>
+                        {{ _('Children') }}
+                    </dt>
+                    <dd>
+                        {% for child in record.data.children %}
+                            {% if child.child_id != '' or child.child_label !='' %}
+                            <a href="{{ url_for('show_orga', orga_id=child.child_id) }}">{% if child.child_label %}{{ child.child_label }}{% else %}{{ child.child_id }}{% endif %}</a><br/>
+                            {% endif %}
+                        {% endfor %}
+                    </dd>
+                {% endif %}
                 <hr/>
                 {% if record.data.id %}
                     <dt>

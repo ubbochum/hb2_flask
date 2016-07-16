@@ -61,7 +61,7 @@
                 </dt>
                 <dd>
                     {% for title in record.data.other_title %}
-                        {{ title.other_title }}{% if title.language %} [{{ lang_map.get(title.language) }}]{% endif %}
+                        {{ title.other_title }}{% if title.language %} &lt;{{ lang_map.get(title.language) }}&gt;{% endif %}
                         {% if not loop.last %}<br/>{% endif %}
                     {% endfor %}
                 </dd>
@@ -299,6 +299,14 @@
                     {% if record.data.publisher_place %}{{ record.data.publisher_place }}: {% endif %}{{ record.data.publisher }}
                 </dd>
             {% endif %}
+            {% if not record.data.publisher and record.data.publisher_place %}
+                <dt>
+                    {{ _('Publisher Place') }}
+                </dt>
+                <dd>
+                    {{ record.data.publisher_place }}
+                </dd>
+            {% endif %}
             {% if record.data.number_of_volumes %}
                 <dt>
                     {{ _('Number of Volumes') }}
@@ -427,12 +435,11 @@
                         <li>
                             {% with mypart = part|deserialize_json %}
                                 <li>
-                                    <a href="{{ url_for('show_record', pubtype=mypart.pubtype, record_id=mypart.id) }}">{{ mypart.title }}</a>
                                     {% if mypart.volume %}
-                                        <br/>{{ _('Vol.') }}: {{ mypart.volume }}{% if mypart.issue %}, {{ _('Issue') }}: {{ mypart.issue }}{% endif %}
+                                        {{ _('Vol.') }}: {{ mypart.volume }}{% if mypart.issue %}, {{ _('Issue') }}: {{ mypart.issue }}{% endif %}
                                     {% endif %}
                                     {% if not mypart.volume and mypart.issue %}
-                                        <br/>{{ _('Issue') }}: {{ mypart.issue }}
+                                        {{ _('Issue') }}: {{ mypart.issue }}
                                     {% endif %}
                                     {% if mypart.page_first and mypart.page_last %}
                                         | {{ _('p.') }} {{ mypart.page_first }}-{{ mypart.page_last }}
@@ -440,6 +447,8 @@
                                     {% if mypart.page_first and not mypart.page_last %}
                                         | {{ _('p.') }} {{ mypart.page_first }}
                                     {% endif %}
+                                    {% if mypart.volume or (mypart.page_first and mypart.page_last) %}:{% endif %}
+                                    <a href="{{ url_for('show_record', pubtype=mypart.pubtype, record_id=mypart.id) }}">{{ mypart.title }}</a>
                                 </li>
                             {% endwith %}
                         </li>
@@ -544,6 +553,22 @@
                     <a href="https://dx.doi.org/{{ record.data.DOI }}">{{ record.data.DOI }}</a>
                 </dd>
             {% endif %}
+            {% if record.data.PMID.0 %}
+                <dt>
+                    {{ _('PMID') }}
+                </dt>
+                <dd>
+                    <a href="http://www.ncbi.nlm.nih.gov/pubmed/{{ record.data.PMID }}">{{ record.data.PMID }}</a>
+                </dd>
+            {% endif %}
+            {% if record.data.WOSID.0 %}
+                <dt>
+                    {{ _('WOSID') }}
+                </dt>
+                <dd>
+                    <a href="http://http://ws.isiknowledge.com/cps/openurl/service?url_ver=Z39.88-2004&rft_id=info:ut/{{ record.data.WOSID }}">{{ record.data.WOSID }}</a>
+                </dd>
+            {% endif %}
             {% if record.data.uri.0 %}
                 <dt>
                     {% trans count=record.data.uri|length %}
@@ -596,6 +621,14 @@
                 </dt>
                 <dd>
                     {{ record.data.license_text }}
+                </dd>
+            {% endif %}
+            {% if record.data.DFG %}
+                <dt>
+                    {{ _('Funding') }}
+                </dt>
+                <dd>
+                    {{ _('Article Processing Charge funded by the Deutsche Forschungsgemeinschaft (DFG) and the Open Access Publication Fund of') }} {{ record.data.catalog[0] }}
                 </dd>
             {% endif %}
             {% if record.data.medium and record.data.medium != 'None' %}

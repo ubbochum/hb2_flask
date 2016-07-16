@@ -9,28 +9,14 @@
             {{ form.errors }}
         {% endif %}
             <div class="col-sm-6">
-                <h4>{{ _('Import/Export') }}</h4>
-                <p><a href="{{ url_for('export_solr_dump', core='group') }}" type="button" class="btn btn-default"><i class="fa fa-cloud-download"></i> {{ _('Export Index') }}</a></p>
-                <table class="table">
-                    {% for record in import_records %}
-                        <tr>
-                            <th scope="row">{{ loop.index + offset }}</th>
-                            <td>{{ record.id }}<br/>
-                            <td class="dropdown">
-                                <button class="btn btn-default dropdown-toggle" type="button" id="action{{ loop.index }}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true"><i class="fa fa-cog"></i> Action <span class="fa fa-caret-down"></span></button>
-                                <ul class="dropdown-menu" aria-labelledby="action{{ loop.index }}">
-                                    <li><a href="{{ url_for('import_solr_dump', filename=record.id) }}"><i class="fa fa-cloud-download"></i> {{ _('Import Dump') }}</a></li>
-                                    {% if current_user.role == 'admin' or current_user.role == 'superadmin' %}<li class="bg-danger"><a href="#" data-href="{{ url_for('delete_dump', record_id=record.id) }}" data-toggle="modal" data-target="#confirm-delete"><i class="fa fa-trash"></i> {{ _('Delete') }}</a></li>{% endif %}
-                                </ul>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </table>
-            </div>
-            <div class="col-sm-6">
-                <h4>&nbsp;</h4>
+                <h4>{{ _('Import New Data') }}</h4>
                 <h5>{{ _('Upload JSON File') }}</h5>
                 {{ wtf.quick_form(form, form_type='inline', action='import/solr_dump/somefile') }}
+            </div>
+            <div class="col-sm-6">
+                <h4>{{ _('Import Updated Data') }}</h4>
+                <h5>{{ _('Upload JSON File') }}</h5>
+                {{ wtf.quick_form(form, form_type='inline', action='update/solr_dump/somefile') }}
             </div>
         </div>
         {% if locked_records %}

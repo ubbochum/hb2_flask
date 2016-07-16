@@ -291,14 +291,16 @@ class Solr(object):
         return self._count
 
     def update(self):
-        url = 'http://%s:%s/%s/%s/update/?commit=true&versions=true' % (self.host, self.port, self.application, self.core)
+        url = 'http://%s:%s/%s/%s/update/?commit=true&versions=true' % (self.host, self.port, self.application,
+                                                                        self.core)
         #logging.info(json.dumps(self.data))
         resp = requests.post(url, headers={'Content-type': 'application/json'}, data=json.dumps(self.data))
         return resp
 
     def delete(self):
         url = 'http://%s:%s/%s/%s/update?commit=true' % (self.host, self.port, self.application, self.core)
-        resp = requests.post(url, headers={'Content-type': 'application/json'}, data=json.dumps({'delete': {'id': self.del_id}}))
+        resp = requests.post(url, headers={'Content-type': 'application/json'},
+                             data=json.dumps({'delete': {'id': self.del_id}}))
         return resp.status_code
 
     def export(self):
@@ -306,9 +308,15 @@ class Solr(object):
         cm = '*'
         export_docs = []
         while not done:
-            resp = requests.get('http://%s:%s/%s/%s/query?q=*:*&sort=id asc&fl=%s&cursorMark=%s' % (self.host, self.port, self.application, self.core, self.export_field, cm)).json()
+            resp = requests.get('http://%s:%s/%s/%s/query?q=%s&sort=id asc&fl=%s&cursorMark=%s' %
+                                (self.host, self.port, self.application, self.core, self.query,
+                                 '%s, %s' % (self.export_field, 'id'), cm)).json()
             for doc in resp.get('response').get('docs'):
-                export_docs.append(json.loads(doc.get(self.export_field)))
+                try:
+                    export_docs.append(json.loads(doc.get(self.export_field)))
+                except TypeError as e:
+                    logging.error(e)
+                    logging.error(doc.get('id'))
             if cm == resp.get('nextCursorMark'):
                 done = True
             cm = resp.get('nextCursorMark')
