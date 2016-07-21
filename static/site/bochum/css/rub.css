@@ -77,9 +77,9 @@ thead {background-color: #e8efcf; border-top: 2px solid #8dae10; text-transform:
             padding-left: 0px;
         }
 
-        .control-label {
+        /*.control-label {
             margin-left: 15px;
-        }
+        }*/
 
         /*.form-group:last-of-type {
             padding-bottom: 18px;
@@ -87,3 +87,19 @@ thead {background-color: #e8efcf; border-top: 2px solid #8dae10; text-transform:
 .select2-container--default, .select2-search--inline, .select2-search__field{width: 100% !important;}
 .multi_enclosure .control-label, .subfield_label {font-size: 14px; font-weight: 700;}
 .multi_enclosure .form-group {margin-bottom: 0;}
+
+
+.list-group-item {overflow:auto;}
+
+@media (min-width:768px){
+  #username {width:130%;margin-left:4em;}
+  #password {width:160%;margin-left:1.5em;}
+  .btn {white-space:normal;}
+}
+@media (min-width:992px){
+  #username, #password {width:120%;margin-left:3em;}
+}
+@media (min-width:1200px){
+  #username, #password {width:100%;margin-left:2em;}
+  .btn {white-space:nowrap;}
+}

@@ -19,8 +19,8 @@
     <span class="pull-right">
         {% if current_user.is_authenticated %}<i class="fa fa-user"></i> {{ current_user.name }} <a href="{{ url_for('logout', next='homepage') }}"><i class="fa fa-sign-out"></i></a>{% else %}{% if header != 'Sign In' %}<a href="{{ url_for('login', next=request.url_rule.endpoint) }}"><i class="fa fa-sign-in"></i> {{ _('Sign In') }}</a>{% endif %}{% endif %}
     </span>
-    <h1 class="alert alert-danger">{{ _('Research bibliography and repository') }} - Testinstanz</h1>
-    <h2 class="alert alert-danger">{{ header }}</h2>
+    <h1>{{ _('Research bibliography and repository') }}</h1>
+    <h2>{{ header }}</h2>
     {#{% for field in current_user %}
         {{ field }}
     {% endfor %}

@@ -294,6 +294,27 @@ LANGUAGE_MAP = {
     'bos': lazy_gettext('Bosnian'),
 }
 
+FREQUENCY_MAP = {
+    'completely_irregular': lazy_gettext('Completely Irregular'),
+    'annual': lazy_gettext('Annual'),
+    'quarterly': lazy_gettext('Quarterly'),
+    'semiannual': lazy_gettext('Semiannual'),
+    'monthly': lazy_gettext('Monthly'),
+    'bimonthly': lazy_gettext('Bimonthly'),
+    'three_times_a_year': lazy_gettext('Three Times a Year'),
+    'semimonthly': lazy_gettext('Semimonthly'),
+    'biennial': lazy_gettext('Biannial'),
+    'fifteen_issues_a_year': lazy_gettext('Fifteen Issues a Year'),
+    'continuously_updated': lazy_gettext('Continuously Updated'),
+    'daily': lazy_gettext('Daily'),
+    'semiweekly': lazy_gettext('Semiweekly'),
+    'three_times_a_week': lazy_gettext('Three Times a Week'),
+    'weekly': lazy_gettext('Weekly'),
+    'biweekly': lazy_gettext('Biweekly'),
+    'three_times_a_month': lazy_gettext('Three Times a Month'),
+    'triennial': lazy_gettext('Triennial'),
+}
+
 URL_TYPE_MAP = {
     'hp': lazy_gettext('Homepage'),
     'rg': lazy_gettext('ResearchGate'),
@@ -388,15 +409,14 @@ def deserialize_json_filter(thejson):
 
 
 def theme(ip):
-    # logging.info(ip[0])
-    if ip[0].startswith('134.147'):
-        return 'bochum'
+    # logging.info(ip)
+    site = 'dortmund'
+    if ip[0].startswith('134.147') or ip[0].startswith('129.217.135.159') or ip[0].startswith('129.217.135.4'):
+        site = 'bochum'
     elif ip[0].startswith('127.0.0.1') or ip[0].startswith('129.217'):
-        return 'dortmund'
-    elif ip[0].startswith('129.217.135.159'):
-        return 'bochum'
-    else:
-        return 'dortmund'
+        site = 'dortmund'
+
+    return site
 
 
 def _diff_struct(a, b):
@@ -447,7 +467,8 @@ def redis_test():
 @app.route('/dedup/<idtype>/<path:id>')
 def dedup(idtype='', id=''):
     resp = {'duplicate': False}
-    dedup_solr = Solr(application=secrets.SOLR_APP, fquery=['%s:%s' % (idtype, id)], facet='false')
+    dedup_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, application=secrets.SOLR_APP, 
+                      fquery=['%s:%s' % (idtype, id)], facet='false')
     dedup_solr.request()
     logging.info(dedup_solr.count())
     if dedup_solr.count() > 0:
@@ -467,8 +488,8 @@ def homepage():
     num_found = 0
     mystart = 0
     if current_user.is_authenticated:
-        index_solr = Solr(application=secrets.SOLR_APP, start=(page - 1) * 10,
-                          query='owner:"' + current_user.email + '"', facet='false')
+        index_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, application=secrets.SOLR_APP, 
+                          start=(page - 1) * 10, query='owner:"' + current_user.email + '"', facet='false')
         index_solr.request()
         num_found = index_solr.count()
         records = index_solr.results
@@ -542,7 +563,8 @@ def persons():
     query = '*:*'
     filterquery = request.values.getlist('filter')
 
-    persons_solr = Solr(application=secrets.SOLR_APP, query=query, start=(page - 1) * 10, core='person',
+    persons_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, application=secrets.SOLR_APP, 
+                        query=query, start=(page - 1) * 10, core='person',
                         sort='changed desc', json_facet=secrets.DASHBOARD_PERS_FACETS, fquery=filterquery)
     persons_solr.request()
 
@@ -594,16 +616,20 @@ def search():
 
     search_solr = None
     if core == 'hb2':
-        search_solr = Solr(application=secrets.SOLR_APP, core=core, start=(page - 1) * 10, query=query,
+        search_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, application=secrets.SOLR_APP, 
+                           core=core, start=(page - 1) * 10, query=query,
                            fquery=filterquery, sort=sorting, json_facet=secrets.SOLR_SEARCH_FACETS)
     if core == 'person':
-        search_solr = Solr(application=secrets.SOLR_APP, core=core, start=(page - 1) * 10, query=query,
+        search_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, application=secrets.SOLR_APP, 
+                           core=core, start=(page - 1) * 10, query=query,
                            fquery=filterquery, sort='changed desc', json_facet=secrets.SOLR_PERSON_FACETS)
     if core == 'organisation':
-        search_solr = Solr(application=secrets.SOLR_APP, core=core, start=(page - 1) * 10, query=query,
+        search_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, application=secrets.SOLR_APP, 
+                           core=core, start=(page - 1) * 10, query=query,
                            fquery=filterquery, sort='changed desc', json_facet=secrets.SOLR_ORGA_FACETS)
     if core == 'group':
-        search_solr = Solr(application=secrets.SOLR_APP, core=core, start=(page - 1) * 10, query=query,
+        search_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, application=secrets.SOLR_APP, 
+                           core=core, start=(page - 1) * 10, query=query,
                            fquery=filterquery, sort='changed desc', json_facet=secrets.SOLR_GROUP_FACETS)
     search_solr.request()
     num_found = search_solr.count()
@@ -658,7 +684,7 @@ def apparent_dup():
         data.setdefault('apparent_dup', {}).setdefault('set', request.form.get('apparent_dup'))
         # requests.post('http://%s:%s/solr/%s/update' % (secrets.SOLR_HOST, secrets.SOLR_PORT, secrets.SOLR_CORE),
         #              headers={'Content-type': 'application/json'}, data=json.dumps(data))
-        app_dup_solr = Solr(application=secrets.SOLR_APP, core='hb2', data=[data])
+        app_dup_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, application=secrets.SOLR_APP, core='hb2', data=[data])
         app_dup_solr.update()
     return jsonify(data)
 
@@ -677,7 +703,7 @@ def flash_errors(form):
 def _record2solr(form, action, relItems=True):
     if action == 'update':
         if form.data.get('editorial_status') == 'new':
-            form.editorial_status.data = 'editing'
+            form.editorial_status.data = 'in_process'
         if form.data.get('editorial_status') == 'edited' and current_user.role == 'superadmin':
             form.editorial_status.data = 'final_editing'
     solr_data = {}
@@ -694,6 +720,10 @@ def _record2solr(form, action, relItems=True):
         if field == 'id':
             solr_data.setdefault('id', form.data.get(field).strip())
             id = form.data.get(field).strip()
+        if field == 'same_as':
+            for same_as in form.data.get(field):
+                if len(same_as.strip()) > 0:
+                    solr_data.setdefault('same_as', []).append(same_as.strip())
         if field == 'created':
             if len(form.data.get(field).strip()) == 10:
                 solr_data.setdefault('recordCreationDate', '%sT00:00:00.001Z' % form.data.get(field).strip())
@@ -754,10 +784,13 @@ def _record2solr(form, action, relItems=True):
         if field == 'locked':
             solr_data.setdefault('locked', form.data.get(field))
         if field == 'person':
+            # für alle personen
             for idx, person in enumerate(form.data.get(field)):
+                # hat die person einen namen?
                 if person.get('name'):
                     solr_data.setdefault('person', []).append(person.get('name').strip())
                     solr_data.setdefault('fperson', []).append(person.get('name').strip())
+                    # hat die person eine gnd-id?
                     if person.get('gnd'):
                         # logging.info('drin: gnd: %s' % person.get('gnd'))
                         solr_data.setdefault('pnd', []).append(
@@ -766,7 +799,8 @@ def _record2solr(form, action, relItems=True):
                         # schon belegt.
                         try:
                             query = 'id:%s' % person.get('gnd')
-                            gnd_solr = Solr(application=secrets.SOLR_APP, core='person', query=query, facet='false',
+                            gnd_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                                            application=secrets.SOLR_APP, core='person', query=query, facet='false',
                                             fields=['wtf_json'])
                             gnd_solr.request()
                             if len(gnd_solr.results) == 0:
@@ -775,55 +809,29 @@ def _record2solr(form, action, relItems=True):
                                     gettext(
                                         'IDs from relation "person" could not be found! Ref: %s' % person.get('gnd')),
                                     'warning')
-                            for idx1, doc in enumerate(gnd_solr.results):
-                                myjson = json.loads(doc.get('wtf_json'))
-                                # logging.info(myjson)
-                                for affiliation in myjson.get('affiliation'):
-                                    affiliation_id = affiliation.get('organisation_id')
-                                    # logging.info(affiliation_id)
-                                    # füge affiliation_context dem wtf_json hinzu
-                                    if not affiliation_id in form.data.get('affiliation_context'):
-                                        form.affiliation_context.append_entry(affiliation_id)
-                                    # Suche nach dem passenden Orga-Record
-                                    query = 'id:%s' % affiliation_id
-                                    parent_solr = Solr(application=secrets.SOLR_APP, core='organisation', query=query,
-                                                       facet='false', fields=['wtf_json'])
-                                    parent_solr.request()
-                                    if len(parent_solr.results) == 0:
-                                        query = 'account:%s' % affiliation_id
-                                        parent_solr = Solr(application=secrets.SOLR_APP, core='organisation',
-                                                           query=query, facet='false', fields=['wtf_json'])
-                                        parent_solr.request()
-                                        if len(parent_solr.results) == 0:
-                                            flash(
-                                                gettext(
-                                                    'IDs from relation "affiliation" could not be found! Ref: %s' % affiliation_id),
-                                                'warning')
-                                        for doc in parent_solr.results:
-                                            myjson = json.loads(doc.get('wtf_json'))
-                                            for catalog in myjson.get('catalog'):
-                                                if 'Bochum' in catalog:
-                                                    # logging.info("%s, %s: yo! rubi!" % (person.get('name'), person.get('gnd')))
-                                                    form.person[idx].rubi.data = True
-                                                    solr_data.setdefault('frubi', []).append(person.get('name'))
-                                                    is_rubi = True
-                                                if 'Dortmund' in catalog:
-                                                    # logging.info("%s, %s: yo! tudo!" % (person.get('name'), person.get('gnd')))
-                                                    form.person[idx].tudo.data = True
-                                                    solr_data.setdefault('ftudo', []).append(person.get('name'))
-                                                    is_tudo = True
-                                    for doc in parent_solr.results:
-                                        myjson = json.loads(doc.get('wtf_json'))
-                                        for catalog in myjson.get('catalog'):
-                                            if 'Bochum' in catalog:
-                                                # logging.info("%s, %s: yo! rubi!" % (person.get('name'), person.get('gnd')))
-                                                form.person[idx].rubi.data = True
-                                                solr_data.setdefault('frubi', []).append(person.get('name'))
-                                                is_rubi = True
-                                            if 'Dortmund' in catalog:
-                                                form.person[idx].tudo.data = True
-                                                solr_data.setdefault('ftudo', []).append(person.get('name'))
-                                                is_tudo = True
+                            else:
+                                # setze den parameter für die boolesche zugehörigkeit
+                                myjson = json.loads(gnd_solr.results[0].get('wtf_json'))
+                                for catalog in myjson.get('catalog'):
+                                    if 'Bochum' in catalog:
+                                        # logging.info("%s, %s: yo! rubi!" % (person.get('name'), person.get('gnd')))
+                                        form.person[idx].rubi.data = True
+                                        solr_data.setdefault('frubi', []).append(person.get('name'))
+                                        is_rubi = True
+                                    if 'Dortmund' in catalog:
+                                        form.person[idx].tudo.data = True
+                                        solr_data.setdefault('ftudo', []).append(person.get('name'))
+                                        is_tudo = True
+                                # details zur zugeörigkeit ermitteln
+                                for idx1, doc in enumerate(gnd_solr.results):
+                                    myjson = json.loads(doc.get('wtf_json'))
+                                    # logging.info(myjson)
+                                    for affiliation in myjson.get('affiliation'):
+                                        affiliation_id = affiliation.get('organisation_id')
+                                        # logging.info(affiliation_id)
+                                        # füge affiliation_context dem wtf_json hinzu
+                                        if affiliation_id not in form.data.get('affiliation_context'):
+                                            form.affiliation_context.append_entry(affiliation_id)
                         except AttributeError as e:
                             logging.error(e)
                     else:
@@ -836,9 +844,57 @@ def _record2solr(form, action, relItems=True):
                 if corporation.get('name'):
                     solr_data.setdefault('institution', []).append(corporation.get('name').strip())
                     solr_data.setdefault('fcorporation', []).append(corporation.get('name').strip())
+                    # TODO reicht gnd hier aus? eher nein, oder?
                     if corporation.get('gnd'):
                         solr_data.setdefault('gkd', []).append(
                             '%s#%s' % (corporation.get('gnd').strip(), corporation.get('name').strip()))
+                        # prüfe, ob eine 'person' mit GND im System ist. Wenn ja, setze affiliation_context, wenn nicht
+                        # schon belegt.
+                        try:
+                            query = 'id:%s' % corporation.get('gnd')
+                            gnd_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT,
+                                            application=secrets.SOLR_APP, core='organisation', query=query, facet='false',
+                                            fields=['wtf_json'])
+                            gnd_solr.request()
+                            if len(gnd_solr.results) == 0:
+                                # logging.info('keine Treffer zu gnd: %s' % person.get('gnd'))
+                                flash(
+                                    gettext(
+                                        'IDs from relation "corporation" could not be found! Ref: %s' % corporation.get('gnd')),
+                                    'warning')
+                                try:
+                                    storage_actor_errors = app.extensions['redis']['REDIS_ACTOR_ERRORS_URL']
+
+                                    storage_actor_errors.hset(form.data.get('id'), corporation.get('gnd'), 'corporation not found')
+
+                                except Exception as e:
+                                    logging.info('REDIS ERROR: %s' % e)
+                                    return 'failed to write data'
+                            else:
+                                # setze den parameter für die boolesche zugehörigkeit
+                                myjson = json.loads(gnd_solr.results[0].get('wtf_json'))
+                                for catalog in myjson.get('catalog'):
+                                    if 'Bochum' in catalog:
+                                        # logging.info("%s, %s: yo! rubi!" % (corporation.get('name'), corporation.get('gnd')))
+                                        form.corporation[idx].rubi.data = True
+                                        solr_data.setdefault('frubi', []).append(corporation.get('name'))
+                                        is_rubi = True
+                                    if 'Dortmund' in catalog:
+                                        form.corporation[idx].tudo.data = True
+                                        solr_data.setdefault('ftudo', []).append(corporation.get('name'))
+                                        is_tudo = True
+                                # details zur zugeörigkeit ermitteln
+                                for idx1, doc in enumerate(gnd_solr.results):
+                                    myjson = json.loads(doc.get('wtf_json'))
+                                    # logging.info(myjson)
+                                    for affiliation in myjson.get('affiliation'):
+                                        affiliation_id = affiliation.get('organisation_id')
+                                        # logging.info(affiliation_id)
+                                        # füge affiliation_context dem wtf_json hinzu
+                                        if affiliation_id not in form.data.get('affiliation_context'):
+                                            form.affiliation_context.append_entry(affiliation_id)
+                        except AttributeError as e:
+                            logging.error(e)
                     else:
                         solr_data.setdefault('gkd', []).append(
                             '%s#corporation-%s#%s' % (form.data.get('id'), idx, corporation.get('name').strip()))
@@ -854,12 +910,14 @@ def _record2solr(form, action, relItems=True):
                 if len(context) > 0:
                     try:
                         query = 'id:%s' % context
-                        parent_solr = Solr(application=secrets.SOLR_APP, core='organisation', query=query,
+                        parent_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                                           application=secrets.SOLR_APP, core='organisation', query=query,
                                            facet='false', fields=['wtf_json'])
                         parent_solr.request()
                         if len(parent_solr.results) == 0:
                             query = 'account:%s' % context
-                            parent_solr = Solr(application=secrets.SOLR_APP, core='organisation', query=query,
+                            parent_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                                               application=secrets.SOLR_APP, core='organisation', query=query,
                                                facet='false', fields=['wtf_json'])
                             parent_solr.request()
                             if len(parent_solr.results) == 0:
@@ -887,7 +945,8 @@ def _record2solr(form, action, relItems=True):
                 if len(context) > 0:
                     try:
                         query = 'id:%s' % context
-                        parent_solr = Solr(application=secrets.SOLR_APP, core='group', query=query, facet='false',
+                        parent_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                                           application=secrets.SOLR_APP, core='group', query=query, facet='false',
                                            fields=['wtf_json'])
                         parent_solr.request()
                         if len(parent_solr.results) == 0:
@@ -968,7 +1027,9 @@ def _record2solr(form, action, relItems=True):
                 if len(ipo_ids) == 1:
                     query = 'id:%s' % ipo_ids[0]
                 if len(ipo_ids) > 0:
-                    ipo_solr = Solr(application=secrets.SOLR_APP, query=query, rows=len(ipo_ids), facet='false', fields=['wtf_json'])
+                    ipo_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                                    application=secrets.SOLR_APP, query=query, rows=len(ipo_ids), facet='false', 
+                                    fields=['wtf_json'])
                     ipo_solr.request()
                     if len(ipo_solr.results) == 0:
                         flash(gettext(
@@ -1001,6 +1062,7 @@ def _record2solr(form, action, relItems=True):
                 for hp in form.data.get(field):
                     if hp.get('has_part') != '':
                         hp_ids.append(hp.get('has_part'))
+                logging.info('hp_ids: %s' % len(hp_ids))
                 queries = []
                 if len(hp_ids) == 1:
                     queries.append('id:%s' % hp_ids[0])
@@ -1008,15 +1070,24 @@ def _record2solr(form, action, relItems=True):
                     query = '{!terms f=id}'
                     tmp = []
                     for hp_id in hp_ids:
-                        if len(query + ','.join(tmp) + ',' + hp_id) < 7168:
+                        logging.info('hp_id: %s' % hp_id)
+                        logging.info('len(tmp): %s' % len(tmp))
+                        logging.info('len(query): %s' % len(query + ','.join(tmp) + ',' + hp_id))
+                        if len(tmp) < 2:
+                            tmp.append(hp_id)
+                        elif len(query + ','.join(tmp) + ',' + hp_id) < 7168:
                             tmp.append(hp_id)
                         else:
                             queries.append('{!terms f=id}%s' % ','.join(tmp))
                             tmp = [hp_id]
+                    if len(tmp) > 0:
+                        queries.append('{!terms f=id}%s' % ','.join(tmp))
                 logging.info('queries: %s' % len(queries))
                 if len(queries) > 0:
                     for query in queries:
-                        hp_solr = Solr(application=secrets.SOLR_APP, query=query, rows=len(hp_ids), facet='false', fields=['wtf_json'])
+                        hp_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                                       application=secrets.SOLR_APP, query=query, rows=len(hp_ids), facet='false', 
+                                       fields=['wtf_json'])
                         hp_solr.request()
                         if len(hp_solr.results) == 0:
                             flash(
@@ -1055,7 +1126,8 @@ def _record2solr(form, action, relItems=True):
                 if len(ov_ids) == 1:
                     query = 'id:%s' % ov_ids[0]
                 if len(ov_ids) > 0:
-                    ov_solr = Solr(application=secrets.SOLR_APP, query=query, facet='false', fields=['wtf_json'])
+                    ov_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                                   application=secrets.SOLR_APP, query=query, facet='false', fields=['wtf_json'])
                     ov_solr.request()
                     if len(ov_solr.results) == 0:
                         flash(
@@ -1078,17 +1150,20 @@ def _record2solr(form, action, relItems=True):
     solr_data.setdefault('wtf_json', wtf)
     # logging.info('has_part: %s' % has_part)
     # logging.info('is_part_of: %s' % is_part_of)
-    record_solr = Solr(application=secrets.SOLR_APP, core='hb2', data=[solr_data])
+    record_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                       application=secrets.SOLR_APP, core='hb2', data=[solr_data])
     record_solr.update()
     # reload all records listed in has_part, is_part_of, other_version
     if relItems:
         for record_id in has_part:
             # lock record
-            lock_record_solr = Solr(application=secrets.SOLR_APP, core='hb2',
+            lock_record_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                                    application=secrets.SOLR_APP, core='hb2',
                                     data=[{'id': record_id, 'locked': {'set': 'true'}}])
             lock_record_solr.update()
             # search record
-            edit_record_solr = Solr(application=secrets.SOLR_APP, core='hb2', query='id:%s' % record_id)
+            edit_record_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                                    application=secrets.SOLR_APP, core='hb2', query='id:%s' % record_id)
             edit_record_solr.request()
             # load record in form and modify changeDate
             thedata = json.loads(edit_record_solr.results[0].get('wtf_json'))
@@ -1110,16 +1185,19 @@ def _record2solr(form, action, relItems=True):
                 except AttributeError as e:
                     flash(gettext('ERROR linking from %s: %s' % (record_id, str(e))), 'error')
             # unlock record
-            unlock_record_solr = Solr(application=secrets.SOLR_APP, core='hb2',
+            unlock_record_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                                      application=secrets.SOLR_APP, core='hb2',
                                       data=[{'id': record_id, 'locked': {'set': 'false'}}])
             unlock_record_solr.update()
         for record_id in is_part_of:
             # lock record
-            lock_record_solr = Solr(application=secrets.SOLR_APP, core='hb2',
+            lock_record_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                                    application=secrets.SOLR_APP, core='hb2',
                                     data=[{'id': record_id, 'locked': {'set': 'true'}}])
             lock_record_solr.update()
             # search record
-            edit_record_solr = Solr(application=secrets.SOLR_APP, core='hb2', query='id:%s' % record_id)
+            edit_record_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                                    application=secrets.SOLR_APP, core='hb2', query='id:%s' % record_id)
             edit_record_solr.request()
             # load record in form and modify changeDate
             thedata = json.loads(edit_record_solr.results[0].get('wtf_json'))
@@ -1141,16 +1219,19 @@ def _record2solr(form, action, relItems=True):
                 except AttributeError as e:
                     flash(gettext('ERROR linking from %s: %s' % (record_id, str(e))), 'error')
             # unlock record
-            unlock_record_solr = Solr(application=secrets.SOLR_APP, core='hb2',
+            unlock_record_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                                      application=secrets.SOLR_APP, core='hb2',
                                       data=[{'id': record_id, 'locked': {'set': 'false'}}])
             unlock_record_solr.update()
         for record_id in other_version:
             # lock record
-            lock_record_solr = Solr(application=secrets.SOLR_APP, core='hb2',
+            lock_record_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                                    application=secrets.SOLR_APP, core='hb2',
                                     data=[{'id': record_id, 'locked': {'set': 'true'}}])
             lock_record_solr.update()
             # search record
-            edit_record_solr = Solr(application=secrets.SOLR_APP, core='hb2', query='id:%s' % record_id)
+            edit_record_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                                    application=secrets.SOLR_APP, core='hb2', query='id:%s' % record_id)
             edit_record_solr.request()
             # load record in form and modify changeDate
             thedata = json.loads(edit_record_solr.results[0].get('wtf_json'))
@@ -1172,7 +1253,8 @@ def _record2solr(form, action, relItems=True):
                 except AttributeError as e:
                     flash(gettext('ERROR linking from %s: %s' % (record_id, str(e))), 'error')
             # unlock record
-            unlock_record_solr = Solr(application=secrets.SOLR_APP, core='hb2',
+            unlock_record_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                                      application=secrets.SOLR_APP, core='hb2',
                                       data=[{'id': record_id, 'locked': {'set': 'false'}}])
             unlock_record_solr.update()
 
@@ -1206,7 +1288,8 @@ def orcid_login():
             # add orcid_id to person if exists. if not exists person then create an entity
             try:
                 query = 'email:%s' % current_user.email
-                person_solr = Solr(application=secrets.SOLR_APP, core='person', query=query, facet='false',
+                person_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                                   application=secrets.SOLR_APP, core='person', query=query, facet='false',
                                    fields=['wtf_json'])
                 person_solr.request()
                 if len(person_solr.results) == 0:
@@ -1214,11 +1297,13 @@ def orcid_login():
                 for idx1, doc in enumerate(person_solr.results):
                     myjson = json.loads(doc.get('wtf_json'))
                     logging.info('id: %s' % myjson.get('id'))
-                    lock_record_solr = Solr(application=secrets.SOLR_APP, core='person',
+                    lock_record_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                                            application=secrets.SOLR_APP, core='person',
                                             data=[{'id': myjson.get('id'), 'locked': {'set': 'true'}}])
                     lock_record_solr.update()
 
-                    edit_person_solr = Solr(application=secrets.SOLR_APP, query='id:%s' % myjson.get('id'),
+                    edit_person_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                                            application=secrets.SOLR_APP, query='id:%s' % myjson.get('id'),
                                             core='person', facet='false')
                     edit_person_solr.request()
 
@@ -1229,7 +1314,8 @@ def orcid_login():
                     form.orcid.data = orcid_id
 
                     _person2solr(form)
-                    unlock_record_solr = Solr(application=secrets.SOLR_APP, core='person',
+                    unlock_record_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                                              application=secrets.SOLR_APP, core='person',
                                               data=[{'id': myjson.get('id'), 'locked': {'set': 'false'}}])
                     unlock_record_solr.update()
 
@@ -1254,7 +1340,8 @@ def dashboard():
     query = '*:*'
     filterquery = request.values.getlist('filter')
     logging.info(filterquery)
-    dashboard_solr = Solr(application=secrets.SOLR_APP, start=(page - 1) * 10, query=query,
+    dashboard_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                          application=secrets.SOLR_APP, start=(page - 1) * 10, query=query,
                           sort='recordCreationDate desc', json_facet=secrets.DASHBOARD_FACETS, fquery=filterquery)
     dashboard_solr.request()
 
@@ -1282,7 +1369,8 @@ def make_user(user_id=''):
         flash(gettext('For SuperAdmins ONLY!!!'))
         return redirect(url_for('homepage'))
     if user_id:
-        ma_solr = Solr(application=secrets.SOLR_APP, core='hb2_users', data=[{'id': user_id, 'role': {'set': 'user'}}])
+        ma_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                       application=secrets.SOLR_APP, core='hb2_users', data=[{'id': user_id, 'role': {'set': 'user'}}])
         ma_solr.update()
         flash(gettext('%s downgraded to user!' % user_id), 'success')
         return redirect(url_for('superadmin'))
@@ -1298,7 +1386,8 @@ def make_admin(user_id=''):
         flash(gettext('For SuperAdmins ONLY!!!'))
         return redirect(url_for('homepage'))
     if user_id:
-        ma_solr = Solr(application=secrets.SOLR_APP, core='hb2_users', data=[{'id': user_id, 'role': {'set': 'admin'}}])
+        ma_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                       application=secrets.SOLR_APP, core='hb2_users', data=[{'id': user_id, 'role': {'set': 'admin'}}])
         ma_solr.update()
         flash(gettext('%s made to admin!' % user_id), 'success')
         return redirect(url_for('superadmin'))
@@ -1314,7 +1403,8 @@ def make_superadmin(user_id=''):
         flash(gettext('For SuperAdmins ONLY!!!'))
         return redirect(url_for('homepage'))
     if user_id:
-        ma_solr = Solr(application=secrets.SOLR_APP, core='hb2_users',
+        ma_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                       application=secrets.SOLR_APP, core='hb2_users',
                        data=[{'id': user_id, 'role': {'set': 'superadmin'}}])
         ma_solr.update()
         flash(gettext('%s upgraded to superadmin!' % user_id), 'success')
@@ -1332,7 +1422,8 @@ def superadmin():
         return redirect(url_for('homepage'))
     # Get locked records that were last changed more than one hour ago...
     page = int(request.args.get('page', 1))
-    locked_solr = Solr(application=secrets.SOLR_APP, core='hb2',
+    locked_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, application=secrets.SOLR_APP, 
+                       core='hb2',
                        fquery=['locked:true', 'recordChangeDate:[* TO NOW-1HOUR]'], sort='recordChangeDate asc',
                        start=(page - 1) * 10)
     locked_solr.request()
@@ -1342,7 +1433,8 @@ def superadmin():
                             search_msg=lazy_gettext('Showing {start} to {end} of {found} {record_name}'))
     mystart = 1 + (pagination.page - 1) * pagination.per_page
 
-    solr_dumps = Solr(application=secrets.SOLR_APP, core='hb2_users', query='id:*.json', facet='false', rows=10000)
+    solr_dumps = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, application=secrets.SOLR_APP, 
+                      core='hb2_users', query='id:*.json', facet='false', rows=10000)
     solr_dumps.request()
     num_found = solr_dumps.count()
     form = FileUploadForm()
@@ -1360,7 +1452,8 @@ def unlock(record_id=''):
         flash(gettext('For SuperAdmins ONLY!!!'))
         return redirect(url_for('homepage'))
     if record_id:
-        unlock_solr = Solr(application=secrets.SOLR_APP, core='hb2',
+        unlock_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                           application=secrets.SOLR_APP, core='hb2',
                            data=[{'id': record_id, 'locked': {'set': 'false'}}])
         unlock_solr.update()
 
@@ -1378,7 +1471,8 @@ def unlock_person(person_id=''):
         flash(gettext('For SuperAdmins ONLY!!!'))
         return redirect(url_for('homepage'))
     if person_id:
-        unlock_solr = Solr(application=secrets.SOLR_APP, core='person',
+        unlock_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                           application=secrets.SOLR_APP, core='person',
                            data=[{'id': person_id, 'locked': {'set': 'false'}}])
         unlock_solr.update()
 
@@ -1396,7 +1490,8 @@ def unlock_orga(orga_id=''):
         flash(gettext('For SuperAdmins ONLY!!!'))
         return redirect(url_for('homepage'))
     if orga_id:
-        unlock_solr = Solr(application=secrets.SOLR_APP, core='organisation',
+        unlock_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                           application=secrets.SOLR_APP, core='organisation',
                            data=[{'id': orga_id, 'locked': {'set': 'false'}}])
         unlock_solr.update()
 
@@ -1414,7 +1509,8 @@ def unlock_group(group_id=''):
         flash(gettext('For SuperAdmins ONLY!!!'))
         return redirect(url_for('homepage'))
     if group_id:
-        unlock_solr = Solr(application=secrets.SOLR_APP, core='group',
+        unlock_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                           application=secrets.SOLR_APP, core='group',
                            data=[{'id': group_id, 'locked': {'set': 'false'}}])
         unlock_solr.update()
 
@@ -1497,7 +1593,8 @@ def orgas():
     query = '*:*'
     filterquery = request.values.getlist('filter')
 
-    orgas_solr = Solr(application=secrets.SOLR_APP, query=query, start=(page - 1) * 10, core='organisation',
+    orgas_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                      application=secrets.SOLR_APP, query=query, start=(page - 1) * 10, core='organisation',
                       sort='changed desc', json_facet=secrets.DASHBOARD_ORGA_FACETS, fquery=filterquery)
     orgas_solr.request()
 
@@ -1528,7 +1625,7 @@ def _orga2solr(form, action, linkChildren=True):
         form.editorial_status.data = 'new'
     if action == 'update':
         if form.data.get('editorial_status') == 'new':
-            form.editorial_status.data = 'editing'
+            form.editorial_status.data = 'in_process'
         if form.data.get('editorial_status') == 'edited' and current_user.role == 'superadmin':
             form.editorial_status.data = 'final_editing'
     if not form.data.get('owner'):
@@ -1538,21 +1635,22 @@ def _orga2solr(form, action, linkChildren=True):
     for field in form.data:
         if field == 'orga_id':
             tmp.setdefault('orga_id', form.data.get(field))
+        elif field == 'same_as':
+            for same_as in form.data.get(field):
+                if len(same_as.strip()) > 0:
+                    tmp.setdefault('same_as', []).append(same_as.strip())
         elif field == 'alt_label':
             for alt_label in form.data.get(field):
                 tmp.setdefault('alt_label', []).append(alt_label.strip())
         elif field == 'dwid':
             for account in form.data.get(field):
                 tmp.setdefault('account', []).append(account.strip())
+            if len(form.data.get('gnd')) == 0 and len(form.data.get(field)[0].strip()) > 0:
+                form.id.data = form.data.get(field)[0].strip()
         elif field == 'gnd':
             if len(form.data.get(field)) > 0:
                 tmp.setdefault('gnd', form.data.get(field).strip())
-                try:
-                    # check only
-                    val = uuid.UUID(form.data.get('id'), version=4)
-                    form.id.data = form.data.get('gnd').strip()
-                except ValueError:
-                    pass
+                form.id.data = form.data.get(field).strip()
         elif field == 'created':
             tmp.setdefault('created', form.data.get(field).strip().replace(' ', 'T') + 'Z')
         elif field == 'changed':
@@ -1582,7 +1680,8 @@ def _orga2solr(form, action, linkChildren=True):
             if not form.data.get('parent_label') or len(form.data.get('parent_label')) == 0:
                 try:
                     query = 'id:%s' % form.data.get(field)
-                    parent_solr = Solr(application=secrets.SOLR_APP, core='organisation', query=query, facet='false',
+                    parent_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                                       application=secrets.SOLR_APP, core='organisation', query=query, facet='false',
                                        fields=['wtf_json'])
                     parent_solr.request()
                     logging.info('Treffer für %s: %s' % (form.data.get(field), len(parent_solr.results)))
@@ -1610,8 +1709,9 @@ def _orga2solr(form, action, linkChildren=True):
                         if child.get('child_id') != '' and child.get('child_label') == '':
                             try:
                                 query = 'id:%s' % child.get('child_id')
-                                child_solr = Solr(application=secrets.SOLR_APP, core='organisation', query=query,
-                                                   facet='false', fields=['wtf_json'])
+                                child_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                                                  application=secrets.SOLR_APP, core='organisation', query=query, 
+                                                  facet='false', fields=['wtf_json'])
                                 child_solr.request()
                                 if len(child_solr.results) == 0:
                                     flash(
@@ -1642,7 +1742,8 @@ def _orga2solr(form, action, linkChildren=True):
                     query = 'id:%s' % child_ids[0]
                 # logging.info('query = %s' % query)
                 if len(child_ids) > 0:
-                    children_solr = Solr(application=secrets.SOLR_APP, core='organisation', query=query, facet='false',
+                    children_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                                         application=secrets.SOLR_APP, core='organisation', query=query, facet='false',
                                          fields=['wtf_json'])
                     children_solr.request()
                     if len(children_solr.results) == 0:
@@ -1663,10 +1764,12 @@ def _orga2solr(form, action, linkChildren=True):
                 logging.error('work on children: %s' % e)
         else:
             if form.data.get(field):
-                tmp.setdefault(field, form.data.get(field))
+                if field != 'id':
+                    tmp.setdefault(field, form.data.get(field))
     # TODO search for organisations with id in parent_id; deduplicate with existing children
     # search record
-    search_orga_solr = Solr(application=secrets.SOLR_APP, core='organisation', rows=100, query='parent_id:%s' % id)
+    search_orga_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                            application=secrets.SOLR_APP, core='organisation', rows=100, query='parent_id:%s' % id)
     search_orga_solr.request()
     if len(search_orga_solr.results) > 0:
         children = form.data.get('children')
@@ -1683,13 +1786,26 @@ def _orga2solr(form, action, linkChildren=True):
                 childform.child_id.data = result.get('id')
                 childform.child_label.data = result.get('pref_label')
                 form.children.append_entry(childform.data)
-    # build json
-    wtf_json = json.dumps(form.data)
-    tmp.setdefault('wtf_json', wtf_json)
-    # logging.info(tmp)
     # save record to index
     try:
-        orga_solr = Solr(application=secrets.SOLR_APP, core='organisation', data=[tmp])
+        logging.info('%s vs. %s' % (id, form.data.get('id')))
+        if id != form.data.get('id'):
+            delete_orga_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT,
+                                    application=secrets.SOLR_APP, core='organisation', del_id=id)
+            delete_orga_solr.delete()
+            form.same_as.append_entry(id)
+            tmp.setdefault('id', form.data.get('id'))
+            tmp.setdefault('same_as', []).append(id)
+
+            id = form.data.get('id')
+        else:
+            tmp.setdefault('id', id)
+        # build json
+        wtf_json = json.dumps(form.data)
+        tmp.setdefault('wtf_json', wtf_json)
+        # logging.info(tmp)
+        orga_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT,
+                         application=secrets.SOLR_APP, core='organisation', data=[tmp])
         orga_solr.update()
     except AttributeError as e:
         logging.error(e)
@@ -1698,13 +1814,15 @@ def _orga2solr(form, action, linkChildren=True):
         logging.info('parents: %s' % parents)
         for parent_id in parents:
             # search record
-            edit_orga_solr = Solr(application=secrets.SOLR_APP, core='organisation', query='id:%s' % parent_id)
+            edit_orga_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                                  application=secrets.SOLR_APP, core='organisation', query='id:%s' % parent_id)
             edit_orga_solr.request()
             # load orga in form and modify changeDate
             if len(edit_orga_solr.results) > 0:
                 # lock record
-                lock_orga_solr = Solr(application=secrets.SOLR_APP, core='organisation',
-                                        data=[{'id': parent_id, 'locked': {'set': 'true'}}])
+                lock_orga_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                                      application=secrets.SOLR_APP, core='organisation', 
+                                      data=[{'id': parent_id, 'locked': {'set': 'true'}}])
                 lock_orga_solr.update()
                 # edit
                 try:
@@ -1724,19 +1842,21 @@ def _orga2solr(form, action, linkChildren=True):
                             form.children.append_entry(childform.data)
                             form.changed.data = str(datetime.datetime.now())
                             # save record
-                            _orga2solr(form, linkChildren=False)
+                            _orga2solr(form, action='update', linkChildren=False)
                         except AttributeError as e:
                             flash(gettext('ERROR linking from %s: %s' % (parent_id, str(e))), 'error')
                 except TypeError as e:
                     logging.error(e)
                     logging.error('thedate: %s' % edit_orga_solr.results[0].get('wtf_json'))
                 # unlock record
-                unlock_orga_solr = Solr(application=secrets.SOLR_APP, core='organisation',
-                                          data=[{'id': parent_id, 'locked': {'set': 'false'}}])
+                unlock_orga_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                                        application=secrets.SOLR_APP, core='organisation', 
+                                        data=[{'id': parent_id, 'locked': {'set': 'false'}}])
                 unlock_orga_solr.update()
             else:
                 logging.info('Cuurently there is no record for parent_id %s!' % parent_id)
 
+    return id
 
 @app.route('/create/organisation', methods=['GET', 'POST'])
 @login_required
@@ -1748,8 +1868,12 @@ def new_orga():
 
     if form.validate_on_submit():
         # logging.info(form.data)
-        _orga2solr(form)
-        return redirect(url_for('orgas'))
+        _orga2solr(form, action='create')
+
+        time.sleep(secrets.WAITING_FOR_REDIRECT)
+        return show_orga(form.data.get('id').strip())
+        # return redirect(url_for('orgas'))
+
     form.id.data = uuid.uuid4()
     form.owner[0].data = current_user.email
     form.created.data = datetime.datetime.now()
@@ -1766,7 +1890,8 @@ def groups():
     query = '*:*'
     filterquery = request.values.getlist('filter')
 
-    groups_solr = Solr(application=secrets.SOLR_APP, query=query, start=(page - 1) * 10, core='group',
+    groups_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                       application=secrets.SOLR_APP, query=query, start=(page - 1) * 10, core='group',
                        sort='changed desc', json_facet=secrets.DASHBOARD_GROUP_FACETS, fquery=filterquery)
     groups_solr.request()
 
@@ -1792,6 +1917,11 @@ def _group2solr(form, action):
     tmp = {}
     if not form.data.get('editorial_status'):
         form.editorial_status.data = 'new'
+    if action == 'update':
+        if form.data.get('editorial_status') == 'new':
+            form.editorial_status.data = 'in_process'
+        if form.data.get('editorial_status') == 'edited' and current_user.role == 'superadmin':
+            form.editorial_status.data = 'final_editing'
     if not form.data.get('owner'):
         tmp.setdefault('owner', ['daten.ub@tu-dortmund.de'])
     else:
@@ -1799,6 +1929,10 @@ def _group2solr(form, action):
     for field in form.data:
         if field == 'group_id':
             tmp.setdefault('group_id', form.data.get(field))
+        elif field == 'same_as':
+            for same_as in form.data.get(field):
+                if len(same_as.strip()) > 0:
+                    tmp.setdefault('same_as', []).append(same_as.strip())
         elif field == 'alt_label':
             for alt_label in form.data.get(field):
                 tmp.setdefault('alt_label', []).append(alt_label.data.strip())
@@ -1828,7 +1962,8 @@ def _group2solr(form, action):
             tmp.setdefault('parent_id', form.data.get(field))
             try:
                 query = 'id:%s' % form.data.get(field)
-                parent_solr = Solr(application=secrets.SOLR_APP, core='group', query=query, facet='false',
+                parent_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                                   application=secrets.SOLR_APP, core='group', query=query, facet='false',
                                    fields=['wtf_json'])
                 parent_solr.request()
                 if len(parent_solr.results) == 0:
@@ -1855,7 +1990,8 @@ def _group2solr(form, action):
     wtf_json = json.dumps(form.data)
     tmp.setdefault('wtf_json', wtf_json)
     # logging.info(tmp)
-    groups_solr = Solr(application=secrets.SOLR_APP, core='group', data=[tmp])
+    groups_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                       application=secrets.SOLR_APP, core='group', data=[tmp])
     groups_solr.update()
 
 
@@ -1870,11 +2006,16 @@ def new_group():
     if form.validate_on_submit():
         # logging.info(form.data)
         _group2solr(form)
-        return redirect(url_for('groups'))
+
+        time.sleep(secrets.WAITING_FOR_REDIRECT)
+        return show_group(form.data.get('id').strip())
+        # return redirect(url_for('groups'))
+
     form.id.data = uuid.uuid4()
     form.owner[0].data = current_user.email
     form.created.data = datetime.datetime.now()
     form.changed.data = datetime.datetime.now()
+
     return render_template('linear_form.html', header=lazy_gettext('New Working Group'),
                            site=theme(request.access_route), form=form, action='create', pubtype='group')
 
@@ -1885,7 +2026,7 @@ def _person2solr(form, action):
         form.editorial_status.data = 'new'
     if action == 'update':
         if form.data.get('editorial_status') == 'new':
-            form.editorial_status.data = 'editing'
+            form.editorial_status.data = 'in_process'
         if form.data.get('editorial_status') == 'edited' and current_user.role == 'superadmin':
             form.editorial_status.data = 'final_editing'
     if not form.data.get('owner'):
@@ -1897,14 +2038,19 @@ def _person2solr(form, action):
     for field in form.data:
         if field == 'name':
             tmp.setdefault('name', form.data.get(field).strip())
+        elif field == 'same_as':
+            for same_as in form.data.get(field):
+                if len(same_as.strip()) > 0:
+                    tmp.setdefault('same_as', []).append(same_as.strip())
         elif field == 'gnd':
             if len(form.data.get(field).strip()) > 0:
                 tmp.setdefault('gnd', form.data.get(field).strip())
                 new_id = form.data.get(field).strip()
         elif field == 'dwid':
+            tmp.setdefault('dwid', form.data.get(field))
             logging.info('%s vs. %s' % (form.data.get(field).strip(), form.data.get('gnd')))
             if len(form.data.get('gnd')) == 0 and len(form.data.get(field).strip()) > 0:
-                new_id = form.data.get(field).strip()
+                new_id = form.data.get(field).strip().strip()
         elif field == 'email':
             tmp.setdefault('email', form.data.get(field))
         elif field == 'rubi':
@@ -1964,12 +2110,14 @@ def _person2solr(form, action):
                     if len(affiliation.get('organisation_id')) > 0:
                         try:
                             query = 'id:%s' % affiliation.get('organisation_id')
-                            parent_solr = Solr(application=secrets.SOLR_APP, core='organisation', query=query,
+                            parent_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                                               application=secrets.SOLR_APP, core='organisation', query=query,
                                                facet='false', fields=['wtf_json'])
                             parent_solr.request()
                             if len(parent_solr.results) == 0:
                                 query = 'account:%s' % affiliation.get('organisation_id')
-                                parent_solr = Solr(application=secrets.SOLR_APP, core='organisation', query=query,
+                                parent_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                                                   application=secrets.SOLR_APP, core='organisation', query=query,
                                                    facet='false', fields=['wtf_json'])
                                 parent_solr.request()
                                 if len(parent_solr.results) == 0:
@@ -2001,7 +2149,8 @@ def _person2solr(form, action):
                     if len(group.get('group_id')) > 0:
                         try:
                             query = 'id:%s' % group.get('group_id')
-                            parent_solr = Solr(application=secrets.SOLR_APP, core='group', query=query, facet='false',
+                            parent_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                                               application=secrets.SOLR_APP, core='group', query=query, facet='false',
                                                fields=['wtf_json'])
                             parent_solr.request()
                             if len(parent_solr.results) == 0:
@@ -2046,7 +2195,8 @@ def _person2solr(form, action):
 
     doit = False
     if action == 'create':
-        person_solr = Solr(application=secrets.SOLR_APP, core='person', query='id:%s' % new_id,
+        person_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                           application=secrets.SOLR_APP, core='person', query='id:%s' % new_id,
                            facet='false', fields=['wtf_json'])
         person_solr.request()
         if len(person_solr.results) == 0:
@@ -2058,11 +2208,22 @@ def _person2solr(form, action):
     # logging.info('doit: %s for %s' % (doit, form.data.get('id')))
 
     if doit:
+        if new_id != form.data.get('id'):
+            form.same_as.append_entry(form.data.get('id'))
+            tmp.setdefault('same_as', []).append(form.data.get('id'))
+            # delete record with current id
+            try:
+                delete_person_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT,
+                                          application=secrets.SOLR_APP, core='person', del_id=form.data.get('id'))
+                delete_person_solr.delete()
+            except AttributeError as e:
+                logging.error(e)
+            form.id.data = new_id
         tmp.setdefault('id', new_id)
-        form.id.data = new_id
         wtf_json = json.dumps(form.data)
         tmp.setdefault('wtf_json', wtf_json)
-        person_solr = Solr(application=secrets.SOLR_APP, core='person', data=[tmp])
+        person_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                           application=secrets.SOLR_APP, core='person', data=[tmp])
         person_solr.update()
 
     return doit, new_id
@@ -2079,7 +2240,10 @@ def new_person():
         # logging.info(form.data)
         doit, new_id = _person2solr(form, action='create')
         if doit:
-            return redirect(url_for('persons'))
+
+            time.sleep(secrets.WAITING_FOR_REDIRECT)
+            return show_person(form.data.get('id').strip())
+            # return redirect(url_for('persons'))
         else:
             flash(gettext('A person with id %s already exists!' % new_id), 'danger')
             return render_template('tabbed_form.html', header=lazy_gettext('New Person'),
@@ -2155,7 +2319,8 @@ def new_person_from_gnd():
             # is gndid or name or orcid currently in hb2?
             try:
                 query = 'gnd:%s' % form.data.get('gnd')
-                person_solr = Solr(application=secrets.SOLR_APP, core='person', query=query, facet='false',
+                person_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                                   application=secrets.SOLR_APP, core='person', query=query, facet='false',
                                    fields=['id'])
                 person_solr.request()
                 if len(person_solr.results) > 0:
@@ -2163,7 +2328,8 @@ def new_person_from_gnd():
                           category='warning')
                 else:
                     query = 'orcid:%s' % form.data.get('orcid')
-                    person_solr = Solr(application=secrets.SOLR_APP, core='person', query=query, facet='false',
+                    person_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                                       application=secrets.SOLR_APP, core='person', query=query, facet='false',
                                        fields=['id'])
                     person_solr.request()
                     if len(person_solr.results) > 0:
@@ -2171,7 +2337,8 @@ def new_person_from_gnd():
                         gndid, person_solr.results[0].get('id')), category='warning')
                     else:
                         query = 'name:%s' % form.data.get('name')
-                        person_solr = Solr(application=secrets.SOLR_APP, core='person', query=query, facet='false',
+                        person_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                                           application=secrets.SOLR_APP, core='person', query=query, facet='false',
                                            fields=['id'])
                         person_solr.request()
                         if len(person_solr.results) > 0:
@@ -2258,7 +2425,8 @@ def new_record(pubtype='ArticleJournal'):
                     solr_data.setdefault('pubtype', form.data.get(field).strip())
                 if field == 'editorial_status':
                     solr_data.setdefault('editorial_status', form.data.get(field).strip())
-            record_solr = Solr(application=secrets.SOLR_APP, core='hb2', data=[solr_data])
+            record_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                               application=secrets.SOLR_APP, core='hb2', data=[solr_data])
             record_solr.update()
         else:
             _record2solr(form, action='create')
@@ -2286,6 +2454,8 @@ def new_record(pubtype='ArticleJournal'):
         # return redirect(url_for('dashboard'))
         # logging.info(form.data)
         # logging.info(form.data.get('id').strip())
+
+        time.sleep(secrets.WAITING_FOR_REDIRECT)
         return show_record(pubtype, form.data.get('id').strip())
 
     if request.args.get('subtype'):
@@ -2309,7 +2479,8 @@ def new_record(pubtype='ArticleJournal'):
 
 @app.route('/retrieve/<pubtype>/<record_id>')
 def show_record(pubtype, record_id=''):
-    show_record_solr = Solr(application=secrets.SOLR_APP, query='id:%s' % record_id)
+    show_record_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                            application=secrets.SOLR_APP, query='id:%s' % record_id)
     show_record_solr.request()
 
     if len(show_record_solr.results) == 0:
@@ -2328,24 +2499,54 @@ def show_record(pubtype, record_id=''):
                                site=theme(request.access_route), action='retrieve', record_id=record_id,
                                del_redirect=url_for('dashboard'), pubtype=pubtype, role_map=ROLE_MAP,
                                lang_map=LANGUAGE_MAP, pubtype_map=PUBTYPE2TEXT, subtype_map=SUBTYPE2TEXT,
-                               license_map=LICENSE_MAP, locked=locked, is_part_of=is_part_of, has_part=has_part,
+                               license_map=LICENSE_MAP, frequency_map=FREQUENCY_MAP, locked=locked, is_part_of=is_part_of, has_part=has_part,
                                other_version=other_version)
 
 
 @app.route('/retrieve/person/<person_id>')
 def show_person(person_id=''):
-    show_person_solr = Solr(application=secrets.SOLR_APP, query='gnd:%s' % person_id, core='person',
+    show_person_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                            application=secrets.SOLR_APP, query='gnd:%s' % person_id, core='person',
                             facet='false')
     show_person_solr.request()
 
     if len(show_person_solr.results) == 0:
-        show_person_solr = Solr(application=secrets.SOLR_APP, query='id:%s' % person_id, core='person',
+        show_person_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                                application=secrets.SOLR_APP, query='id:%s' % person_id, core='person',
                                 facet='false')
         show_person_solr.request()
 
         if len(show_person_solr.results) == 0:
-            flash('The requested record %s was not found!' % person_id, category='warning')
-            return redirect(url_for('persons'))
+            show_person_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT,
+                                    application=secrets.SOLR_APP, query='dwd:%s' % person_id, core='person',
+                                    facet='false')
+            show_person_solr.request()
+
+            if len(show_person_solr.results) == 0:
+                show_person_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT,
+                                        application=secrets.SOLR_APP, query='same_as:%s' % person_id, core='person',
+                                        facet='false')
+                show_person_solr.request()
+
+                if len(show_person_solr.results) == 0:
+                    flash('The requested record %s was not found!' % person_id, category='warning')
+                    return redirect(url_for('persons'))
+                else:
+                    thedata = json.loads(show_person_solr.results[0].get('wtf_json'))
+                    form = PersonAdminForm.from_json(thedata)
+
+                    return render_template('person.html', record=form, header=form.data.get('name'),
+                                           site=theme(request.access_route), action='retrieve', record_id=person_id,
+                                           pubtype='person', del_redirect=url_for('persons'),
+                                           url_map=URL_TYPE_MAP, pers_status_map=PERS_STATUS_MAP)
+            else:
+                thedata = json.loads(show_person_solr.results[0].get('wtf_json'))
+                form = PersonAdminForm.from_json(thedata)
+
+                return render_template('person.html', record=form, header=form.data.get('name'),
+                                       site=theme(request.access_route), action='retrieve', record_id=person_id,
+                                       pubtype='person', del_redirect=url_for('persons'),
+                                       url_map=URL_TYPE_MAP, pers_status_map=PERS_STATUS_MAP)
         else:
             thedata = json.loads(show_person_solr.results[0].get('wtf_json'))
             form = PersonAdminForm.from_json(thedata)
@@ -2366,17 +2567,32 @@ def show_person(person_id=''):
 
 @app.route('/retrieve/organisation/<orga_id>')
 def show_orga(orga_id=''):
-    show_orga_solr = Solr(application=secrets.SOLR_APP, query='id:%s' % orga_id, core='organisation', facet='false')
+    show_orga_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                          application=secrets.SOLR_APP, query='id:%s' % orga_id, core='organisation', facet='false')
     show_orga_solr.request()
 
     if len(show_orga_solr.results) == 0:
-        show_orga_solr = Solr(application=secrets.SOLR_APP, query='account:%s' % orga_id, core='organisation',
+        show_orga_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                              application=secrets.SOLR_APP, query='account:%s' % orga_id, core='organisation',
                               facet='false')
         show_orga_solr.request()
 
         if len(show_orga_solr.results) == 0:
-            flash('The requested record %s was not found!' % orga_id, category='warning')
-            return redirect(url_for('orgas'))
+            show_orga_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT,
+                                  application=secrets.SOLR_APP, query='same_as:%s' % orga_id, core='organisation',
+                                  facet='false')
+            show_orga_solr.request()
+
+            if len(show_orga_solr.results) == 0:
+                flash('The requested record %s was not found!' % orga_id, category='warning')
+                return redirect(url_for('orgas'))
+            else:
+                thedata = json.loads(show_orga_solr.results[0].get('wtf_json'))
+                form = OrgaAdminForm.from_json(thedata)
+
+                return render_template('orga.html', record=form, header=form.data.get('pref_label'),
+                                       site=theme(request.access_route), action='retrieve', record_id=orga_id,
+                                       pubtype='organisation', del_redirect=url_for('orgas'))
         else:
             thedata = json.loads(show_orga_solr.results[0].get('wtf_json'))
             form = OrgaAdminForm.from_json(thedata)
@@ -2398,14 +2614,16 @@ def show_orga_links(orga_id=''):
     linked_entities = {}
     # TODO get all orgas with parent_id=orga_id plus parent_id of orga_id
     children = []
-    get_orgas_solr = Solr(application=secrets.SOLR_APP, query='parent_id:%s' % orga_id, core='organisation', facet='false')
+    get_orgas_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                          application=secrets.SOLR_APP, query='parent_id:%s' % orga_id, core='organisation', facet='false')
     get_orgas_solr.request()
     if len(get_orgas_solr.results) > 0:
         for child in get_orgas_solr.results:
             children.append(child.get('id'))
 
     parents = []
-    show_orga_solr = Solr(application=secrets.SOLR_APP, query='id:%s' % orga_id, core='organisation', facet='false')
+    show_orga_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                          application=secrets.SOLR_APP, query='id:%s' % orga_id, core='organisation', facet='false')
     show_orga_solr.request()
     thedata = json.loads(show_orga_solr.results[0].get('wtf_json'))
     form = OrgaAdminForm.from_json(thedata)
@@ -2418,7 +2636,8 @@ def show_orga_links(orga_id=''):
     # TODO get all persons with affiliation.organisation_id=orga_id
     persons = []
     ## TODO export der personen!!!
-    get_persons_solr = Solr(application=secrets.SOLR_APP, query='*:*', core='person', facet='false')
+    get_persons_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                            application=secrets.SOLR_APP, query='*:*', core='person', facet='false')
     get_persons_solr.request()
     if len(get_persons_solr.results) > 0:
         for person in get_persons_solr.results:
@@ -2434,7 +2653,9 @@ def show_orga_links(orga_id=''):
 
     # TODO get all publications with affiliation_context=orga_id
     publications = []
-    get_publications_solr = Solr(application=secrets.SOLR_APP, query='affiliation_context:%s' % orga_id, core='hb2', facet='false')
+    get_publications_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                                 application=secrets.SOLR_APP, query='affiliation_context:%s' % orga_id, core='hb2', 
+                                 facet='false')
     get_publications_solr.request()
     if len(get_publications_solr.results) > 0:
         for record in get_publications_solr.results:
@@ -2447,7 +2668,8 @@ def show_orga_links(orga_id=''):
 
 @app.route('/retrieve/group/<group_id>')
 def show_group(group_id=''):
-    show_group_solr = Solr(application=secrets.SOLR_APP, query='id:%s' % group_id, core='group', facet='false')
+    show_group_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                           application=secrets.SOLR_APP, query='id:%s' % group_id, core='group', facet='false')
     show_group_solr.request()
 
     if len(show_group_solr.results) == 0:
@@ -2468,11 +2690,13 @@ def edit_orga(orga_id=''):
     if current_user.role != 'admin' and current_user.role != 'superadmin':
         flash(gettext('For Admins ONLY!!!'))
         return redirect(url_for('homepage'))
-    lock_record_solr = Solr(application=secrets.SOLR_APP, core='organisation',
+    lock_record_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                            application=secrets.SOLR_APP, core='organisation',
                             data=[{'id': orga_id, 'locked': {'set': 'true'}}])
     lock_record_solr.update()
 
-    edit_orga_solr = Solr(application=secrets.SOLR_APP, query='id:%s' % orga_id, core='organisation')
+    edit_orga_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                          application=secrets.SOLR_APP, query='id:%s' % orga_id, core='organisation')
     edit_orga_solr.request()
 
     if request.method == 'POST':
@@ -2480,7 +2704,7 @@ def edit_orga(orga_id=''):
     else:
         if len(edit_orga_solr.results) == 0:
             flash('The requested organisation %s was not found!' % orga_id, category='warning')
-            return redirect(url_for('organisations'))
+            return redirect(url_for('orgas'))
         else:
             thedata = json.loads(edit_orga_solr.results[0].get('wtf_json'))
             form = OrgaAdminForm.from_json(thedata)
@@ -2488,18 +2712,22 @@ def edit_orga(orga_id=''):
     if form.validate_on_submit():
         if form.errors:
             flash_errors(form)
-            return render_template('linear_form.html', form=form,
+            return render_template('tabbed_form.html', form=form,
                                    header=lazy_gettext('Edit: %(title)s', title=form.data.get('title')),
                                    site=theme(request.access_route), action='update')
-        _orga2solr(form, action='update')
-        unlock_record_solr = Solr(application=secrets.SOLR_APP, core='organistion',
+        redirect_id = _orga2solr(form, action='update')
+        unlock_record_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                                  application=secrets.SOLR_APP, core='organistion',
                                   data=[{'id': orga_id, 'locked': {'set': 'false'}}])
         unlock_record_solr.update()
-        return redirect(url_for('orgas'))
+
+        time.sleep(secrets.WAITING_FOR_REDIRECT)
+        return show_orga(redirect_id)
+        # return redirect(url_for('orgas'))
 
     form.changed.data = datetime.datetime.now()
 
-    return render_template('linear_form.html', form=form,
+    return render_template('tabbed_form.html', form=form,
                            header=lazy_gettext('Edit: %(orga)s', orga=form.data.get('pref_label')),
                            locked=True, site=theme(request.access_route), action='update', pubtype='organisation',
                            record_id=orga_id)
@@ -2511,11 +2739,13 @@ def edit_group(group_id=''):
     if current_user.role != 'admin' and current_user.role != 'superadmin':
         flash(gettext('For Admins ONLY!!!'))
         return redirect(url_for('homepage'))
-    lock_record_solr = Solr(application=secrets.SOLR_APP, core='group',
+    lock_record_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                            application=secrets.SOLR_APP, core='group',
                             data=[{'id': group_id, 'locked': {'set': 'true'}}])
     lock_record_solr.update()
 
-    edit_group_solr = Solr(application=secrets.SOLR_APP, query='id:%s' % group_id, core='group')
+    edit_group_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                           application=secrets.SOLR_APP, query='id:%s' % group_id, core='group')
     edit_group_solr.request()
 
     thedata = json.loads(edit_group_solr.results[0].get('wtf_json'))
@@ -2532,10 +2762,14 @@ def edit_group(group_id=''):
                                    header=lazy_gettext('Edit: %(title)s', title=form.data.get('title')),
                                    site=theme(request.access_route), action='update')
         _group2solr(form)
-        unlock_record_solr = Solr(application=secrets.SOLR_APP, core='group',
+        unlock_record_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                                  application=secrets.SOLR_APP, core='group',
                                   data=[{'id': group_id, 'locked': {'set': 'false'}}])
         unlock_record_solr.update()
-        return redirect(url_for('groups'))
+
+        time.sleep(secrets.WAITING_FOR_REDIRECT)
+        return show_group(form.data.get('id').strip())
+        # return redirect(url_for('groups'))
 
     form.changed.data = datetime.datetime.now()
 
@@ -2551,14 +2785,16 @@ def edit_person(person_id=''):
     if current_user.role != 'admin' and current_user.role != 'superadmin':
         flash(gettext('For Admins ONLY!!!'))
         return redirect(url_for('homepage'))
-    lock_record_solr = Solr(application=secrets.SOLR_APP, core='person',
+    lock_record_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                            application=secrets.SOLR_APP, core='person',
                             data=[{'id': person_id, 'locked': {'set': 'true'}}])
     lock_record_solr.update()
 
     idfield = 'id'
     if GND_RE.match(person_id):
         idfield = 'gnd'
-    edit_person_solr = Solr(application=secrets.SOLR_APP, query='%s:%s' % (idfield, person_id), core='person',
+    edit_person_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                            application=secrets.SOLR_APP, query='%s:%s' % (idfield, person_id), core='person',
                             facet='false')
     edit_person_solr.request()
 
@@ -2580,10 +2816,14 @@ def edit_person(person_id=''):
                                    header=lazy_gettext('Edit: %(title)s', title=form.data.get('title')),
                                    site=theme(request.access_route), action='update')
         _person2solr(form, action='update')
-        unlock_record_solr = Solr(application=secrets.SOLR_APP, core='person',
+        unlock_record_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                                  application=secrets.SOLR_APP, core='person',
                                   data=[{'id': person_id, 'locked': {'set': 'false'}}])
         unlock_record_solr.update()
-        return redirect(url_for('persons'))
+
+        time.sleep(secrets.WAITING_FOR_REDIRECT)
+        return show_person(form.data.get('id').strip())
+        # return redirect(url_for('persons'))
 
     form.changed.data = datetime.datetime.now()
 
@@ -2599,11 +2839,13 @@ def edit_record(record_id='', pubtype=''):
     cptask = request.args.get('cptask', False)
     logging.info('cptask = %s' % cptask)
 
-    lock_record_solr = Solr(application=secrets.SOLR_APP, core='hb2',
+    lock_record_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                            application=secrets.SOLR_APP, core='hb2',
                             data=[{'id': record_id, 'locked': {'set': 'true'}}])
     lock_record_solr.update()
 
-    edit_record_solr = Solr(application=secrets.SOLR_APP, core='hb2', query='id:%s' % record_id)
+    edit_record_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                            application=secrets.SOLR_APP, core='hb2', query='id:%s' % record_id)
     edit_record_solr.request()
 
     thedata = json.loads(edit_record_solr.results[0].get('wtf_json'))
@@ -2647,10 +2889,13 @@ def edit_record(record_id='', pubtype=''):
                                    header=lazy_gettext('Edit: %(title)s', title=form.data.get('title')),
                                    site=theme(request.access_route), action='update', pubtype=pubtype)
         _record2solr(form, action='update')
-        unlock_record_solr = Solr(application=secrets.SOLR_APP, core='hb2',
+        unlock_record_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                                  application=secrets.SOLR_APP, core='hb2',
                                   data=[{'id': record_id, 'locked': {'set': 'false'}}])
         unlock_record_solr.update()
         # return redirect(url_for('dashboard'))
+
+        time.sleep(secrets.WAITING_FOR_REDIRECT)
         return show_record(pubtype, form.data.get('id').strip())
 
     form.changed.data = datetime.datetime.now()
@@ -2675,7 +2920,8 @@ def edit_record(record_id='', pubtype=''):
 def delete_record(record_id=''):
     if current_user.role == 'admin':
         # load record
-        edit_record_solr = Solr(application=secrets.SOLR_APP, core='hb2', query='id:%s' % record_id)
+        edit_record_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                                application=secrets.SOLR_APP, core='hb2', query='id:%s' % record_id)
         edit_record_solr.request()
         thedata = json.loads(edit_record_solr.results[0].get('wtf_json'))
         pubtype = thedata.get('pubtype')
@@ -2689,11 +2935,16 @@ def delete_record(record_id=''):
         _record2solr(form, action='update')
         # return
         flash(gettext('Set editorial status of %s to deleted!' % record_id))
+
+        time.sleep(secrets.WAITING_FOR_REDIRECT)
         return jsonify({'deleted': True})
     elif current_user.role == 'superadmin':
-        delete_record_solr = Solr(application=secrets.SOLR_APP, core='hb2', del_id=record_id)
+        delete_record_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                                  application=secrets.SOLR_APP, core='hb2', del_id=record_id)
         delete_record_solr.delete()
         flash(gettext('Record %s deleted!' % record_id))
+
+        time.sleep(secrets.WAITING_FOR_REDIRECT)
         return jsonify({'deleted': True})
     else:
         flash(gettext('For SuperAdmins ONLY!!!'))
@@ -2706,7 +2957,8 @@ def delete_person(person_id=''):
     if current_user.role == 'admin':
         flash(gettext('Set status of %s to deleted!' % person_id))
         # load person
-        edit_person_solr = Solr(application=secrets.SOLR_APP, core='person', query='id:%s' % person_id)
+        edit_person_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                                application=secrets.SOLR_APP, core='person', query='id:%s' % person_id)
         edit_person_solr.request()
 
         thedata = json.loads(edit_person_solr.results[0].get('wtf_json'))
@@ -2716,13 +2968,18 @@ def delete_person(person_id=''):
         form.changed.data = str(datetime.datetime.now())
         form.deskman.data = current_user.email
         # save person
-        _person2solr(form)
+        _person2solr(form, action='delete')
+
+        time.sleep(secrets.WAITING_FOR_REDIRECT)
         return jsonify({'deleted': True})
     # TODO if superadmin
     elif current_user.role == 'superadmin':
-        delete_person_solr = Solr(application=secrets.SOLR_APP, core='person', del_id=person_id)
+        delete_person_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                                  application=secrets.SOLR_APP, core='person', del_id=person_id)
         delete_person_solr.delete()
         flash(gettext('Person %s deleted!' % person_id))
+
+        time.sleep(secrets.WAITING_FOR_REDIRECT)
         return jsonify({'deleted': True})
     else:
         flash(gettext('For SuperAdmins ONLY!!!'))
@@ -2735,7 +2992,8 @@ def delete_orga(orga_id=''):
     if current_user.role == 'admin':
         flash(gettext('Set status of %s to deleted!' % orga_id))
         # load orga
-        edit_orga_solr = Solr(application=secrets.SOLR_APP, core='organisation', query='id:%s' % orga_id)
+        edit_orga_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                              application=secrets.SOLR_APP, core='organisation', query='id:%s' % orga_id)
         edit_orga_solr.request()
 
         thedata = json.loads(edit_orga_solr.results[0].get('wtf_json'))
@@ -2745,13 +3003,18 @@ def delete_orga(orga_id=''):
         form.changed.data = str(datetime.datetime.now())
         form.deskman.data = current_user.email
         # save orga
-        _orga2solr(form)
+        _orga2solr(form, action='delete')
+
+        time.sleep(secrets.WAITING_FOR_REDIRECT)
         return jsonify({'deleted': True})
     # TODO if superadmin
     elif current_user.role == 'superadmin':
-        delete_orga_solr = Solr(application=secrets.SOLR_APP, core='organisation', del_id=orga_id)
+        delete_orga_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                                application=secrets.SOLR_APP, core='organisation', del_id=orga_id)
         delete_orga_solr.delete()
         flash(gettext('Organisation %s deleted!' % orga_id))
+
+        time.sleep(secrets.WAITING_FOR_REDIRECT)
         return jsonify({'deleted': True})
     else:
         flash(gettext('For SuperAdmins ONLY!!!'))
@@ -2764,7 +3027,8 @@ def delete_group(group_id=''):
     if current_user.role == 'admin':
         flash(gettext('Set status of %s to deleted!' % group_id))
         # load group
-        edit_orga_solr = Solr(application=secrets.SOLR_APP, core='group', query='id:%s' % group_id)
+        edit_orga_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                              application=secrets.SOLR_APP, core='group', query='id:%s' % group_id)
         edit_orga_solr.request()
 
         thedata = json.loads(edit_orga_solr.results[0].get('wtf_json'))
@@ -2775,12 +3039,17 @@ def delete_group(group_id=''):
         form.deskman.data = current_user.email
         # save group
         _group2solr(form)
+
+        time.sleep(secrets.WAITING_FOR_REDIRECT)
         return jsonify({'deleted': True})
     # TODO if superadmin
     elif current_user.role == 'superadmin':
-        delete_group_solr = Solr(application=secrets.SOLR_APP, core='group', del_id=group_id)
+        delete_group_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                                 application=secrets.SOLR_APP, core='group', del_id=group_id)
         delete_group_solr.delete()
         flash(gettext('Working Group %s deleted!' % group_id))
+
+        time.sleep(secrets.WAITING_FOR_REDIRECT)
         return jsonify({'deleted': True})
     else:
         flash(gettext('For SuperAdmins ONLY!!!'))
@@ -2796,7 +3065,8 @@ def add_file():
 def duplicates():
     pagination = ''
     page = int(request.args.get('page', 1))
-    duplicates_solr = Solr(application=secrets.SOLR_APP, start=(page - 1) * 10, fquery=['dedupid:[* TO *]'],
+    duplicates_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                           application=secrets.SOLR_APP, start=(page - 1) * 10, fquery=['dedupid:[* TO *]'],
                            group='true', group_field='dedupid', group_limit=100, facet='false')
     duplicates_solr.request()
     logging.info(duplicates_solr.response)
@@ -2855,7 +3125,8 @@ class User(UserMixin):
         self.email = email
         self.gndid = gndid
         self.accesstoken = accesstoken
-        user_solr = Solr(application=secrets.SOLR_APP, core='hb2_users', query='id:%s' % id, facet='false')
+        user_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                         application=secrets.SOLR_APP, core='hb2_users', query='id:%s' % id, facet='false')
         user_solr.request()
         if user_solr.count() > 0:
             _user = user_solr.results[0]
@@ -2870,7 +3141,8 @@ class User(UserMixin):
 
     @classmethod
     def get_user(self_class, id):
-        user_solr = Solr(application=secrets.SOLR_APP, core='hb2_users', query='id:%s' % id, facet='false')
+        user_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                         application=secrets.SOLR_APP, core='hb2_users', query='id:%s' % id, facet='false')
         user_solr.request()
 
         return user_solr.results[0]
@@ -2929,7 +3201,8 @@ def login():
                                                request.form.get('password').encode('ascii'))}).json()
             # logging.info(authuser)
             if authuser.get('email'):
-                user_solr = Solr(application=secrets.SOLR_APP, core='hb2_users', query='id:%s' % authuser.get('id'),
+                user_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                                 application=secrets.SOLR_APP, core='hb2_users', query='id:%s' % authuser.get('id'),
                                  facet='false')
                 user_solr.request()
                 if user_solr.count() == 0:
@@ -2948,7 +3221,8 @@ def login():
                     user.name = '%s %s' % (authuser.get('given_name'), authuser.get('last_name'))
                     user.email = authuser.get('email')
                     user.accesstoken = accesstoken
-                    new_user_solr = Solr(application=secrets.SOLR_APP, core='hb2_users', data=[tmp], facet='false')
+                    new_user_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                                         application=secrets.SOLR_APP, core='hb2_users', data=[tmp], facet='false')
                     new_user_solr.update()
                 login_user(user)
 
@@ -2974,7 +3248,8 @@ def login():
                                              authuser.get('token_type'), authuser.get('access_token'))
                                          }).json()
                 # logging.info(user_info)
-                user_solr = Solr(application=secrets.SOLR_APP, core='hb2_users',
+                user_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                                 application=secrets.SOLR_APP, core='hb2_users',
                                  query='accesstoken:%s' % authuser.get('access_token'), facet='false')
                 user_solr.request()
                 if user_solr.count() == 0:
@@ -2993,7 +3268,8 @@ def login():
                     user.name = user_info.get('name')
                     user.email = user_info.get('email')
                     user.accesstoken = authuser.get('access_token')
-                    new_user_solr = Solr(application=secrets.SOLR_APP, core='hb2_users', data=[tmp], facet='false')
+                    new_user_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                                         application=secrets.SOLR_APP, core='hb2_users', data=[tmp], facet='false')
                     new_user_solr.update()
                 login_user(user)
                 return redirect(next or url_for('homepage'))
@@ -3052,7 +3328,8 @@ def export_solr_dump(core=''):
     '''
     if core != 'hb2_users':
         filename = '%s_%s.json' % (core, int(time.time()))
-        export_solr = Solr(application=secrets.SOLR_APP, export_field='wtf_json', core=core)
+        export_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                           application=secrets.SOLR_APP, export_field='wtf_json', core=core)
         export_docs = export_solr.export()
         # target_solr = Solr(application=secrets.SOLR_APP, core='hb2_users', data=[{'id': filename, 'core': core, 'dump': json.dumps(export_docs)}])
         # target_solr.update()
@@ -3076,7 +3353,9 @@ def export_not_imported_records(core=''):
     '''
     if core != 'hb2_users':
         filename = '%s_%s.json' % (core, int(time.time()))
-        export_solr = Solr(application=secrets.SOLR_APP, query='-editorial_status:imported', export_field='wtf_json', core=core)
+        export_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                           application=secrets.SOLR_APP, query='-editorial_status:imported', export_field='wtf_json', 
+                           core=core)
         export_docs = export_solr.export()
         # target_solr = Solr(application=secrets.SOLR_APP, core='hb2_users', data=[{'id': filename, 'core': core, 'dump': json.dumps(export_docs)}])
         # target_solr.update()
@@ -3099,7 +3378,8 @@ def export_serials():
     system. Uses the current user's ID and a timestamp as the document ID and file name.
     '''
     filename = '%s_%s.json' % ('serials', int(time.time()))
-    export_solr = Solr(application=secrets.SOLR_APP, query='pubtype:Series or pubtype:Jounral', export_field='wtf_json',
+    export_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                       application=secrets.SOLR_APP, query='pubtype:Series or pubtype:Jounral', export_field='wtf_json',
                        core='hb2')
     export_docs = export_solr.export()
     return send_file(BytesIO(str.encode(json.dumps(export_docs, indent=4))), attachment_filename=filename, as_attachment=True,
@@ -3117,7 +3397,8 @@ def import_solr_dumps():
     Import Solr dumps either from the users core or from the local file system.
     '''
     page = int(request.args.get('page', 1))
-    solr_dumps = Solr(application=secrets.SOLR_APP, core='hb2_users', query='id:*.json', facet='false',
+    solr_dumps = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                      application=secrets.SOLR_APP, core='hb2_users', query='id:*.json', facet='false',
                       start=(page - 1) * 10)
     solr_dumps.request()
     num_found = solr_dumps.count()
@@ -3162,7 +3443,8 @@ def import_solr_dump(filename=''):
     type = ''
     if request.method == 'GET':
         if filename:
-            import_solr = Solr(application=secrets.SOLR_APP, core='hb2_users', query='id:%s' % filename, facet='false')
+            import_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                               application=secrets.SOLR_APP, core='hb2_users', query='id:%s' % filename, facet='false')
             import_solr.request()
             thedata = json.loads(import_solr.results[0].get('dump')[0])
             type = import_solr.results[0].get('core')
@@ -3234,7 +3516,8 @@ def update_solr_dump(filename=''):
     type = ''
     if request.method == 'GET':
         if filename:
-            update_solr = Solr(application=secrets.SOLR_APP, core='hb2_users', query='id:%s' % filename, facet='false')
+            update_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                               application=secrets.SOLR_APP, core='hb2_users', query='id:%s' % filename, facet='false')
             update_solr.request()
             thedata = json.loads(update_solr.results[0].get('dump')[0])
             type = update_solr.results[0].get('core')
@@ -3281,7 +3564,8 @@ def delete_dump(record_id=''):
     if current_user.role != 'superadmin':
         flash(gettext('For SuperAdmins ONLY!!!'))
         return redirect(url_for('homepage'))
-    delete_record_solr = Solr(application=secrets.SOLR_APP, core='hb2_users', del_id=record_id)
+    delete_record_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                              application=secrets.SOLR_APP, core='hb2_users', del_id=record_id)
     delete_record_solr.delete()
 
     return jsonify({'deleted': True})
@@ -3292,7 +3576,8 @@ def show_related_item(relation='', record_ids=''):
     query = '{!terms f=id}%s' % record_ids
     if ',' not in record_ids:
         query = 'id:%s' % record_ids
-    relation_solr = Solr(application=secrets.SOLR_APP, query=query, facet='false')
+    relation_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                         application=secrets.SOLR_APP, query=query, facet='false')
     relation_solr.request()
 
     return jsonify({'relation': relation, 'docs': relation_solr.results})

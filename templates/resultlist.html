@@ -7,6 +7,12 @@
         <div class="col-sm-4" id="facets">
             {% if facet_data%}
                 {{ drill_down.facets(facet_data.catalog, 'catalog', heading='Catalog', target=target) }}
+                {% if site == 'dortmund' %}
+                    {{ drill_down.facets(facet_data.ftudo, 'ftudo', heading='TUDO Member', target=target) }}
+                {% endif %}
+                {% if site == 'bochum' %}
+                    {{ drill_down.facets(facet_data.frubi, 'frubi', heading='RUB Member', target=target) }}
+                {% endif %}
                 {{ drill_down.facets(facet_data.pubtype, 'pubtype', heading='Publication type', target=target) }}
                 {{ drill_down.facets(facet_data.fdate, 'fdate', heading='Publication Date', target=target) }}
                 {{ drill_down.facets(facet_data.language, 'language', heading='Language', target=target) }}

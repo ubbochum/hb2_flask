@@ -49,6 +49,8 @@ orcid_scopes = [
     '/orcid-bio/update',
 ]
 
+WAITING_FOR_REDIRECT = 5
+
 CATALOG = ''
 
 MODS_TEST_FILE = ''
@@ -58,8 +60,16 @@ RESULTS_DIR = ''
 
 SOLR_HOST = '127.0.0.1'
 SOLR_PORT = '8983'
+
+SOLR_MASTER_HOST = '127.0.0.1'
+SOLR_MASTER_PORT = '8983'
+
+SOLR_SLAVE_HOST = '127.0.0.1'
+SOLR_SLAVE_PORT = '8984'
+
 SOLR_APP = 'solr'
 SOLR_CORE = 'hb2'
+
 SOLR_EXPORT_FIELD = 'wtf_json'
 SOLR_ROWS = '20'
 SOLR_SEARCH_FACETS = {
@@ -73,11 +83,6 @@ SOLR_SEARCH_FACETS = {
             'type': 'terms',
             'field': 'pubtype'
         },
-    # 'subtype':
-    #     {
-    #         'type': 'terms',
-    #         'field': 'subtype'
-    #     },
     'language':
         {
             'type': 'terms',
@@ -87,6 +92,16 @@ SOLR_SEARCH_FACETS = {
         {
             'type': 'terms',
             'field': 'fperson'
+        },
+    'ftudo':
+        {
+            'type': 'terms',
+            'field': 'ftudo'
+        },
+    'frubi':
+        {
+            'type': 'terms',
+            'field': 'frubi'
         },
     'fdate':
         {
@@ -165,6 +180,12 @@ DASHBOARD_FACETS = {
             'type': 'terms',
             'field': 'pubtype',
             'limit': 20
+        },
+    'subtype':
+        {
+            'type': 'terms',
+            'field': 'subtype',
+            'limit': 30
         },
     'fperson':
         {
@@ -326,6 +347,8 @@ REDIS_CONSOLIDATE_PERSONS_PORT = 6379
 REDIS_CONSOLIDATE_PERSONS_DB = 0
 
 REDIS_REPLACE_URIS_URL = 'redis://localhost:6379/1'
+
+REDIS_ACTOR_ERRORS_URL = 'redis://localhost:6379/2'
 
 TRAC_URL = ''
 TRAC_USER = ''

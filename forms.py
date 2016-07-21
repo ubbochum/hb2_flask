@@ -79,6 +79,8 @@ class PersonForm(Form):
     rubi = BooleanField(lazy_gettext('RUB member'), validators=[Optional()])
     tudo = BooleanField(lazy_gettext('TUDO member'), validators=[Optional()])
 
+    admin_only = ['gnd']
+
 
 class PersonAsEditorForm(PersonForm):
     role = SelectMultipleField(lazy_gettext('Role'))
@@ -320,9 +322,7 @@ class ParentForm(IDLForm):
 
 class OrgaAdminForm(Form):
     pref_label = StringField(lazy_gettext('Label'))
-    id = StringField(lazy_gettext('Organisation ID'),
-                     description=lazy_gettext('An Organisation ID such as GND, ISNI, Ringgold or a URI'),
-                     validators=[DataRequired()])
+    id = StringField(lazy_gettext('ID'), validators=[Optional()], widget=CustomTextInput(readonly='readonly'))
     dwid = FieldList(StringField(lazy_gettext('Verwaltungs-ID')), min_entries=1)
     gnd = StringField(lazy_gettext('GND'),
                       validators=[Optional(), Regexp('(1|10)\d{7}[0-9X]|[47]\d{6}-\d|[1-9]\d{0,7}-[0-9X]|3\d{7}[0-9X]')],
@@ -348,7 +348,7 @@ class OrgaAdminForm(Form):
 
     def groups(self):
         yield [
-            {'group': [self.id, self.pref_label, self.dwid, self.gnd, self.correction_request, self.start_date,
+            {'group': [self.pref_label, self.dwid, self.gnd, self.correction_request, self.start_date,
                        self.end_date],
              'label': lazy_gettext('Basic')},
             {'group': [self.parent_id, self.parent_label],
@@ -357,7 +357,7 @@ class OrgaAdminForm(Form):
              'label': lazy_gettext('Children')},
             {'group': [self.destatis],
              'label': lazy_gettext('Destatis')},
-            {'group': [self.created, self.changed, self.editorial_status, self.catalog, self.owner, self.deskman,
+            {'group': [self.id, self.created, self.changed, self.editorial_status, self.catalog, self.owner, self.deskman,
                        self.same_as],
              'label': lazy_gettext('Administrative')},
         ]
@@ -531,7 +531,7 @@ class WorkForm(Form):
                                                 widget=CustomTextInput(placeholder=lazy_gettext('The organisational unit this publication belongs to'))), min_entries=1)
     group_context = FieldList(StringField(lazy_gettext('Working Group Context'), validators=[Optional()],
                                           widget=CustomTextInput(placeholder=lazy_gettext('The working group this publication belongs to'))), min_entries=1)
-    id = StringField(lazy_gettext('UUID'), validators=[UUID(), Optional()], widget=CustomTextInput(readonly='readonly'))
+    id = StringField(lazy_gettext('ID'), validators=[UUID(), Optional()], widget=CustomTextInput(readonly='readonly'))
     created = StringField(lazy_gettext('Record Creation Date'), widget=CustomTextInput(readonly='readonly'))
     changed = StringField(lazy_gettext('Record Change Date'), widget=CustomTextInput(readonly='readonly'))
     editorial_status = SelectField(lazy_gettext('Editorial Status'), validators=[DataRequired()],
@@ -1301,6 +1301,7 @@ class LectureForm(WorkForm):
     open_access = FormField(OpenAccessForm)
     has_part = FieldList(FormField(HasPartForm), min_entries=1)
     other_version = FieldList(FormField(OtherVersionForm), min_entries=1)
+    table_of_contents = FieldList(FormField(TableOfContentsForm), min_entries=1)
 
     def groups(self):
         yield [
@@ -1396,33 +1397,24 @@ class MonographForm(PrintedWorkForm):
 
     def simple_groups(self):
         yield [
-            {'group': [self.pubtype, self.subtype, self.publication_status, self.version, self.title, self.subtitle, self.language,
-                       self.title_supplement, self.other_title, self.issued, self.edition, self.number_of_volumes,
-                       self.publisher, self.publisher_place, self.number_of_pages, self.medium, self.accessed,
-                       self.additions, self.note, self.license, self.license_text],
+            {'group': [self.pubtype, self.publication_status, self.version, self.title, self.subtitle, self.language,
+                       self.issued, self.edition, self.number_of_volumes,
+                       self.publisher, self.keyword, self.note, self.license, self.license_text],
              'label': lazy_gettext('Basic')},
-            {'group': [self.uri, self.DOI, self.PMID, self.WOSID, self.ISBN, self.ISMN, self.hbz_id],
+            {'group': [self.uri, self.DOI, self.PMID, self.WOSID, self.ISBN, self.ISMN],
              'label': lazy_gettext('IDs')},
+            {'group': [self.abstract],
+             'label': lazy_gettext('Abstract')},
             {'group': [self.person],
              'label': lazy_gettext('Person')},
             {'group': [self.corporation],
              'label': lazy_gettext('Corporation')},
-            {'group': [self.is_part_of],
-             'label': lazy_gettext('Is Part of')},
-            {'group': [self.has_part],
-             'label': lazy_gettext('Has Part')},
-            {'group': [self.other_version],
-             'label': lazy_gettext('Other Version')},
-            {'group': [self.keyword, self.keyword_temporal, self.keyword_geographic, self.swd_subject, self.ddc_subject,
-                       self.mesh_subject, self.stw_subject, self.lcsh_subject, self.thesoz_subject],
-             'label': lazy_gettext('Keyword')},
-            {'group': [self.abstract, self.table_of_contents],
-             'label': lazy_gettext('Content')},
+            {'group': [self.is_part_of, self.has_part, self.other_version],
+             'label': lazy_gettext('Relations')},
             {'group': [self.open_access],
              'label': lazy_gettext('Open Access')},
-            {'group': [self.id, self.affiliation_context, self.group_context, self.apparent_dup, self.editorial_status,
-                       self.created, self.changed, self.catalog, self.owner, self.deskman, self.key_publication,
-                       self.same_as],
+            {'group': [self.id, self.affiliation_context, self.group_context, self.editorial_status,
+                       self.created, self.changed, self.catalog, self.owner, self.key_publication],
              'label': lazy_gettext('Administrative')},
         ]
 

@@ -71,6 +71,13 @@
                     </dd>
                 {% endif %}
                 <hr/>
+                    <dt>
+                        {{ _('Links') }}
+                    </dt>
+                    <dd>
+                        <a href="{{ url_for('search') }}?q=*:*&core=person&filter=faffiliation:&quot;{{ record.data.pref_label }}&quot;">{{ _('Show Members') }}</a><br/>
+                    </dd>
+                <hr/>
                 {% if record.data.id %}
                     <dt>
                         {{ _('ID') }}
@@ -114,7 +121,7 @@
             </div>
             <div class="col-sm-2">
             {% if not locked %}
-                {% if (current_user.role == 'admin' and not record.data.editorial_status == 'deleted' and not record.data.editorial_status == 'imported') or current_user.role == 'superadmin' or current_user.email in record.owner %}
+                {% if (current_user.role == 'admin' and not record.data.editorial_status == 'deleted') or current_user.role == 'superadmin' or current_user.email in record.owner %}
                     <div class="btn-group" role="group" aria-label="action-group">
                         <a href="{{ url_for('edit_orga', orga_id=record.data.id) }}" class="btn btn-default"><i class="fa fa-pencil"></i> {{ _('Edit') }}</a>
                         <a href="#" data-href="{{ url_for('delete_orga', orga_id=record.data.id) }}" class="btn btn-danger" data-toggle="modal" data-target="#confirm-delete"><i class="fa fa-trash"></i> {{ _('Delete') }}</a>
@@ -123,8 +130,6 @@
                     </div>
                 {% elif record.data.editorial_status == 'deleted' %}
                     <div class="alert alert-danger" role="alert"><span class="glyphicon glyphicon-warning-sign" aria-hidden="true"></span> This record is marked for deletion!</div>
-                {% elif record.data.editorial_status == 'imported' %}
-                    <div class="alert alert-warning" role="alert"><span class="glyphicon glyphicon-warning-sign" aria-hidden="true"></span> This record is migrated from the old system and marked as not editable!</div>
                 {% endif %}
             {% else %}
                 <div class="alert alert-warning" role="alert"><span class="glyphicon glyphicon-warning-sign" aria-hidden="true"></span> This record is currently locked!</div>
