@@ -35,7 +35,7 @@
                 {% endif %}
             </div>
             <div class="col-xs-9 clearfix">
-                <div class="tab-content">
+                <div class="tab-content" style="overflow: scroll; height: 40em;">
                     {% if current_user.role != 'admin' and current_user.role != 'superadmin' %}
                         {% for simple_groups in form.simple_groups() %}
                             {% for group in simple_groups %}

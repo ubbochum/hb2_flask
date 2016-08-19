@@ -53,18 +53,8 @@ LANGUAGES = [
 USER_ROLES = [
     ('', lazy_gettext('Select a Role')),
     ('aut', lazy_gettext('Author')),
-    ('aui', lazy_gettext('Author of Foreword')),
-    ('ive', lazy_gettext('Interviewee')),
-    ('ivr', lazy_gettext('Interviewer')),
-    ('trl', lazy_gettext('Translator')),
-    ('ths', lazy_gettext('Thesis Advisor')),
-    ('ctb', lazy_gettext('Contributor')),
     ('edt', lazy_gettext('Editor')),
-    ('inv', lazy_gettext('Inventor')),
-    ('prg', lazy_gettext('Programmer')),
-    ('drt', lazy_gettext('Director')),
-    ('spk', lazy_gettext('Speaker')),
-    ('cmp', lazy_gettext('Composer')),
+    ('ctb', lazy_gettext('Contributor')),
 ]
 
 CORP_ROLES = [
@@ -74,8 +64,17 @@ CORP_ROLES = [
     ('his', lazy_gettext('Host institution')),
     ('dgg', lazy_gettext('Degree granting institution')),
     ('orm', lazy_gettext('Organizer')),
-    ('pta', lazy_gettext('Patent applicant')),
     ('brd', lazy_gettext('Broadcaster')),
+]
+
+PATENT_PERS_ROLES = [
+    ('', lazy_gettext('Select a Role')),
+    ('inv', lazy_gettext('Inventor')),
+    ('pta', lazy_gettext('Patent applicant')),
+]
+
+PATENT_CORP_ROLES = [
+    ('pta', lazy_gettext('Patent applicant')),
 ]
 
 ADMIN_ROLES = USER_ROLES[:]
@@ -84,28 +83,36 @@ ADMIN_ROLES.extend([
     ('abr', lazy_gettext('Abridger')),
     ('act', lazy_gettext('Actor')),
     ('aft', lazy_gettext('Author of Afterword')),
+    ('aui', lazy_gettext('Author of Foreword')),
     ('arr', lazy_gettext('Arranger')),
     ('chr', lazy_gettext('Choreographer')),
     ('cmp', lazy_gettext('Composer')),
     ('cst', lazy_gettext('Costume Designer')),
     ('cwt', lazy_gettext('Commentator for written text')),
+    ('drt', lazy_gettext('Director')),
     ('elg', lazy_gettext('Electrician')),
     ('fmk', lazy_gettext('Filmmaker')),
     ('hnr', lazy_gettext('Honoree')),
     ('ill', lazy_gettext('Illustrator')),
     ('itr', lazy_gettext('Instrumentalist')),
+    ('ive', lazy_gettext('Interviewee')),
+    ('ivr', lazy_gettext('Interviewer')),
     ('mod', lazy_gettext('Moderator')),
     ('mus', lazy_gettext('Musician')),
     ('org', lazy_gettext('Originator')),
     ('pdr', lazy_gettext('Project Director')),
     ('pht', lazy_gettext('Photographer')),
     ('pmn', lazy_gettext('Production Manager')),
+    ('prg', lazy_gettext('Programmer')),
     ('pro', lazy_gettext('Producer')),
-    ('red', lazy_gettext('Redaktor')),
+    ('red', lazy_gettext('Redactor')),
     ('sng', lazy_gettext('Singer')),
+    ('spk', lazy_gettext('Speaker')),
     ('std', lazy_gettext('Set designer')),
     ('stl', lazy_gettext('Storyteller')),
     ('tcd', lazy_gettext('Technical Director')),
+    ('ths', lazy_gettext('Thesis Adviser')),
+    ('trl', lazy_gettext('Translator')),
     ])
 
 USER_PUBTYPES = [

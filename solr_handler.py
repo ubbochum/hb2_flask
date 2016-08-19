@@ -308,15 +308,25 @@ class Solr(object):
         cm = '*'
         export_docs = []
         while not done:
-            resp = requests.get('http://%s:%s/%s/%s/query?q=%s&sort=id asc&fl=%s&cursorMark=%s' %
-                                (self.host, self.port, self.application, self.core, self.query,
-                                 '%s, %s' % (self.export_field, 'id'), cm)).json()
-            for doc in resp.get('response').get('docs'):
-                try:
-                    export_docs.append(json.loads(doc.get(self.export_field)))
-                except TypeError as e:
-                    logging.error(e)
-                    logging.error(doc.get('id'))
+            if self.export_field == '':
+                resp = requests.get('http://%s:%s/%s/%s/query?q=%s&sort=id asc&cursorMark=%s' %
+                                    (self.host, self.port, self.application, self.core, self.query, cm)).json()
+                for doc in resp.get('response').get('docs'):
+                    try:
+                        export_docs.append(doc)
+                    except TypeError as e:
+                        logging.error(e)
+                        logging.error(doc.get('id'))
+            else:
+                resp = requests.get('http://%s:%s/%s/%s/query?q=%s&sort=id asc&fl=%s&cursorMark=%s' %
+                                    (self.host, self.port, self.application, self.core, self.query,
+                                     '%s, %s' % (self.export_field, 'id'), cm)).json()
+                for doc in resp.get('response').get('docs'):
+                    try:
+                        export_docs.append(json.loads(doc.get(self.export_field)))
+                    except TypeError as e:
+                        logging.error(e)
+                        logging.error(doc.get('id'))
             if cm == resp.get('nextCursorMark'):
                 done = True
             cm = resp.get('nextCursorMark')

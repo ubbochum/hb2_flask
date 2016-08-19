@@ -38,14 +38,20 @@ DIFFERENT_PROXY_PATH = False
 
 orcid_sandbox_client_id = ''
 orcid_sandbox_client_secret = ''
+
+orcid_app_data = {
+    'tudo': {
+        'sandbox_client_id': '',
+        'sandbox_client_secret': '',
+        'client_id': '',
+        'client_secret': '',
+        'affiliation_string': ''
+    }
+}
+
 orcid_scopes = [
-    '/authenticate',
     '/read-limited',
-    '/orcid-works/create',
-    '/orcid-works/update',
-    '/affiliations/create',
-    '/affiliations/update',
-    '/orcid-bio/external-identifiers/create',
+    '/activities/update',
     '/orcid-bio/update',
 ]
 
@@ -57,6 +63,8 @@ MODS_TEST_FILE = ''
 MODS_FILES_PATH = ''
 
 RESULTS_DIR = ''
+
+BACKUP_DIR = ''
 
 SOLR_HOST = '127.0.0.1'
 SOLR_PORT = '8983'

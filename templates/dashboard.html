@@ -13,9 +13,9 @@
                 {{ drill_down.facets(facet_data.fakultaet, 'fakultaet', heading='Affiliation', target=target) }}
                 {{ drill_down.facets(facet_data.pubtype, 'pubtype', heading='Publication Type', target=target) }}
                 {{ drill_down.facets(facet_data.subtype, 'subtype', heading='Publication Subtype', target=target) }}
+                {{ drill_down.boolean_filter('dfg', heading='DFG funded', target=target) }}
                 {{ drill_down.facets(facet_data.editorial_status, 'editorial_status', heading='Editorial Status', target=target) }}
                 {{ drill_down.facets(facet_data.publication_status, 'publication_status', heading='Publication Status', target=target) }}
-                {{ drill_down.simple_filter('gnd', heading='GND', target='persons') }}
                 {{ drill_down.facets(facet_data.deskman, 'deskman', heading='Deskman', target=target) }}
                 {{ drill_down.facets(facet_data.owner, 'owner', heading='Owner', target=target) }}
             </div>

@@ -862,14 +862,6 @@ def _record2solr(form, action, relItems=True):
                                     gettext(
                                         'IDs from relation "corporation" could not be found! Ref: %s' % corporation.get('gnd')),
                                     'warning')
-                                try:
-                                    storage_actor_errors = app.extensions['redis']['REDIS_ACTOR_ERRORS_URL']
-
-                                    storage_actor_errors.hset(form.data.get('id'), corporation.get('gnd'), 'corporation not found')
-
-                                except Exception as e:
-                                    logging.info('REDIS ERROR: %s' % e)
-                                    return 'failed to write data'
                             else:
                                 # setze den parameter für die boolesche zugehörigkeit
                                 myjson = json.loads(gnd_solr.results[0].get('wtf_json'))
@@ -1271,11 +1263,66 @@ def orcid2name(orcid_id=''):
     bio.get('orcid-profile').get('orcid-bio').get('personal-details').get('given-names').get('value'))})
 
 
+@app.route('/orcid')
+@login_required
+def orcid_start():
+
+    # TODO get ORCID and Token from Solr
+    user_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, application=secrets.SOLR_APP, core='hb2_users',
+                     query='id:%s' % current_user.id, facet='false')
+    user_solr.request()
+
+    if user_solr.count() > 0:
+
+        # flash(user_solr.results[0])
+
+        orcid_id = ''
+        if user_solr.results[0].get('orcidid'):
+            orcid_id = user_solr.results[0].get('orcidid')
+        orcid_access_token = ''
+        if user_solr.results[0].get('orcidaccesstoken'):
+            orcid_access_token = user_solr.results[0].get('orcidaccesstoken')
+        orcid_refresh_token = ''
+        if user_solr.results[0].get('orcidrefreshtoken'):
+            orcid_refresh_token = user_solr.results[0].get('orcidrefreshtoken')
+        orcid_token_revoked = False
+        if user_solr.results[0].get('orcidtokenrevoked'):
+            orcid_token_revoked = user_solr.results[0].get('orcidtokenrevoked')
+
+        # flash('%s, %s, %s, %s' % (orcid_id, orcid_access_token, orcid_refresh_token, orcid_token_revoked))
+
+        is_linked = False
+        if len(orcid_id) > 0 and len(orcid_access_token) > 0 and not orcid_token_revoked:
+            is_linked = True
+            flash('You are already linked to ORCID!')
+
+        if is_linked:
+            api = orcid.MemberAPI(secrets.orcid_sandbox_client_id, secrets.orcid_sandbox_client_secret, sandbox=True)
+            try:
+                member_info = api.read_record_member(orcid_id=orcid_id, request_type='activities',
+                                                     token=orcid_access_token)
+                # TODO show linking information
+                flash('You have granted us right for writing to ORCID!')
+            except RequestException as e:
+                orcid_token_revoked = True
+                # write to Solr!!!
+                user_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT,
+                                 application=secrets.SOLR_APP, core='hb2_users',
+                                 data=[{'id': current_user.id, 'orcidtokenrevoked': {'set': 'true'}}], facet='false')
+                user_solr.update()
+                flash('Your granted rights to ORCID are revoked!', 'danger')
+        else:
+            flash('You are not linked to ORCID!', 'warning')
+
+        return render_template('orcid.html', header=lazy_gettext('ORCID'), site=theme(request.access_route),
+                               is_linked=is_linked, token_revoked=orcid_token_revoked)
+
+
 @app.route('/orcid/register')
 @login_required
 def orcid_login():
     code = request.args.get('code', '')
-    api = orcid.PublicAPI(secrets.orcid_sandbox_client_id, secrets.orcid_sandbox_client_secret, sandbox=True)
+    api = orcid.MemberAPI(secrets.orcid_sandbox_client_id, secrets.orcid_sandbox_client_secret, sandbox=True)
     if code == '':
         url = api.get_login_url(secrets.orcid_scopes, '%s%s' % (secrets.APP_BASE_URL, url_for('orcid_login')),
                                 email=current_user.email)
@@ -1293,7 +1340,7 @@ def orcid_login():
                                    fields=['wtf_json'])
                 person_solr.request()
                 if len(person_solr.results) == 0:
-                    logging.info('keine Treffer zu email in personl: %s' % current_user.email)
+                    logging.info('keine Treffer zu email in person: %s' % current_user.email)
                 for idx1, doc in enumerate(person_solr.results):
                     myjson = json.loads(doc.get('wtf_json'))
                     logging.info('id: %s' % myjson.get('id'))
@@ -1313,20 +1360,40 @@ def orcid_login():
                     form.changed.data = str(datetime.datetime.now())
                     form.orcid.data = orcid_id
 
-                    _person2solr(form)
+                    _person2solr(form, action='update')
                     unlock_record_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
                                               application=secrets.SOLR_APP, core='person',
                                               data=[{'id': myjson.get('id'), 'locked': {'set': 'false'}}])
                     unlock_record_solr.update()
 
+                    # add orcid_token_data to hb2_users; orcid_token_revoked = True
+                    tmp = {
+                        'id': current_user.id,
+                        'orcidid': {'set': orcid_id},
+                        'orcidaccesstoken': {'set': token.get('access_token')},
+                        'orcidrefreshtoken': {'set': token.get('refresh_token')},
+                        'orcidtokenrevoked': {'set': 'false'}
+                    }
+                    user_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT,
+                                     application=secrets.SOLR_APP, core='hb2_users',
+                                     data=[tmp], facet='false')
+                    user_solr.update()
+
+                    # TODO add institution to employment if not already existing
+                    # Technische Universität Dortmund: Dortmund, Nordrhein-Westfalen, Germany
+                    data = {'organization': {'name': 'Technische Universität Dortmund', 'address': {'city': 'Dortmund', 'region': 'Nordrhein-Westfalen', 'country': 'Germany'}}}
+                    api.add_record(orcid_id=orcid_id, token=token.get('access_token'), request_type='employment', data=data)
+
             except AttributeError as e:
                 logging.error(e)
             flash(gettext('Your institutional account %s is now linked to your ORCID!' % orcid_id))
-            return redirect(url_for('homepage'))
+            # flash(gettext('The response: %s' % token))
+            # flash(gettext('We added the following data to our system: {%s, %s}!' % (token.get('access_token'), token.get('refresh_token'))))
+            return redirect(url_for('orcid_start'))
         except RequestException as e:
             logging.error(e.response.text)
             flash(gettext('ORCID-ERROR: %s' % e.response.text), 'error')
-            return redirect(url_for('homepage'))
+            return redirect(url_for('orcid_start'))
 
 
 @app.route('/dashboard')
@@ -3118,16 +3185,23 @@ class UserNotFoundError(Exception):
 
 
 class User(UserMixin):
-    def __init__(self, id, role='', name='', email='', accesstoken='', gndid=''):
+    def __init__(self, id, role='', name='', email='', accesstoken='', gndid='', orcidid='', orcidaccesstoken='',
+                 orcidrefreshtoken='', orcidtokenrevoked=False):
         self.id = id
         self.name = name
         self.role = role
         self.email = email
         self.gndid = gndid
         self.accesstoken = accesstoken
-        user_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+        self.orcidid = orcidid
+        self.orcidaccesstoken = orcidaccesstoken
+        self.orcidrefreshtoken = orcidrefreshtoken
+        self.orcidtokenrevoked = orcidtokenrevoked
+
+        user_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT,
                          application=secrets.SOLR_APP, core='hb2_users', query='id:%s' % id, facet='false')
         user_solr.request()
+
         if user_solr.count() > 0:
             _user = user_solr.results[0]
             self.name = _user.get('name')
@@ -3135,6 +3209,10 @@ class User(UserMixin):
             self.email = _user.get('email')
             self.gndid = _user.get('gndid')
             self.accesstoken = _user.get('accesstoken')
+            self.orcidid = _user.get('orcidid')
+            self.orcidaccesstoken = _user.get('orcidaccesstoken')
+            self.orcidrefreshtoken = _user.get('orcidrefreshtoken')
+            self.orcidtokenrevoked = _user.get('orcidtokenrevoked')
 
     def __repr__(self):
         return '<User %s: %s>' % (self.id, self.name)
@@ -3221,6 +3299,7 @@ def login():
                     user.name = '%s %s' % (authuser.get('given_name'), authuser.get('last_name'))
                     user.email = authuser.get('email')
                     user.accesstoken = accesstoken
+                    user.id = authuser.get('id')
                     new_user_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
                                          application=secrets.SOLR_APP, core='hb2_users', data=[tmp], facet='false')
                     new_user_solr.update()
@@ -3268,6 +3347,7 @@ def login():
                     user.name = user_info.get('name')
                     user.email = user_info.get('email')
                     user.accesstoken = authuser.get('access_token')
+                    user.id = user_info.get('username')
                     new_user_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
                                          application=secrets.SOLR_APP, core='hb2_users', data=[tmp], facet='false')
                     new_user_solr.update()

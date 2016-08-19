@@ -1,0 +1,22 @@
+{% extends 'site_base.html' %}
+
+{% block site_content %}
+    {{ super() }}
+    <div class="row">
+        <div class="col-sm-offset-1 col-sm-10">
+            <h3>{{ _('ORCID') }}</h3>
+            <div class="col-sm-8">
+                <span style="color: #BDBDBD"> {{ _('Integrate with ORCID') }}</span></h4>
+                <p>{{ _('With just a few clicks we will make you and your work individually recognisable on the web and in important data sources.') }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-offset-1 col-sm-10">
+            <h3>{{ _('Link ORCID to Institutional Account') }}</h3>
+            <div class="col-sm-3">
+                <a class="btn btn-default btn-lg" href="{{ url_for('orcid_login') }}">{{ _('Do it!') }}</a><br/>
+            </div>
+        </div>
+    </div>
+{% endblock %}
