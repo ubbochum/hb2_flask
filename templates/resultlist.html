@@ -15,6 +15,7 @@
                 {% endif %}
                 {{ drill_down.facets(facet_data.pubtype, 'pubtype', heading='Publication type', target=target) }}
                 {{ drill_down.facets(facet_data.fdate, 'fdate', heading='Publication Date', target=target) }}
+                {{ drill_down.boolean_filter('dfg', heading='DFG funded', target=target) }}
                 {{ drill_down.facets(facet_data.language, 'language', heading='Language', target=target) }}
             {% endif %}
         </div>

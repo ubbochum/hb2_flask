@@ -35,11 +35,11 @@
                 {% endif %}
             </div>
             <div class="col-xs-9 clearfix">
-                <div class="tab-content" style="overflow: scroll; height: 40em;">
+                <div class="tab-content">
                     {% if current_user.role != 'admin' and current_user.role != 'superadmin' %}
                         {% for simple_groups in form.simple_groups() %}
                             {% for group in simple_groups %}
-                                <div class="tab-pane{% if loop.first %} active{% endif %}" id="{{ group.label|lower|replace(' ', '_') }}">
+                                <div class="tab-pane{% if loop.first %} active{% endif %}"  style="overflow: scroll; height: 40em;" id="{{ group.label|lower|replace(' ', '_') }}">
                                     {% for item in group.group %}
                                         {% if item.type != 'FieldList' %}
                                             {% if item.type == 'FormField' %}

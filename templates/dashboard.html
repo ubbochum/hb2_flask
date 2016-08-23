@@ -18,6 +18,7 @@
                 {{ drill_down.facets(facet_data.publication_status, 'publication_status', heading='Publication Status', target=target) }}
                 {{ drill_down.facets(facet_data.deskman, 'deskman', heading='Deskman', target=target) }}
                 {{ drill_down.facets(facet_data.owner, 'owner', heading='Owner', target=target) }}
+                {{ drill_down.boolean_filter('locked', heading='Locked Records', target=target) }}
             </div>
             <div class="col-sm-9">
                 {{ pagination.info }}
@@ -55,6 +56,11 @@
                                     {% if (current_user.role == 'admin' and not record.editorial_status == 'deleted') or current_user.role == 'superadmin' or current_user.email in record.owner %}
                                     <li id="{{ record.id }}" class="{{ record.id }}_edit"><a href="{{ url_for('edit_record', record_id=record.id, pubtype=record.pubtype) }}" class="lock_me"><i class="fa fa-pencil"></i> {{ _('Edit') }}</a></li>
                                     <li class="bg-danger {{ record.id }}_del"><a href="#" data-href="{{ url_for('delete_record', record_id=record.id) }}" data-toggle="modal" data-target="#confirm-delete"><i class="fa fa-trash"></i> {{ _('Delete') }}</a></li>
+                                    {% endif %}
+                                    {% if current_user.role == 'superadmin' and record.locked %}
+                                    <li class="bg-warning">
+                                        <a href="{{ url_for('unlock', record_id=record.id, next='dashboard') }}" class="btn btn-sm btn-info"><i class="fa fa-unlock"></i> {{ _('Unlock') }}</a>
+                                    </li>
                                     {% endif %}
                                     <li class="divider" role="separator"></li>
                                     <li class="dropdown-header"><i class="fa fa-plus"></i> {{ _('Add') }}</li>
@@ -103,5 +109,10 @@
         socket.on('unlocked', function(msg){
             console.log(JSON.stringify(msg));
         });
+    </script>
+    <!-- http://www.codecogs.com/latex/integration/htmlequations.php -->
+    <script type="text/javascript" src="https://latex.codecogs.com/latexit.js"></script>
+    <script type="text/javascript">
+        LatexIT.add('li',true);
     </script>
 {% endblock %}

@@ -10,7 +10,7 @@
     {{ super() }}
     <div class="row">
         <div class="col-sm-10">
-        <h3>{{ record.data.title }}</h3>
+        <h3>{% if (current_user.role == 'admin' or current_user.role == 'superadmin') and record.data.same_as and record.data.same_as[0] != '' %}<span class="glyphicon glyphicon-paperclip" aria-hidden="true"></span> {% endif %}{{ record.data.title }}</h3>
         <dl class="dl-horizontal">
             {% if record.data.key_publication == True %}
                 <dt>
@@ -251,7 +251,15 @@
                     {{ pubtype_map.get(record.data.pubtype) }}{% if record.data.subtype and record.data.subtype != 'None' %} | {{ subtype_map.get(record.data.subtype) }}{% endif %}
                 </dd>
             {% endif %}
-            {% if record.data.language and record.data.language.0 != 'None' %}
+            {% if record.data.publication_status %}
+                <dt>
+                    {{ _('Publication Status') }}
+                </dt>
+                <dd>
+                    {{ pubstatus_map.get(record.data.publication_status) }}
+                </dd>
+            {% endif %}
+            {% if record.data.language and record.data.language.0 != 'None' and record.data.language.0 != '' %}
                 <dt>
                     {% trans count=record.data.language|length %}
                     Language
@@ -654,11 +662,28 @@
                         {% for doc in mlt %}
                             <li><a href="{{ url_for('show_record', pubtype=doc.pubtype, record_id=doc.id) }}">{{ doc.title }}, {{ doc.issued }}</a></li>
                         {% endfor %}
-
                     </ul>
                 </dd>
             {% endif %}
             <hr/>
+            {% if record.data.id %}
+                <dt>
+                    {{ _('ID') }}
+                </dt>
+                <dd>
+                    {{ record.data.id }}{% if (current_user.role == 'admin' or current_user.role == 'superadmin') and record.data.same_as and record.data.same_as[0] != '' %} <span class="glyphicon glyphicon-paperclip" aria-hidden="true"></span>{% endif %}
+                </dd>
+            {% endif %}
+            {% if (current_user.role == 'admin' or current_user.role == 'superadmin') and record.data.same_as and record.data.same_as[0] != '' %}
+                <dt>{{ _('Same as') }}</dt>
+                <dd>
+                    <ul class="list-unstyled">
+                        {% for doc in record.data.same_as %}
+                            <li><a href="{{ url_for('show_record', pubtype=pubtype, record_id=doc) }}">{{ doc }}</a></li>
+                        {% endfor %}
+                    </ul>
+                </dd>
+            {% endif %}
             {% if current_user.role == 'admin' or current_user.role == 'superadmin' %}
                 <dt>{{ _('Record Information') }}</dt>
                 <dd>{{ _('Created %(created)s by %(owner)s.', created=record.data.created|mk_time|humanize(), owner=record.data.owner) }}{% if record.data.created != record.data.changed %} {{ _('Last changed %(changed)s.', changed=record.data.changed|mk_time|humanize()) }}{% endif %}</dd>
@@ -690,6 +715,9 @@
                 {% endif %}
             {% else %}
                 <div class="alert alert-warning" role="alert"><span class="glyphicon glyphicon-warning-sign" aria-hidden="true"></span> This record is currently locked!</div>
+                {% if current_user.role == 'superadmin' %}
+                    <span class="col-sm-2"><a href="{{ url_for('unlock', record_id=record.data.id, next='dashboard') }}" class="btn btn-sm btn-info"><i class="fa fa-unlock"></i> {{ _('Unlock') }}</a></span>
+                {% endif %}
             {% endif %}
         </div>
     </div>
@@ -733,5 +761,12 @@
             //console.log($('pre').text());
             $.post('/update/json', JSON.parse($('code').text()));
         })
+    </script>
+    <!-- http://www.codecogs.com/latex/integration/htmlequations.php -->
+    <script type="text/javascript" src="https://latex.codecogs.com/latexit.js"></script>
+    <script type="text/javascript">
+        LatexIT.add('h2',true);
+        LatexIT.add('h3',true);
+        LatexIT.add('dd',true);
     </script>
 {% endblock %}

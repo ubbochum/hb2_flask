@@ -53,7 +53,8 @@ from solr_handler import Solr
 from processors import mods_processor
 from forms import *
 import ast
-import vocabularies
+import forms_vocabularies
+import display_vocabularies
 
 try:
     import site_secrets as secrets
@@ -120,256 +121,11 @@ FORM_COUNT_RE = re.compile('-\d+$')
 GND_RE = re.compile('(1|10)\d{7}[0-9X]|[47]\d{6}-\d|[1-9]\d{0,7}-[0-9X]|3\d{7}[0-9X]')
 UUID_RE = re.compile('[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}')
 
-PUBTYPE2TEXT = {
-    'ArticleJournal': lazy_gettext('Article in Journal'),
-    'ArticleNewspaper': lazy_gettext('Article in Newspaper'),
-    'AudioBook': lazy_gettext('Audio Book'),
-    'AudioVideoDocument': lazy_gettext('Audio or Video Document'),
-    'Chapter': lazy_gettext('Chapter in...'),
-    'ChapterInLegalCommentary': lazy_gettext('Chapter in a Legal Commentary'),
-    'ChapterInMonograph': lazy_gettext('Chapter in a Monograph'),
-    'Collection': lazy_gettext('Collection'),
-    'Conference': lazy_gettext('Conference'),
-    'Edition': lazy_gettext('Edition'),
-    'InternetDocument': lazy_gettext('Internet Document'),
-    'Journal': lazy_gettext('Journal'),
-    'Lecture': lazy_gettext('Lecture'),
-    'LegalCommentary': lazy_gettext('Legal Commentary'),
-    'Monograph': lazy_gettext('Monograph'),
-    'MultivolumeWork': lazy_gettext('MultivolumeWork'),
-    'Newspaper': lazy_gettext('Newspaper'),
-    'Other': lazy_gettext('Other'),
-    'Patent': lazy_gettext('Patent'),
-    'PressRelease': lazy_gettext('Press Release'),
-    'RadioTVProgram': lazy_gettext('Radio or TV Program'),
-    'Report': lazy_gettext('Report'),
-    'ResearchData': lazy_gettext('Research Data'),
-    'Series': lazy_gettext('Series'),
-    'Software': lazy_gettext('Software'),
-    'SpecialIssue': lazy_gettext('Special Issue'),
-    'Standard': lazy_gettext('Standard'),
-    'Thesis': lazy_gettext('Thesis'),
-}
-
-SUBTYPE2TEXT = {
-    'lexicon_article': lazy_gettext('Article in Lexicon'),
-    'abstract': lazy_gettext('Abstract'),
-    'afterword': lazy_gettext('Afterword'),
-    'bachelor_thesis': lazy_gettext('Bachelor Thesis'),
-    'diploma_thesis': lazy_gettext('Diploma Thesis'),
-    'dissertation': lazy_gettext('Dissertation'),
-    'dramatic_work': lazy_gettext('Dramatic Work'),
-    'expert_opinion': lazy_gettext('Expert Opinion'),
-    'festschrift': lazy_gettext('Festschrift'),
-    'first_state_examination': lazy_gettext('1st State Examination'),
-    'habilitation': lazy_gettext('Habilitation'),
-    'image_database': lazy_gettext('Image Database'),
-    'interview': lazy_gettext('Interview'),
-    'introduction': lazy_gettext('Foreword'),
-    'lecture_notes': lazy_gettext('Lecture Notes'),
-    'magisterarbeit': lazy_gettext('Magisterarbeit'),
-    'masters_thesis': lazy_gettext("Master's Thesis"),
-    'meeting_abstract': lazy_gettext('Meeting Abstract'),
-    'notated_music': lazy_gettext('Notated Music'),
-    'poster': lazy_gettext('Poster'),
-    'poster_abstract': lazy_gettext('Poster Abstract'),
-    'report': lazy_gettext('Report'),
-    'review': lazy_gettext('Review'),
-    'second_state_examination': lazy_gettext('2nd State Examination'),
-    'sermon': lazy_gettext('Sermon'),
-}
-
-PUBTYPE2FORM = {
-    'ArticleJournal': ArticleJournalForm,
-    'MultivolumeWork': MultivolumeWorkForm,
-    'Monograph': MonographForm,
-    'Patent': PatentForm,
-    'Chapter': ChapterForm,
-    'ChapterInLegalCommentary': ChapterInLegalCommentaryForm,
-    'Conference': ConferenceForm,
-    'Collection': CollectionForm,
-    'Other': OtherForm,
-    'Thesis': ThesisForm,
-    'ArticleNewspaper': ArticleNewspaperForm,
-    'AudioVideoDocument': AudioVideoDocumentForm,
-    'Edition': EditionForm,
-    'InternetDocument': InternetDocumentForm,
-    'Journal': JournalForm,
-    'Lecture': LectureForm,
-    'LegalCommentary': LegalCommentaryForm,
-    'Newspaper': NewspaperForm,
-    'PressRelease': PressReleaseForm,
-    'RadioTVProgram': RadioTVProgramForm,
-    'Series': SeriesForm,
-    'Software': SoftwareForm,
-    'SpecialIssue': SpecialIssueForm,
-    'Standard': StandardForm,
-    'Report': ReportForm,
-    'ResearchData': ResearchDataForm,
-}
-
-ROLE_MAP = {
-    'abr': lazy_gettext('Abridger'),
-    'act': lazy_gettext('Actor'),
-    'aut': lazy_gettext('Author'),
-    'aft': lazy_gettext('Author of Afterword'),
-    'arr': lazy_gettext('Arranger'),
-    'aui': lazy_gettext('Author of Introduction'),
-    'brd': lazy_gettext('Broadcaster'),
-    'chr': lazy_gettext('Choreographer'),
-    'cmp': lazy_gettext('Composer'),
-    'ctb': lazy_gettext('Contributor'),
-    'cst': lazy_gettext('Costume Designer'),
-    'cwt': lazy_gettext('Commentator for written text'),
-    'dgg': lazy_gettext('Degree Granting Institution'),
-    'drt': lazy_gettext('Director'),
-    'edt': lazy_gettext('Editor'),
-    'elg': lazy_gettext('Electrician'),
-    'fmk': lazy_gettext('Filmmaker'),
-    'hnr': lazy_gettext('Honoree'),
-    'his': lazy_gettext('Host institution'),
-    'ill': lazy_gettext('Illustrator'),
-    'itr': lazy_gettext('Instrumentalist'),
-    'ive': lazy_gettext('Interviewee'),
-    'ivr': lazy_gettext('Interviewer'),
-    'inv': lazy_gettext('Inventor'),
-    'mod': lazy_gettext('Moderator'),
-    'mus': lazy_gettext('Musician'),
-    'org': lazy_gettext('Originator'),
-    'orm': lazy_gettext('Organizer'),
-    'pdr': lazy_gettext('Project Director'),
-    'pht': lazy_gettext('Photographer'),
-    'pmn': lazy_gettext('Production Manager'),
-    'pro': lazy_gettext('Producer'),
-    'prg': lazy_gettext('Programmer'),
-    'pta': lazy_gettext('Patent applicant'),
-    'red': lazy_gettext('Redaktor'),
-    'std': lazy_gettext('Set Designer'),
-    'sng': lazy_gettext('Singer'),
-    'spk': lazy_gettext('Speaker'),
-    'stl': lazy_gettext('Storyteller'),
-    'trl': lazy_gettext('Translator'),
-    'tcd': lazy_gettext('Technical Director'),
-    'ths': lazy_gettext('Thesis Advisor'),
-}
-
-LANGUAGE_MAP = {
-    'eng': lazy_gettext('English'),
-    'ger': lazy_gettext('German'),
-    'fre': lazy_gettext('French'),
-    'rus': lazy_gettext('Russian'),
-    'spa': lazy_gettext('Spanish'),
-    'ita': lazy_gettext('Italian'),
-    'jpn': lazy_gettext('Japanese'),
-    'lat': lazy_gettext('Latin'),
-    'zhn': lazy_gettext('Chinese'),
-    'dut': lazy_gettext('Dutch'),
-    'tur': lazy_gettext('Turkish'),
-    'por': lazy_gettext('Portuguese'),
-    'pol': lazy_gettext('Polish'),
-    'gre': lazy_gettext('Greek'),
-    'srp': lazy_gettext('Serbian'),
-    'cat': lazy_gettext('Catalan'),
-    'dan': lazy_gettext('Danish'),
-    'cze': lazy_gettext('Czech'),
-    'kor': lazy_gettext('Korean'),
-    'ara': lazy_gettext('Arabic'),
-    'hun': lazy_gettext('Hungarian'),
-    'swe': lazy_gettext('Swedish'),
-    'ukr': lazy_gettext('Ukranian'),
-    'heb': lazy_gettext('Hebrew'),
-    'hrv': lazy_gettext('Croatian'),
-    'slo': lazy_gettext('Slovak'),
-    'nor': lazy_gettext('Norwegian'),
-    'rum': lazy_gettext('Romanian'),
-    'fin': lazy_gettext('Finnish'),
-    'geo': lazy_gettext('Georgian'),
-    'bul': lazy_gettext('Bulgarian'),
-    'grc': lazy_gettext('Ancient Greek'),
-    'ind': lazy_gettext('Indonesian Language'),
-    'gmh': lazy_gettext('Middle High German'),
-    'mon': lazy_gettext('Mongolian Language'),
-    'peo': lazy_gettext('Persian'),
-    'alb': lazy_gettext('Albanian'),
-    'bos': lazy_gettext('Bosnian'),
-}
-
-FREQUENCY_MAP = {
-    'completely_irregular': lazy_gettext('Completely Irregular'),
-    'annual': lazy_gettext('Annual'),
-    'quarterly': lazy_gettext('Quarterly'),
-    'semiannual': lazy_gettext('Semiannual'),
-    'monthly': lazy_gettext('Monthly'),
-    'bimonthly': lazy_gettext('Bimonthly'),
-    'three_times_a_year': lazy_gettext('Three Times a Year'),
-    'semimonthly': lazy_gettext('Semimonthly'),
-    'biennial': lazy_gettext('Biannial'),
-    'fifteen_issues_a_year': lazy_gettext('Fifteen Issues a Year'),
-    'continuously_updated': lazy_gettext('Continuously Updated'),
-    'daily': lazy_gettext('Daily'),
-    'semiweekly': lazy_gettext('Semiweekly'),
-    'three_times_a_week': lazy_gettext('Three Times a Week'),
-    'weekly': lazy_gettext('Weekly'),
-    'biweekly': lazy_gettext('Biweekly'),
-    'three_times_a_month': lazy_gettext('Three Times a Month'),
-    'triennial': lazy_gettext('Triennial'),
-}
-
-URL_TYPE_MAP = {
-    'hp': lazy_gettext('Homepage'),
-    'rg': lazy_gettext('ResearchGate'),
-    'ri': lazy_gettext('ResearcherID'),
-    'an': lazy_gettext('AcademiaNet'),
-    'ae': lazy_gettext('Academia.edu'),
-    'wp': lazy_gettext('Wikipedia'),
-    'xi': lazy_gettext('Xing'),
-    'li': lazy_gettext('LinkedIn'),
-    'bl': lazy_gettext('Blog'),
-    'fb': lazy_gettext('Facebook'),
-    'tw': lazy_gettext('Twitter'),
-    'ic': lazy_gettext('identi.ca'),
-    'zt': lazy_gettext('Zotero'),
-    'md': lazy_gettext('Mendeley'),
-    'mi': lazy_gettext('Other'),
-}
-
-LICENSE_MAP = {
-    'cc_zero': lazy_gettext('Creative Commons Zero - Public Domain'),
-    'cc_by': lazy_gettext('Creative Commons Attribution'),
-    'cc_by_sa': lazy_gettext('Creative Commons Attribution Share Alike'),
-    'cc_by_nd': lazy_gettext('Creative Commons Attribution No Derivatives')
-}
-
-PERS_STATUS_MAP = {
-    'alumnus': lazy_gettext('Alumnus'),
-    'assistant_lecturer': lazy_gettext('Assistant Lecturer'),
-    'callcenter': lazy_gettext('Callcenter'),
-    'ranking': lazy_gettext('Relevant for Ranking'),
-    'external': lazy_gettext('External Staff'),
-    'manually_added': lazy_gettext('Manually added'),
-    'official': lazy_gettext('Official'),
-    'official_ns': lazy_gettext('Official, Non-Scientific'),
-    'research_school': lazy_gettext('Doctoral Candidate'),
-    'principal_investigator': lazy_gettext('Principal Investigator'),
-    'professor': lazy_gettext('Professor'),
-    'emeritus': lazy_gettext('Emeritus'),
-    'teaching_assistant': lazy_gettext('Teaching Assistant'),
-    'tech_admin': lazy_gettext('Technical and Administrative Staff'),
-}
-
-LANGUAGES = {
-    'de': 'German',
-    'de_DE': 'German',
-    'en': 'English',
-    'en_GB': 'English',
-    'en_US': 'English'
-}
-
 
 @humanize_filter.localeselector
 @babel.localeselector
 def get_locale():
-    return request.accept_languages.best_match(LANGUAGES.keys())
+    return request.accept_languages.best_match(display_vocabularies.LANGUAGES.keys())
     # return 'de_DE'
 
 
@@ -1159,7 +915,7 @@ def _record2solr(form, action, relItems=True):
             edit_record_solr.request()
             # load record in form and modify changeDate
             thedata = json.loads(edit_record_solr.results[0].get('wtf_json'))
-            form = PUBTYPE2FORM.get(thedata.get('pubtype')).from_json(thedata)
+            form = display_vocabularies.PUBTYPE2FORM.get(thedata.get('pubtype')).from_json(thedata)
             # add is_part_of to form if not exists
             exists = False
             for ipo in form.data.get('is_part_of'):
@@ -1193,7 +949,7 @@ def _record2solr(form, action, relItems=True):
             edit_record_solr.request()
             # load record in form and modify changeDate
             thedata = json.loads(edit_record_solr.results[0].get('wtf_json'))
-            form = PUBTYPE2FORM.get(thedata.get('pubtype')).from_json(thedata)
+            form = display_vocabularies.PUBTYPE2FORM.get(thedata.get('pubtype')).from_json(thedata)
             # add has_part to form
             exists = False
             for hpo in form.data.get('has_part'):
@@ -1227,7 +983,7 @@ def _record2solr(form, action, relItems=True):
             edit_record_solr.request()
             # load record in form and modify changeDate
             thedata = json.loads(edit_record_solr.results[0].get('wtf_json'))
-            form = PUBTYPE2FORM.get(thedata.get('pubtype')).from_json(thedata)
+            form = display_vocabularies.PUBTYPE2FORM.get(thedata.get('pubtype')).from_json(thedata)
             # add is_part_of to form
             exists = False
             for ovo in form.data.get('other_version'):
@@ -1249,151 +1005,6 @@ def _record2solr(form, action, relItems=True):
                                       application=secrets.SOLR_APP, core='hb2',
                                       data=[{'id': record_id, 'locked': {'set': 'false'}}])
             unlock_record_solr.update()
-
-
-@app.route('/orcid2name/<orcid_id>')
-@login_required
-def orcid2name(orcid_id=''):
-    if orcid_id:
-        bio = requests.get('https://pub.orcid.org/%s/orcid-bio/' % orcid_id,
-                           headers={'Accept': 'application/json'}).json()
-        # logging.info(bio.get('orcid-profile').get('orcid-bio').get('personal-details').get('family-name'))
-    return jsonify({'name': '%s, %s' % (
-    bio.get('orcid-profile').get('orcid-bio').get('personal-details').get('family-name').get('value'),
-    bio.get('orcid-profile').get('orcid-bio').get('personal-details').get('given-names').get('value'))})
-
-
-@app.route('/orcid')
-@login_required
-def orcid_start():
-
-    # TODO get ORCID and Token from Solr
-    user_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, application=secrets.SOLR_APP, core='hb2_users',
-                     query='id:%s' % current_user.id, facet='false')
-    user_solr.request()
-
-    if user_solr.count() > 0:
-
-        # flash(user_solr.results[0])
-
-        orcid_id = ''
-        if user_solr.results[0].get('orcidid'):
-            orcid_id = user_solr.results[0].get('orcidid')
-        orcid_access_token = ''
-        if user_solr.results[0].get('orcidaccesstoken'):
-            orcid_access_token = user_solr.results[0].get('orcidaccesstoken')
-        orcid_refresh_token = ''
-        if user_solr.results[0].get('orcidrefreshtoken'):
-            orcid_refresh_token = user_solr.results[0].get('orcidrefreshtoken')
-        orcid_token_revoked = False
-        if user_solr.results[0].get('orcidtokenrevoked'):
-            orcid_token_revoked = user_solr.results[0].get('orcidtokenrevoked')
-
-        # flash('%s, %s, %s, %s' % (orcid_id, orcid_access_token, orcid_refresh_token, orcid_token_revoked))
-
-        is_linked = False
-        if len(orcid_id) > 0 and len(orcid_access_token) > 0 and not orcid_token_revoked:
-            is_linked = True
-            flash('You are already linked to ORCID!')
-
-        if is_linked:
-            api = orcid.MemberAPI(secrets.orcid_sandbox_client_id, secrets.orcid_sandbox_client_secret, sandbox=True)
-            try:
-                member_info = api.read_record_member(orcid_id=orcid_id, request_type='activities',
-                                                     token=orcid_access_token)
-                # TODO show linking information
-                flash('You have granted us right for writing to ORCID!')
-            except RequestException as e:
-                orcid_token_revoked = True
-                # write to Solr!!!
-                user_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT,
-                                 application=secrets.SOLR_APP, core='hb2_users',
-                                 data=[{'id': current_user.id, 'orcidtokenrevoked': {'set': 'true'}}], facet='false')
-                user_solr.update()
-                flash('Your granted rights to ORCID are revoked!', 'danger')
-        else:
-            flash('You are not linked to ORCID!', 'warning')
-
-        return render_template('orcid.html', header=lazy_gettext('ORCID'), site=theme(request.access_route),
-                               is_linked=is_linked, token_revoked=orcid_token_revoked)
-
-
-@app.route('/orcid/register')
-@login_required
-def orcid_login():
-    code = request.args.get('code', '')
-    api = orcid.MemberAPI(secrets.orcid_sandbox_client_id, secrets.orcid_sandbox_client_secret, sandbox=True)
-    if code == '':
-        url = api.get_login_url(secrets.orcid_scopes, '%s%s' % (secrets.APP_BASE_URL, url_for('orcid_login')),
-                                email=current_user.email)
-        return redirect(url)
-    else:
-        try:
-            token = api.get_token_from_authorization_code(code, '%s%s' % (secrets.APP_BASE_URL, url_for('orcid_login')))
-            orcid_id = token.get('orcid')
-
-            # add orcid_id to person if exists. if not exists person then create an entity
-            try:
-                query = 'email:%s' % current_user.email
-                person_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
-                                   application=secrets.SOLR_APP, core='person', query=query, facet='false',
-                                   fields=['wtf_json'])
-                person_solr.request()
-                if len(person_solr.results) == 0:
-                    logging.info('keine Treffer zu email in person: %s' % current_user.email)
-                for idx1, doc in enumerate(person_solr.results):
-                    myjson = json.loads(doc.get('wtf_json'))
-                    logging.info('id: %s' % myjson.get('id'))
-                    lock_record_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
-                                            application=secrets.SOLR_APP, core='person',
-                                            data=[{'id': myjson.get('id'), 'locked': {'set': 'true'}}])
-                    lock_record_solr.update()
-
-                    edit_person_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
-                                            application=secrets.SOLR_APP, query='id:%s' % myjson.get('id'),
-                                            core='person', facet='false')
-                    edit_person_solr.request()
-
-                    thedata = json.loads(edit_person_solr.results[0].get('wtf_json'))
-
-                    form = PersonAdminForm.from_json(thedata)
-                    form.changed.data = str(datetime.datetime.now())
-                    form.orcid.data = orcid_id
-
-                    _person2solr(form, action='update')
-                    unlock_record_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
-                                              application=secrets.SOLR_APP, core='person',
-                                              data=[{'id': myjson.get('id'), 'locked': {'set': 'false'}}])
-                    unlock_record_solr.update()
-
-                    # add orcid_token_data to hb2_users; orcid_token_revoked = True
-                    tmp = {
-                        'id': current_user.id,
-                        'orcidid': {'set': orcid_id},
-                        'orcidaccesstoken': {'set': token.get('access_token')},
-                        'orcidrefreshtoken': {'set': token.get('refresh_token')},
-                        'orcidtokenrevoked': {'set': 'false'}
-                    }
-                    user_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT,
-                                     application=secrets.SOLR_APP, core='hb2_users',
-                                     data=[tmp], facet='false')
-                    user_solr.update()
-
-                    # TODO add institution to employment if not already existing
-                    # Technische Universität Dortmund: Dortmund, Nordrhein-Westfalen, Germany
-                    data = {'organization': {'name': 'Technische Universität Dortmund', 'address': {'city': 'Dortmund', 'region': 'Nordrhein-Westfalen', 'country': 'Germany'}}}
-                    api.add_record(orcid_id=orcid_id, token=token.get('access_token'), request_type='employment', data=data)
-
-            except AttributeError as e:
-                logging.error(e)
-            flash(gettext('Your institutional account %s is now linked to your ORCID!' % orcid_id))
-            # flash(gettext('The response: %s' % token))
-            # flash(gettext('We added the following data to our system: {%s, %s}!' % (token.get('access_token'), token.get('refresh_token'))))
-            return redirect(url_for('orcid_start'))
-        except RequestException as e:
-            logging.error(e.response.text)
-            flash(gettext('ORCID-ERROR: %s' % e.response.text), 'error')
-            return redirect(url_for('orcid_start'))
 
 
 @app.route('/dashboard')
@@ -2464,13 +2075,13 @@ def new_by_search():
 @app.route('/create/<pubtype>', methods=['GET', 'POST'])
 @login_required
 def new_record(pubtype='ArticleJournal'):
-    form = PUBTYPE2FORM.get(pubtype)()
+    form = display_vocabularies.PUBTYPE2FORM.get(pubtype)()
 
     # logging.info(form)
 
     if request.is_xhr:
         logging.info(request.form)
-        form = PUBTYPE2FORM.get(pubtype)(request.form)
+        form = display_vocabularies.PUBTYPE2FORM.get(pubtype)(request.form)
         logging.info(form)
         # logging.info(request.form.person)
         # Do we have any data already?
@@ -2487,7 +2098,7 @@ def new_record(pubtype='ArticleJournal'):
                 if field == 'changed':
                     solr_data.setdefault('recordChangeDate', form.data.get(field).strip().replace(' ', 'T') + 'Z')
                 if field == 'owner':
-                    solr_data.setdefault('owner', form.data.get(field).strip())
+                    solr_data.setdefault('owner', form.data.get(field)[0].strip())
                 if field == 'pubtype':
                     solr_data.setdefault('pubtype', form.data.get(field).strip())
                 if field == 'editorial_status':
@@ -2501,14 +2112,14 @@ def new_record(pubtype='ArticleJournal'):
 
     for person in form.person:
         if current_user.role == 'admin' or current_user.role == 'superadmin':
-            person.role.choices = vocabularies.ADMIN_ROLES
+            person.role.choices = forms_vocabularies.ADMIN_ROLES
         else:
-            person.role.choices = vocabularies.USER_ROLES
+            person.role.choices = forms_vocabularies.USER_ROLES
 
     if current_user.role == 'admin' or current_user.role == 'superadmin':
-        form.pubtype.choices = vocabularies.ADMIN_PUBTYPES
+        form.pubtype.choices = forms_vocabularies.ADMIN_PUBTYPES
     else:
-        form.pubtype.choices = vocabularies.USER_PUBTYPES
+        form.pubtype.choices = forms_vocabularies.USER_PUBTYPES
 
     if form.validate_on_submit():
         # logging.info(form)
@@ -2560,14 +2171,19 @@ def show_record(pubtype, record_id=''):
 
         thedata = json.loads(show_record_solr.results[0].get('wtf_json'))
         locked = show_record_solr.results[0].get('locked')
-        form = PUBTYPE2FORM.get(pubtype).from_json(thedata)
+        form = display_vocabularies.PUBTYPE2FORM.get(pubtype).from_json(thedata)
 
         return render_template('record.html', record=form, header=form.data.get('title'),
                                site=theme(request.access_route), action='retrieve', record_id=record_id,
-                               del_redirect=url_for('dashboard'), pubtype=pubtype, role_map=ROLE_MAP,
-                               lang_map=LANGUAGE_MAP, pubtype_map=PUBTYPE2TEXT, subtype_map=SUBTYPE2TEXT,
-                               license_map=LICENSE_MAP, frequency_map=FREQUENCY_MAP, locked=locked, is_part_of=is_part_of, has_part=has_part,
-                               other_version=other_version)
+                               del_redirect=url_for('dashboard'), pubtype=pubtype,
+                               role_map=display_vocabularies.ROLE_MAP,
+                               lang_map=display_vocabularies.LANGUAGE_MAP,
+                               pubtype_map=display_vocabularies.PUBTYPE2TEXT,
+                               subtype_map=display_vocabularies.SUBTYPE2TEXT,
+                               license_map=display_vocabularies.LICENSE_MAP,
+                               frequency_map=display_vocabularies.FREQUENCY_MAP, locked=locked, is_part_of=is_part_of,
+                               has_part=has_part, other_version=other_version,
+                               pubstatus_map=display_vocabularies.PUB_STATUS)
 
 
 @app.route('/retrieve/person/<person_id>')
@@ -2605,7 +2221,8 @@ def show_person(person_id=''):
                     return render_template('person.html', record=form, header=form.data.get('name'),
                                            site=theme(request.access_route), action='retrieve', record_id=person_id,
                                            pubtype='person', del_redirect=url_for('persons'),
-                                           url_map=URL_TYPE_MAP, pers_status_map=PERS_STATUS_MAP)
+                                           url_map=display_vocabularies.URL_TYPE_MAP,
+                                           pers_status_map=display_vocabularies.PERS_STATUS_MAP)
             else:
                 thedata = json.loads(show_person_solr.results[0].get('wtf_json'))
                 form = PersonAdminForm.from_json(thedata)
@@ -2613,7 +2230,8 @@ def show_person(person_id=''):
                 return render_template('person.html', record=form, header=form.data.get('name'),
                                        site=theme(request.access_route), action='retrieve', record_id=person_id,
                                        pubtype='person', del_redirect=url_for('persons'),
-                                       url_map=URL_TYPE_MAP, pers_status_map=PERS_STATUS_MAP)
+                                       url_map=display_vocabularies.URL_TYPE_MAP,
+                                       pers_status_map=display_vocabularies.PERS_STATUS_MAP)
         else:
             thedata = json.loads(show_person_solr.results[0].get('wtf_json'))
             form = PersonAdminForm.from_json(thedata)
@@ -2621,7 +2239,8 @@ def show_person(person_id=''):
             return render_template('person.html', record=form, header=form.data.get('name'),
                                    site=theme(request.access_route), action='retrieve', record_id=person_id,
                                    pubtype='person', del_redirect=url_for('persons'),
-                                   url_map=URL_TYPE_MAP, pers_status_map=PERS_STATUS_MAP)
+                                   url_map=display_vocabularies.URL_TYPE_MAP,
+                                   pers_status_map=display_vocabularies.PERS_STATUS_MAP)
     else:
         thedata = json.loads(show_person_solr.results[0].get('wtf_json'))
         form = PersonAdminForm.from_json(thedata)
@@ -2629,7 +2248,8 @@ def show_person(person_id=''):
         return render_template('person.html', record=form, header=form.data.get('name'),
                                site=theme(request.access_route), action='retrieve', record_id=person_id,
                                pubtype='person', del_redirect=url_for('persons'),
-                               url_map=URL_TYPE_MAP, pers_status_map=PERS_STATUS_MAP)
+                               url_map=display_vocabularies.URL_TYPE_MAP,
+                               pers_status_map=display_vocabularies.PERS_STATUS_MAP)
 
 
 @app.route('/retrieve/organisation/<orga_id>')
@@ -2921,17 +2541,17 @@ def edit_record(record_id='', pubtype=''):
 
     if request.method == 'POST':
         # logging.info('POST')
-        form = PUBTYPE2FORM.get(pubtype)()
+        form = display_vocabularies.PUBTYPE2FORM.get(pubtype)()
         # logging.info(form.data)
     elif request.method == 'GET':
         # logging.info('GET')
-        form = PUBTYPE2FORM.get(pubtype).from_json(thedata)
+        form = display_vocabularies.PUBTYPE2FORM.get(pubtype).from_json(thedata)
         # logging.info(form.data)
 
     if current_user.role == 'admin' or current_user.role == 'superadmin':
-        form.pubtype.choices = vocabularies.ADMIN_PUBTYPES
+        form.pubtype.choices = forms_vocabularies.ADMIN_PUBTYPES
     else:
-        form.pubtype.choices = vocabularies.USER_PUBTYPES
+        form.pubtype.choices = forms_vocabularies.USER_PUBTYPES
 
     if thedata.get('pubtype') != pubtype:
         diff = _diff_struct(thedata, form.data)
@@ -2944,9 +2564,9 @@ def edit_record(record_id='', pubtype=''):
 
     for person in form.person:
         if current_user.role == 'admin' or current_user.role != 'superadmin':
-            person.role.choices = vocabularies.ADMIN_ROLES
+            person.role.choices = forms_vocabularies.ADMIN_ROLES
         else:
-            person.role.choices = vocabularies.USER_ROLES
+            person.role.choices = forms_vocabularies.USER_ROLES
 
     if form.validate_on_submit():
 
@@ -2992,7 +2612,7 @@ def delete_record(record_id=''):
         edit_record_solr.request()
         thedata = json.loads(edit_record_solr.results[0].get('wtf_json'))
         pubtype = thedata.get('pubtype')
-        form = PUBTYPE2FORM.get(pubtype).from_json(thedata)
+        form = display_vocabularies.PUBTYPE2FORM.get(pubtype).from_json(thedata)
         # TODO if exists links of type 'other_version' (proof via Solr-Queries if not exists is_other_version_of), 'has_parts', then ERROR!
         # modify status to 'deleted'
         form.editorial_status.data = 'deleted'
@@ -3177,223 +2797,21 @@ def consolidate_persons():
         return 'failed to read data'
 
 
+@app.route('/retrieve/related_items/<relation>/<record_ids>')
+def show_related_item(relation='', record_ids=''):
+    query = '{!terms f=id}%s' % record_ids
+    if ',' not in record_ids:
+        query = 'id:%s' % record_ids
+    relation_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT,
+                         application=secrets.SOLR_APP, query=query, facet='false')
+    relation_solr.request()
+
+    return jsonify({'relation': relation, 'docs': relation_solr.results})
+
+
 ########################################################################################################################
-
-
-class UserNotFoundError(Exception):
-    pass
-
-
-class User(UserMixin):
-    def __init__(self, id, role='', name='', email='', accesstoken='', gndid='', orcidid='', orcidaccesstoken='',
-                 orcidrefreshtoken='', orcidtokenrevoked=False):
-        self.id = id
-        self.name = name
-        self.role = role
-        self.email = email
-        self.gndid = gndid
-        self.accesstoken = accesstoken
-        self.orcidid = orcidid
-        self.orcidaccesstoken = orcidaccesstoken
-        self.orcidrefreshtoken = orcidrefreshtoken
-        self.orcidtokenrevoked = orcidtokenrevoked
-
-        user_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT,
-                         application=secrets.SOLR_APP, core='hb2_users', query='id:%s' % id, facet='false')
-        user_solr.request()
-
-        if user_solr.count() > 0:
-            _user = user_solr.results[0]
-            self.name = _user.get('name')
-            self.role = _user.get('role')
-            self.email = _user.get('email')
-            self.gndid = _user.get('gndid')
-            self.accesstoken = _user.get('accesstoken')
-            self.orcidid = _user.get('orcidid')
-            self.orcidaccesstoken = _user.get('orcidaccesstoken')
-            self.orcidrefreshtoken = _user.get('orcidrefreshtoken')
-            self.orcidtokenrevoked = _user.get('orcidtokenrevoked')
-
-    def __repr__(self):
-        return '<User %s: %s>' % (self.id, self.name)
-
-    @classmethod
-    def get_user(self_class, id):
-        user_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
-                         application=secrets.SOLR_APP, core='hb2_users', query='id:%s' % id, facet='false')
-        user_solr.request()
-
-        return user_solr.results[0]
-
-    @classmethod
-    def get(self_class, id):
-        try:
-            return self_class(id)
-        except UserNotFoundError:
-            return None
-
-
-class LoginForm(Form):
-    username = StringField(lazy_gettext('Username'))
-    password = PasswordField(lazy_gettext('Password'))
-    wayf = HiddenField(lazy_gettext('Where Are You From?'))
-
-
-def is_safe_url(target):
-    ref_url = parse.urlparse(request.host_url)
-    test_url = parse.urlparse(parse.urljoin(request.host_url, target))
-    return test_url.scheme in ('http', 'https') and ref_url.netloc == test_url.netloc
-
-
-def get_redirect_target():
-    for target in request.values.get('next'), request.referrer:
-        if not target:
-            continue
-        if is_safe_url(target):
-            return target
-
-
-def redirect_back(endpoint, **values):
-    target = request.form['next']
-    if not target or not is_safe_url(target):
-        target = url_for(endpoint, **values)
-    return redirect(target)
-
-
-@login_manager.user_loader
-def load_user(id):
-    return User.get(id)
-
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        user = User(request.form.get('username'))
-        # user_info = user.get_user(request.form.get('username'))
-        next = get_redirect_target()
-        if request.form.get('wayf') == 'bochum':
-            authuser = requests.post('https://api.ub.rub.de/ldap/authenticate/',
-                                     data={'nocheck': 'true',
-                                           'userid': base64.b64encode(request.form.get('username').encode('ascii')),
-                                           'passwd': base64.b64encode(
-                                               request.form.get('password').encode('ascii'))}).json()
-            # logging.info(authuser)
-            if authuser.get('email'):
-                user_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
-                                 application=secrets.SOLR_APP, core='hb2_users', query='id:%s' % authuser.get('id'),
-                                 facet='false')
-                user_solr.request()
-                if user_solr.count() == 0:
-                    tmp = {}
-                    accesstoken = make_secure_token(
-                        base64.b64encode(request.form.get('username').encode('ascii')) + base64.b64encode(
-                            request.form.get('password').encode('ascii')))
-                    tmp.setdefault('id', request.form.get('username').encode('ascii'))
-                    tmp.setdefault('name', '%s %s' % (authuser.get('given_name'), authuser.get('last_name')))
-                    tmp.setdefault('email', authuser.get('email'))
-                    if user.role == '' or user.role == 'user':
-                        tmp.setdefault('role', 'user')
-                    else:
-                        tmp.setdefault('role', user.role)
-                    tmp.setdefault('accesstoken', accesstoken)
-                    user.name = '%s %s' % (authuser.get('given_name'), authuser.get('last_name'))
-                    user.email = authuser.get('email')
-                    user.accesstoken = accesstoken
-                    user.id = authuser.get('id')
-                    new_user_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
-                                         application=secrets.SOLR_APP, core='hb2_users', data=[tmp], facet='false')
-                    new_user_solr.update()
-                login_user(user)
-
-                return redirect(next or url_for('homepage'))
-            else:
-                flash(gettext("Username and Password Don't Match"), 'danger')
-                return redirect('login')
-        elif request.form.get('wayf') == 'dortmund':
-            # 010188
-            authuser = requests.post('https://api.ub.tu-dortmund.de/paia/auth/login',
-                                     data={
-                                         'username': request.form.get('username').encode('ascii'),
-                                         'password': request.form.get('password').encode('ascii'),
-                                         'grant_type': 'password',
-                                     },
-                                     headers={'Accept': 'application/json', 'Content-type': 'application/json'}).json()
-            # logging.info(authuser)
-            if authuser.get('access_token'):
-                user_info = requests.get('https://api.ub.tu-dortmund.de/paia/core/%s' % authuser.get('patron'),
-                                         headers={
-                                             'Accept': 'application/json',
-                                             'Authorization': '%s %s' % (
-                                             authuser.get('token_type'), authuser.get('access_token'))
-                                         }).json()
-                # logging.info(user_info)
-                user_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
-                                 application=secrets.SOLR_APP, core='hb2_users',
-                                 query='accesstoken:%s' % authuser.get('access_token'), facet='false')
-                user_solr.request()
-                if user_solr.count() == 0:
-                    tmp = {}
-                    tmp.setdefault('id', user_info.get('username'))
-                    tmp.setdefault('name', user_info.get('name'))
-                    tmp.setdefault('email', user_info.get('email'))
-                    # TODO for repo: get faculty information
-                    # TODO https://bitbucket.org/beno/python-sword2/wiki/Home
-                    if user.role == '' or user.role == 'user':
-                        tmp.setdefault('role', 'user')
-                    else:
-                        tmp.setdefault('role', user.role)
-                    tmp.setdefault('accesstoken', authuser.get('access_token'))
-                    # logging.info(tmp)
-                    user.name = user_info.get('name')
-                    user.email = user_info.get('email')
-                    user.accesstoken = authuser.get('access_token')
-                    user.id = user_info.get('username')
-                    new_user_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
-                                         application=secrets.SOLR_APP, core='hb2_users', data=[tmp], facet='false')
-                    new_user_solr.update()
-                login_user(user)
-                return redirect(next or url_for('homepage'))
-            else:
-                flash(gettext("Username and Password Don't Match"), 'danger')
-                return redirect('login')
-
-    form = LoginForm()
-    next = get_redirect_target()
-    # return render_template('login.html', form=form, header='Sign In', next=next, orcid_sandbox_client_id=orcid_sandbox_client_id)
-    return render_template('login.html', form=form, header='Sign In', next=next, site=theme(request.access_route))
-
-
-@app.route('/logout')
-@login_required
-def logout():
-    logout_user()
-    return redirect('homepage')
-
-
-ORCID_RE = re.compile('\d{4}-\d{4}-\d{4}-\d{4}')
-
-
-@socketio.on('lock', namespace='/hb2')
-def lock_message(message):
-    print('Locked ' + message.get('data'))
-    emit('locked', {'data': message['data']}, broadcast=True)
-
-
-@socketio.on('unlock', namespace='/hb2')
-def unlock_message(message):
-    print(message)
-    # resp = requests.get('http://127.0.0.1:8983/solr/hb2/query?q=id:%s&fl=editorial_status&omitHeader=true' % message.get('data')).json()
-    # status = resp.get('response').get('docs')[0].get('editorial_status')
-    # print(status)
-    print('Unlocked ' + message.get('data'))
-    # emit('unlocked', {'data': {'id': message.get('data'), 'status': status}}, broadcast=True)
-    emit('unlocked', {'data': message.get('data')}, broadcast=True)
-
-
-@socketio.on('connect', namespace='/hb2')
-def connect():
-    emit('my response', {'data': 'connected'})
-
+# IMPORT / EXPORT
+########################################################################################################################
 
 @app.route('/export/solr_dump/<core>')
 @login_required
@@ -3408,7 +2826,7 @@ def export_solr_dump(core=''):
     '''
     if core != 'hb2_users':
         filename = '%s_%s.json' % (core, int(time.time()))
-        export_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+        export_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT,
                            application=secrets.SOLR_APP, export_field='wtf_json', core=core)
         export_docs = export_solr.export()
         # target_solr = Solr(application=secrets.SOLR_APP, core='hb2_users', data=[{'id': filename, 'core': core, 'dump': json.dumps(export_docs)}])
@@ -3433,8 +2851,8 @@ def export_not_imported_records(core=''):
     '''
     if core != 'hb2_users':
         filename = '%s_%s.json' % (core, int(time.time()))
-        export_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
-                           application=secrets.SOLR_APP, query='-editorial_status:imported', export_field='wtf_json', 
+        export_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT,
+                           application=secrets.SOLR_APP, query='-editorial_status:imported', export_field='wtf_json',
                            core=core)
         export_docs = export_solr.export()
         # target_solr = Solr(application=secrets.SOLR_APP, core='hb2_users', data=[{'id': filename, 'core': core, 'dump': json.dumps(export_docs)}])
@@ -3458,7 +2876,7 @@ def export_serials():
     system. Uses the current user's ID and a timestamp as the document ID and file name.
     '''
     filename = '%s_%s.json' % ('serials', int(time.time()))
-    export_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+    export_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT,
                        application=secrets.SOLR_APP, query='pubtype:Series or pubtype:Jounral', export_field='wtf_json',
                        core='hb2')
     export_docs = export_solr.export()
@@ -3477,7 +2895,7 @@ def import_solr_dumps():
     Import Solr dumps either from the users core or from the local file system.
     '''
     page = int(request.args.get('page', 1))
-    solr_dumps = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+    solr_dumps = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT,
                       application=secrets.SOLR_APP, core='hb2_users', query='id:*.json', facet='false',
                       start=(page - 1) * 10)
     solr_dumps.request()
@@ -3492,7 +2910,7 @@ def import_solr_dumps():
 
 
 def _import_data(doc):
-    form = PUBTYPE2FORM.get(doc.get('pubtype')).from_json(doc)
+    form = display_vocabularies.PUBTYPE2FORM.get(doc.get('pubtype')).from_json(doc)
     return _record2solr(form, action='create')
 
 
@@ -3523,7 +2941,7 @@ def import_solr_dump(filename=''):
     type = ''
     if request.method == 'GET':
         if filename:
-            import_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+            import_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT,
                                application=secrets.SOLR_APP, core='hb2_users', query='id:%s' % filename, facet='false')
             import_solr.request()
             thedata = json.loads(import_solr.results[0].get('dump')[0])
@@ -3566,7 +2984,7 @@ def import_solr_dump(filename=''):
 
 
 def _update_data(doc):
-    form = PUBTYPE2FORM.get(doc.get('pubtype')).from_json(doc)
+    form = display_vocabularies.PUBTYPE2FORM.get(doc.get('pubtype')).from_json(doc)
     return _record2solr(form, action='update')
 
 
@@ -3596,7 +3014,7 @@ def update_solr_dump(filename=''):
     type = ''
     if request.method == 'GET':
         if filename:
-            update_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+            update_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT,
                                application=secrets.SOLR_APP, core='hb2_users', query='id:%s' % filename, facet='false')
             update_solr.request()
             thedata = json.loads(update_solr.results[0].get('dump')[0])
@@ -3644,23 +3062,496 @@ def delete_dump(record_id=''):
     if current_user.role != 'superadmin':
         flash(gettext('For SuperAdmins ONLY!!!'))
         return redirect(url_for('homepage'))
-    delete_record_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+    delete_record_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT,
                               application=secrets.SOLR_APP, core='hb2_users', del_id=record_id)
     delete_record_solr.delete()
 
     return jsonify({'deleted': True})
 
 
-@app.route('/retrieve/related_items/<relation>/<record_ids>')
-def show_related_item(relation='', record_ids=''):
-    query = '{!terms f=id}%s' % record_ids
-    if ',' not in record_ids:
-        query = 'id:%s' % record_ids
-    relation_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
-                         application=secrets.SOLR_APP, query=query, facet='false')
-    relation_solr.request()
+########################################################################################################################
+# ORCID
+########################################################################################################################
 
-    return jsonify({'relation': relation, 'docs': relation_solr.results})
+class OrcidForm(Form):
+    read_limited = BooleanField(lazy_gettext('read limited'), validators=[Optional()], default='checked')
+    update_activities = BooleanField(lazy_gettext('update activities'), validators=[Optional()], default='checked')
+    update_orcid_bio = BooleanField(lazy_gettext('update ORCID biography'), validators=[Optional()], default='checked')
+
+
+@app.route('/orcid2name/<orcid_id>')
+@login_required
+def orcid2name(orcid_id=''):
+    if orcid_id:
+        bio = requests.get('https://pub.orcid.org/%s/orcid-bio/' % orcid_id,
+                           headers={'Accept': 'application/json'}).json()
+        # logging.info(bio.get('orcid-profile').get('orcid-bio').get('personal-details').get('family-name'))
+    return jsonify({'name': '%s, %s' % (
+    bio.get('orcid-profile').get('orcid-bio').get('personal-details').get('family-name').get('value'),
+    bio.get('orcid-profile').get('orcid-bio').get('personal-details').get('given-names').get('value'))})
+
+
+@app.route('/orcid', methods=['GET', 'POST'])
+@login_required
+def orcid_start():
+
+    if request.method == 'POST':
+        read_limited = request.form.get('read_limited', False)
+        update_activities = request.form.get('update_activities', False)
+        update_orcid_bio = request.form.get('update_orcid_bio', False)
+
+        # scope params
+        orcid_scopes = []
+        if read_limited:
+            orcid_scopes.append('/read-limited')
+        if update_activities:
+            orcid_scopes.append('/activities/update')
+        if update_orcid_bio:
+            orcid_scopes.append('/orcid-bio/update')
+
+        if len(orcid_scopes) == 0:
+            flash(gettext('You haven\'t granted any of the scopes!'), 'error')
+            return redirect(url_for('orcid_start'))
+        else:
+            # write selected scopes to hb2_users
+            user_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT,
+                             application=secrets.SOLR_APP, core='hb2_users',
+                             data=[{'id': current_user.id, 'orcidscopes': {'set': orcid_scopes}}], facet='false')
+            user_solr.update()
+            # try to get authorization code
+            logging.info('current_user.affiliation = %s' % current_user.affiliation)
+            sandbox = secrets.orcid_app_data.get(current_user.affiliation).get('sandbox')
+            client_id = secrets.orcid_app_data.get(current_user.affiliation).get('sandbox_client_id')
+            client_secret = secrets.orcid_app_data.get(current_user.affiliation).get('sandbox_client_secret')
+            if not sandbox:
+                client_id = secrets.orcid_app_data.get(current_user.affiliation).get('client_id')
+                client_secret = secrets.orcid_app_data.get(current_user.affiliation).get('client_secret')
+
+            api = orcid.MemberAPI(client_id, client_secret, sandbox=sandbox)
+
+            url = api.get_login_url(orcid_scopes, '%s%s' % (secrets.APP_BASE_URL, url_for('orcid_login')),
+                                    email=current_user.email)
+            return redirect(url)
+
+    # get ORCID and Token from Solr
+    user_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, application=secrets.SOLR_APP, core='hb2_users',
+                     query='id:%s' % current_user.id, facet='false')
+    user_solr.request()
+
+    if user_solr.count() > 0:
+
+        # flash(user_solr.results[0])
+
+        orcid_id = ''
+        if user_solr.results[0].get('orcidid'):
+            orcid_id = user_solr.results[0].get('orcidid')
+        orcid_access_token = ''
+        if user_solr.results[0].get('orcidaccesstoken'):
+            orcid_access_token = user_solr.results[0].get('orcidaccesstoken')
+        orcid_refresh_token = ''
+        if user_solr.results[0].get('orcidrefreshtoken'):
+            orcid_refresh_token = user_solr.results[0].get('orcidrefreshtoken')
+        orcid_token_revoked = False
+        if user_solr.results[0].get('orcidtokenrevoked'):
+            orcid_token_revoked = user_solr.results[0].get('orcidtokenrevoked')
+
+        # flash('%s, %s, %s, %s' % (orcid_id, orcid_access_token, orcid_refresh_token, orcid_token_revoked))
+
+        is_linked = False
+        if len(orcid_id) > 0 and len(orcid_access_token) > 0 and not orcid_token_revoked:
+            is_linked = True
+            # flash('You are already linked to ORCID!')
+
+        if is_linked:
+            sandbox = secrets.orcid_app_data.get(current_user.affiliation).get('sandbox')
+            client_id = secrets.orcid_app_data.get(current_user.affiliation).get('sandbox_client_id')
+            client_secret = secrets.orcid_app_data.get(current_user.affiliation).get('sandbox_client_secret')
+            if not sandbox:
+                client_id = secrets.orcid_app_data.get(current_user.affiliation).get('client_id')
+                client_secret = secrets.orcid_app_data.get(current_user.affiliation).get('client_secret')
+
+            api = orcid.MemberAPI(client_id, client_secret, sandbox=sandbox)
+
+            try:
+                member_info = api.read_record_member(orcid_id=orcid_id, request_type='activities',
+                                                     token=orcid_access_token)
+                # TODO show linking information
+                # flash('You have granted us rights to update your ORCID profile! %s' % current_user.orcidscopes)
+            except RequestException as e:
+                orcid_token_revoked = True
+                # write true to hb2_users for orcidtokenrevoked field
+                user_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT,
+                                 application=secrets.SOLR_APP, core='hb2_users',
+                                 data=[{'id': current_user.id, 'orcidtokenrevoked': {'set': 'true'}}], facet='false')
+                user_solr.update()
+                flash('Your granted rights to ORCID are revoked!', 'danger')
+        else:
+            is_linked = False
+            # flash('You are not linked to ORCID!', 'warning')
+
+        form = OrcidForm()
+
+        return render_template('orcid.html', form=form, header=lazy_gettext('ORCID'), site=theme(request.access_route),
+                               is_linked=is_linked, token_revoked=orcid_token_revoked,
+                               orcid_scopes=current_user.orcidscopes)
+
+
+@app.route('/orcid/register', methods=['GET', 'POST'])
+@login_required
+def orcid_login():
+    code = request.args.get('code', '')
+
+    sandbox = secrets.orcid_app_data.get(current_user.affiliation).get('sandbox')
+    client_id = secrets.orcid_app_data.get(current_user.affiliation).get('sandbox_client_id')
+    client_secret = secrets.orcid_app_data.get(current_user.affiliation).get('sandbox_client_secret')
+    if not sandbox:
+        client_id = secrets.orcid_app_data.get(current_user.affiliation).get('client_id')
+        client_secret = secrets.orcid_app_data.get(current_user.affiliation).get('client_secret')
+
+    api = orcid.MemberAPI(client_id, client_secret, sandbox=sandbox)
+
+    if code == '':
+        user_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT,
+                         application=secrets.SOLR_APP, core='hb2_users',
+                         data=[{'id': current_user.id, 'orcidtokenrevoked': {'set': 'true'}}], facet='false')
+        user_solr.update()
+        flash(gettext('You haven\'t granted the selected rights.!'), 'error')
+        return redirect(url_for('orcid_start'))
+    else:
+        try:
+            token = api.get_token_from_authorization_code(code, '%s%s' % (secrets.APP_BASE_URL, url_for('orcid_login')))
+            orcid_id = token.get('orcid')
+
+            # add orcid_id to person if exists. if not exists person then create an entity
+            try:
+                query = 'email:%s' % current_user.email
+                person_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT,
+                                   application=secrets.SOLR_APP, core='person', query=query, facet='false',
+                                   fields=['wtf_json'])
+                person_solr.request()
+                if len(person_solr.results) == 0:
+                    logging.info('keine Treffer zu email in person: %s' % current_user.email)
+                for idx1, doc in enumerate(person_solr.results):
+                    myjson = json.loads(doc.get('wtf_json'))
+                    logging.info('id: %s' % myjson.get('id'))
+                    lock_record_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT,
+                                            application=secrets.SOLR_APP, core='person',
+                                            data=[{'id': myjson.get('id'), 'locked': {'set': 'true'}}])
+                    lock_record_solr.update()
+
+                    edit_person_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT,
+                                            application=secrets.SOLR_APP, query='id:%s' % myjson.get('id'),
+                                            core='person', facet='false')
+                    edit_person_solr.request()
+
+                    thedata = json.loads(edit_person_solr.results[0].get('wtf_json'))
+
+                    form = PersonAdminForm.from_json(thedata)
+                    form.changed.data = str(datetime.datetime.now())
+                    form.orcid.data = orcid_id
+
+                    _person2solr(form, action='update')
+                    unlock_record_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT,
+                                              application=secrets.SOLR_APP, core='person',
+                                              data=[{'id': myjson.get('id'), 'locked': {'set': 'false'}}])
+                    unlock_record_solr.update()
+
+                    # add orcid_token_data to hb2_users; orcid_token_revoked = True
+                    tmp = {
+                        'id': current_user.id,
+                        'orcidid': {'set': orcid_id},
+                        'orcidaccesstoken': {'set': token.get('access_token')},
+                        'orcidrefreshtoken': {'set': token.get('refresh_token')},
+                        'orcidtokenrevoked': {'set': 'false'}
+                    }
+                    user_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT,
+                                     application=secrets.SOLR_APP, core='hb2_users',
+                                     data=[tmp], facet='false')
+                    user_solr.update()
+
+                    # if current_user.orcid_scopes contains 'update_activities'
+                    if '/activities/update' in current_user.orcidscopes:
+                        # add institution to employment if not already existing
+                        doit = True
+                        member_info = api.read_record_member(orcid_id=orcid_id, request_type='activities', token=token.get('access_token'))
+                        if member_info.get('employments'):
+                            for orga in member_info.get('employments').get('employment-summary'):
+                                affilliation = {
+                                    'organization': {
+                                        'address': orga.get('organization').get('address'),
+                                        'name': orga.get('organization').get('name')
+                                    }
+                                }
+                                if json.dumps(secrets.orcid_app_data.get(current_user.affiliation).get('organization')) == json.dumps(affilliation):
+                                    doit = False
+                        if doit:
+                            api.add_record(orcid_id=orcid_id, token=token.get('access_token'), request_type='employment',
+                                           data=secrets.orcid_app_data.get(current_user.affiliation).get('organization'))
+
+            except AttributeError as e:
+                logging.error(e)
+            flash(gettext('Your institutional account %s is now linked to your ORCID!' % orcid_id))
+            # flash(gettext('The response: %s' % token))
+            # flash(gettext('We added the following data to our system: {%s, %s}!' % (token.get('access_token'), token.get('refresh_token'))))
+            return redirect(url_for('orcid_start'))
+        except RequestException as e:
+            logging.error(e.response.text)
+            flash(gettext('ORCID-ERROR: %s' % e.response.text), 'error')
+            return redirect(url_for('orcid_start'))
+
+
+########################################################################################################################
+# LOGIN / LOGOUT
+########################################################################################################################
+
+
+class UserNotFoundError(Exception):
+    pass
+
+
+class User(UserMixin):
+    def __init__(self, id, role='', name='', email='', accesstoken='', gndid='', orcidid='', orcidaccesstoken='',
+                 orcidrefreshtoken='', orcidtokenrevoked=False, affiliation='', orcidscopes=[]):
+        self.id = id
+        self.name = name
+        self.role = role
+        self.email = email
+        self.gndid = gndid
+        self.accesstoken = accesstoken
+        self.affiliation = affiliation
+        self.orcidid = orcidid
+        self.orcidscopes = orcidscopes
+        self.orcidaccesstoken = orcidaccesstoken
+        self.orcidrefreshtoken = orcidrefreshtoken
+        self.orcidtokenrevoked = orcidtokenrevoked
+
+        user_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT,
+                         application=secrets.SOLR_APP, core='hb2_users', query='id:%s' % id, facet='false')
+        user_solr.request()
+
+        if user_solr.count() > 0:
+            _user = user_solr.results[0]
+            self.name = _user.get('name')
+            self.role = _user.get('role')
+            self.email = _user.get('email')
+            self.gndid = _user.get('gndid')
+            self.accesstoken = _user.get('accesstoken')
+            self.affiliation = _user.get('affiliation')
+            self.orcidid = _user.get('orcidid')
+            self.orcidscopes = _user.get('orcidscopes')
+            self.orcidaccesstoken = _user.get('orcidaccesstoken')
+            self.orcidrefreshtoken = _user.get('orcidrefreshtoken')
+            self.orcidtokenrevoked = _user.get('orcidtokenrevoked')
+
+    def __repr__(self):
+        return '<User %s: %s>' % (self.id, self.name)
+
+    @classmethod
+    def get_user(self_class, id):
+        user_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                         application=secrets.SOLR_APP, core='hb2_users', query='id:%s' % id, facet='false')
+        user_solr.request()
+
+        return user_solr.results[0]
+
+    @classmethod
+    def get(self_class, id):
+        try:
+            return self_class(id)
+        except UserNotFoundError:
+            return None
+
+
+class LoginForm(Form):
+    username = StringField(lazy_gettext('Username'))
+    password = PasswordField(lazy_gettext('Password'))
+    wayf = HiddenField(lazy_gettext('Where Are You From?'))
+
+
+@login_manager.user_loader
+def load_user(id):
+    return User.get(id)
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        user = User(request.form.get('username'))
+        # user_info = user.get_user(request.form.get('username'))
+        next = get_redirect_target()
+        if request.form.get('wayf') == 'bochum':
+            authuser = requests.post('https://api.ub.rub.de/ldap/authenticate/',
+                                     data={'nocheck': 'true',
+                                           'userid': base64.b64encode(request.form.get('username').encode('ascii')),
+                                           'passwd': base64.b64encode(
+                                               request.form.get('password').encode('ascii'))}).json()
+            # logging.info(authuser)
+            if authuser.get('email'):
+                user_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                                 application=secrets.SOLR_APP, core='hb2_users', query='id:%s' % authuser.get('id'),
+                                 facet='false')
+                user_solr.request()
+                if user_solr.count() == 0:
+                    tmp = {}
+                    accesstoken = make_secure_token(
+                        base64.b64encode(request.form.get('username').encode('ascii')) + base64.b64encode(
+                            request.form.get('password').encode('ascii')))
+
+                    # new user data for solr
+                    tmp.setdefault('id', request.form.get('username').encode('ascii'))
+                    tmp.setdefault('name', '%s %s' % (authuser.get('given_name'), authuser.get('last_name')))
+                    tmp.setdefault('email', authuser.get('email'))
+                    if user.role == '' or user.role == 'user':
+                        tmp.setdefault('role', 'user')
+                    else:
+                        tmp.setdefault('role', user.role)
+                    tmp.setdefault('accesstoken', accesstoken)
+                    tmp.setdefault('affiliation', 'rub')
+                    tmp.setdefault('orcidid', user.orcidid)
+                    tmp.setdefault('orcidscopes', user.orcidscopes)
+                    tmp.setdefault('orcidaccesstoken', user.orcidaccesstoken)
+                    tmp.setdefault('orcidrefreshtoken', user.orcidrefreshtoken)
+                    tmp.setdefault('orcidtokenrevoked', user.orcidtokenrevoked)
+
+                    new_user_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT,
+                                         application=secrets.SOLR_APP, core='hb2_users', data=[tmp], facet='false')
+                    new_user_solr.update()
+
+                    # update user data for login
+                    user.name = '%s %s' % (authuser.get('given_name'), authuser.get('last_name'))
+                    user.email = authuser.get('email')
+                    user.accesstoken = accesstoken
+                    user.id = authuser.get('id')
+                    user.affiliation = 'rub'
+
+                login_user(user)
+
+                return redirect(next or url_for('homepage'))
+            else:
+                flash(gettext("Username and Password Don't Match"), 'danger')
+                return redirect('login')
+        elif request.form.get('wayf') == 'dortmund':
+            authuser = requests.post('https://api.ub.tu-dortmund.de/paia/auth/login',
+                                     data={
+                                         'username': request.form.get('username').encode('ascii'),
+                                         'password': request.form.get('password').encode('ascii'),
+                                         'grant_type': 'password',
+                                     },
+                                     headers={'Accept': 'application/json', 'Content-type': 'application/json'}).json()
+            # logging.info(authuser)
+            if authuser.get('access_token'):
+                user_info = requests.get('https://api.ub.tu-dortmund.de/paia/core/%s' % authuser.get('patron'),
+                                         headers={
+                                             'Accept': 'application/json',
+                                             'Authorization': '%s %s' % (
+                                             authuser.get('token_type'), authuser.get('access_token'))
+                                         }).json()
+                # logging.info(user_info)
+                user_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
+                                 application=secrets.SOLR_APP, core='hb2_users',
+                                 query='accesstoken:%s' % authuser.get('access_token'), facet='false')
+                user_solr.request()
+                if user_solr.count() == 0:
+
+                    # new user data for solr
+                    tmp = {}
+                    tmp.setdefault('id', user_info.get('username'))
+                    tmp.setdefault('name', user_info.get('name'))
+                    tmp.setdefault('email', user_info.get('email'))
+                    # TODO for repo: get faculty information
+                    # TODO https://bitbucket.org/beno/python-sword2/wiki/Home
+                    if user.role == '' or user.role == 'user':
+                        tmp.setdefault('role', 'user')
+                    else:
+                        tmp.setdefault('role', user.role)
+                    tmp.setdefault('accesstoken', authuser.get('access_token'))
+                    tmp.setdefault('affiliation', 'tudo')
+                    tmp.setdefault('orcidid', user.orcidid)
+                    tmp.setdefault('orcidscopes', user.orcidscopes)
+                    tmp.setdefault('orcidaccesstoken', user.orcidaccesstoken)
+                    tmp.setdefault('orcidrefreshtoken', user.orcidrefreshtoken)
+                    tmp.setdefault('orcidtokenrevoked', user.orcidtokenrevoked)
+
+                    new_user_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT,
+                                         application=secrets.SOLR_APP, core='hb2_users', data=[tmp], facet='false')
+                    new_user_solr.update()
+
+                    # update user data for login
+                    user.name = user_info.get('name')
+                    user.email = user_info.get('email')
+                    user.accesstoken = authuser.get('access_token')
+                    user.id = user_info.get('username')
+                    user.affiliation = 'tudo'
+
+                login_user(user)
+
+                return redirect(next or url_for('homepage'))
+            else:
+                flash(gettext("Username and Password Don't Match"), 'danger')
+                return redirect('login')
+
+    form = LoginForm()
+    next = get_redirect_target()
+    # return render_template('login.html', form=form, header='Sign In', next=next, orcid_sandbox_client_id=orcid_sandbox_client_id)
+    return render_template('login.html', form=form, header='Sign In', next=next, site=theme(request.access_route))
+
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect('homepage')
+
+
+ORCID_RE = re.compile('\d{4}-\d{4}-\d{4}-\d{4}')
+
+
+########################################################################################################################
+# BASICS
+########################################################################################################################
+
+
+def is_safe_url(target):
+    ref_url = parse.urlparse(request.host_url)
+    test_url = parse.urlparse(parse.urljoin(request.host_url, target))
+    return test_url.scheme in ('http', 'https') and ref_url.netloc == test_url.netloc
+
+
+def get_redirect_target():
+    for target in request.values.get('next'), request.referrer:
+        if not target:
+            continue
+        if is_safe_url(target):
+            return target
+
+
+def redirect_back(endpoint, **values):
+    target = request.form['next']
+    if not target or not is_safe_url(target):
+        target = url_for(endpoint, **values)
+    return redirect(target)
+
+
+@socketio.on('lock', namespace='/hb2')
+def lock_message(message):
+    print('Locked ' + message.get('data'))
+    emit('locked', {'data': message['data']}, broadcast=True)
+
+
+@socketio.on('unlock', namespace='/hb2')
+def unlock_message(message):
+    print(message)
+    # resp = requests.get('http://127.0.0.1:8983/solr/hb2/query?q=id:%s&fl=editorial_status&omitHeader=true' % message.get('data')).json()
+    # status = resp.get('response').get('docs')[0].get('editorial_status')
+    # print(status)
+    print('Unlocked ' + message.get('data'))
+    # emit('unlocked', {'data': {'id': message.get('data'), 'status': status}}, broadcast=True)
+    emit('unlocked', {'data': message.get('data')}, broadcast=True)
+
+
+@socketio.on('connect', namespace='/hb2')
+def connect():
+    emit('my response', {'data': 'connected'})
 
 
 @app.route('/contact')

@@ -29,7 +29,7 @@ from wtforms.validators import DataRequired, UUID, URL, Email, Optional, Length,
 from wtforms.widgets import TextInput
 from re import IGNORECASE
 import pyisbn
-import vocabularies
+import forms_vocabularies
 
 def Isbn(form, field):
     theisbn = pyisbn.Isbn(field.data.strip())
@@ -61,7 +61,7 @@ class TableOfContentsForm(Form):
 
 class AbstractForm(URIForm):
     content = TextAreaField(lazy_gettext('Abstract'), validators=[Optional()])
-    language = SelectField(lazy_gettext('Language'), validators=[Optional()], choices=vocabularies.LANGUAGES)
+    language = SelectField(lazy_gettext('Language'), validators=[Optional()], choices=forms_vocabularies.LANGUAGES)
     shareable = BooleanField(lazy_gettext('Shareable'), validators=[Optional()], description=lazy_gettext('I hereby declare that I own the rights to publish this abstract.'))
 
 
@@ -83,7 +83,7 @@ class PersonForm(Form):
 
 
 class PatentPersonForm(PersonForm):
-    role = SelectMultipleField(lazy_gettext('Role'), choices=vocabularies.PATENT_PERS_ROLES)
+    role = SelectMultipleField(lazy_gettext('Role'), choices=forms_vocabularies.PATENT_PERS_ROLES)
 
 
 class PersonAsEditorForm(PersonForm):
@@ -101,7 +101,7 @@ class PersonAsEditorForm(PersonForm):
 
 class OpenAccessForm(Form):
     project_identifier = StringField(lazy_gettext('Project Identifier'), validators=[URL(), Optional()], widget=CustomTextInput(placeholder=lazy_gettext('e.g. http://purl.org/info:eu-repo/grantAgreement/EC/FP7/12345P')))
-    project_type = SelectField(lazy_gettext('Project Type'), choices=vocabularies.PROJECT_TYPES, validators=[Optional()])
+    project_type = SelectField(lazy_gettext('Project Type'), choices=forms_vocabularies.PROJECT_TYPES, validators=[Optional()])
     publication_version = SelectField(lazy_gettext('Publication Version'), choices=[
         ('', lazy_gettext('Select a Publication Version')),
         ('accepted', lazy_gettext('Accepted')),
@@ -162,7 +162,7 @@ class MembershipForm(SEDForm):
 
 class ProjectForm(SEDForm):
     project_id = StringField(lazy_gettext('Project ID'), validators=[Optional()])
-    project_type = SelectField('Project Type', choices=vocabularies.PROJECT_TYPES, validators=[Optional()])
+    project_type = SelectField('Project Type', choices=forms_vocabularies.PROJECT_TYPES, validators=[Optional()])
 
 
 class AffiliationForm(SEDForm):
@@ -252,7 +252,7 @@ class PersonAdminForm(Form):
     arxiv_id = StringField(lazy_gettext('ArXiv Author ID'), validators=[Optional()], description=Markup(lazy_gettext('<a href="http://arxiv.org/find" target="_blank">Find in ArXiv Author ID</a>')))
     research_interest = FieldList(StringField(lazy_gettext('Research Interest')), validators=[Optional()], min_entries=1)
 
-    status = SelectMultipleField(lazy_gettext('Status'), choices=vocabularies.PERS_STATUS_MAP, description=lazy_gettext('Choose one or more Status'))
+    status = SelectMultipleField(lazy_gettext('Status'), choices=forms_vocabularies.PERS_STATUS_MAP, description=lazy_gettext('Choose one or more Status'))
 
     note = TextAreaField(lazy_gettext('Note'), validators=[Optional()],
                              description=lazy_gettext('Commentary on the person'))
@@ -338,8 +338,8 @@ class OrgaAdminForm(Form):
     correction_request = StringField(lazy_gettext('Correction Request'))
     owner = FieldList(StringField(lazy_gettext('Owner')), min_entries=1)
     editorial_status = SelectField(lazy_gettext('Editorial Status'), validators=[DataRequired()],
-                                   choices=vocabularies.EDITORIAL_STATUS, default='new')
-    catalog = SelectMultipleField(lazy_gettext('Data Catalog'), validators=[DataRequired()], choices=vocabularies.CATALOGS,
+                                   choices=forms_vocabularies.EDITORIAL_STATUS, default='new')
+    catalog = SelectMultipleField(lazy_gettext('Data Catalog'), validators=[DataRequired()], choices=forms_vocabularies.CATALOGS,
                                   description=lazy_gettext('Choose one or more DataCatalog'))
     created = StringField(lazy_gettext('Record Creation Date'), widget=CustomTextInput(readonly='readonly'))
     changed = StringField(lazy_gettext('Record Change Date'), widget=CustomTextInput(readonly='readonly'))
@@ -379,8 +379,8 @@ class GroupAdminForm(Form):
     correction_request = StringField(lazy_gettext('Correction Request'))
     owner = FieldList(StringField(lazy_gettext('Owner')), min_entries=1)
     editorial_status = SelectField(lazy_gettext('Editorial Status'), validators=[DataRequired()],
-                                   choices=vocabularies.EDITORIAL_STATUS, default='new')
-    catalog = SelectMultipleField(lazy_gettext('Data Catalog'), validators=[DataRequired()], choices=vocabularies.CATALOGS,
+                                   choices=forms_vocabularies.EDITORIAL_STATUS, default='new')
+    catalog = SelectMultipleField(lazy_gettext('Data Catalog'), validators=[DataRequired()], choices=forms_vocabularies.CATALOGS,
                                   description=lazy_gettext('Choose one or more DataCatalog'))
     created = StringField(lazy_gettext('Record Creation Date'), widget=CustomTextInput(readonly='readonly'))
     changed = StringField(lazy_gettext('Record Change Date'), widget=CustomTextInput(readonly='readonly'))
@@ -395,7 +395,7 @@ class PersonProfileForm(PersonForm):
 
 class CorporationForm(Form):
     name = StringField(lazy_gettext('Name'))
-    role = SelectMultipleField(lazy_gettext('Role'), choices=vocabularies.CORP_ROLES)
+    role = SelectMultipleField(lazy_gettext('Role'), choices=forms_vocabularies.CORP_ROLES)
 
     gnd = StringField(lazy_gettext('GND'), validators=[Optional(), Regexp('(1|10)\d{7}[0-9X]|[47]\d{6}-\d|[1-9]\d{0,7}-[0-9X]|3\d{7}[0-9X]')], description=Markup(lazy_gettext('<a href="https://portal.d-nb.de/opac.htm?method=showOptions#top" target="_blank">Find in GND</a>')))
     viaf = StringField(lazy_gettext('VIAF'), validators=[Optional()])
@@ -405,11 +405,11 @@ class CorporationForm(Form):
 
 
 class PatentCorporationForm(CorporationForm):
-    role = SelectMultipleField(lazy_gettext('Role'), choices=vocabularies.PATENT_CORP_ROLES)
+    role = SelectMultipleField(lazy_gettext('Role'), choices=forms_vocabularies.PATENT_CORP_ROLES)
 
 
 class CorporationAsEditorForm(CorporationForm):
-    role = SelectMultipleField(lazy_gettext('Role'), choices=vocabularies.CORP_ROLES)
+    role = SelectMultipleField(lazy_gettext('Role'), choices=forms_vocabularies.CORP_ROLES)
     start_year = StringField(lazy_gettext('First Year'), validators=[Optional()])
     start_volume = StringField(lazy_gettext('First Volume'), validators=[Optional()])
     start_issue = StringField(lazy_gettext('First Issue'), validators=[Optional()])
@@ -475,7 +475,7 @@ class MonographRelationForm(ContainerRelationForm):
 class OtherTitleForm(Form):
     other_title = StringField(lazy_gettext('Other Title'), validators=[Optional()], widget=CustomTextInput(
         placeholder=lazy_gettext('translated title, parallel title or EST of the work')))
-    language = SelectField(lazy_gettext('Language'), validators=[Optional()], choices=vocabularies.LANGUAGES)
+    language = SelectField(lazy_gettext('Language'), validators=[Optional()], choices=forms_vocabularies.LANGUAGES)
 
 
 class WorkForm(Form):
@@ -486,14 +486,14 @@ class WorkForm(Form):
         placeholder=lazy_gettext('The title of the work')))
     subtitle = StringField(lazy_gettext('Subtitle'), validators=[Optional()], widget=CustomTextInput(
         placeholder=lazy_gettext('The subtitle of the work')))
-    language = FieldList(SelectField(lazy_gettext('Language'), validators=[Optional()], choices=vocabularies.LANGUAGES),
+    language = FieldList(SelectField(lazy_gettext('Language'), validators=[Optional()], choices=forms_vocabularies.LANGUAGES),
                          min_entries=1)
 
     title_supplement = StringField(lazy_gettext('Title Supplement'), validators=[Optional()], widget=CustomTextInput(
         placeholder=lazy_gettext('Additions to the title of the work')))
     other_title = FieldList(FormField(OtherTitleForm), min_entries=1)
     publication_status = SelectField(lazy_gettext('Publication Status'), validators=[DataRequired()],
-                                     choices=vocabularies.PUB_STATUS, default='published')
+                                     choices=forms_vocabularies.PUB_STATUS, default='published')
     version = SelectField(lazy_gettext('Version'), choices=[
         ('', lazy_gettext('Select a Version')),
         ('preprint', lazy_gettext('Preprint')),
@@ -527,10 +527,10 @@ class WorkForm(Form):
 
     abstract = FieldList(FormField(AbstractForm), min_entries=1)
     number_of_pages = StringField(lazy_gettext('Extent'), validators=[Optional()])
-    medium = SelectField(lazy_gettext('Medium'), validators=[Optional()], choices=vocabularies.CARRIER)
+    medium = SelectField(lazy_gettext('Medium'), validators=[Optional()], choices=forms_vocabularies.CARRIER)
     note = TextAreaField(lazy_gettext('Notes'), validators=[Optional()], widget=CustomTextInput(
         placeholder=lazy_gettext('Please put any information that does not fit other fields here.')))
-    license = SelectField(lazy_gettext('License'), choices=vocabularies.LICENSE_MAP)
+    license = SelectField(lazy_gettext('License'), choices=forms_vocabularies.LICENSE_MAP)
     license_text = StringField(lazy_gettext('Copyright'),
                                description=lazy_gettext("If you have granted the exclusive use of rights to a commercial service, please enter relevant information."))
     is_part_of = FieldList(FormField(IsPartOfForm), min_entries=1)
@@ -543,9 +543,9 @@ class WorkForm(Form):
     created = StringField(lazy_gettext('Record Creation Date'), widget=CustomTextInput(readonly='readonly'))
     changed = StringField(lazy_gettext('Record Change Date'), widget=CustomTextInput(readonly='readonly'))
     editorial_status = SelectField(lazy_gettext('Editorial Status'), validators=[DataRequired()],
-                                   choices=vocabularies.EDITORIAL_STATUS, default='new')
+                                   choices=forms_vocabularies.EDITORIAL_STATUS, default='new')
     owner = FieldList(StringField(lazy_gettext('Owner'), validators=[DataRequired()]), min_entries=1)
-    catalog = SelectMultipleField(lazy_gettext('Data Catalog'), validators=[DataRequired()], choices=vocabularies.CATALOGS,
+    catalog = SelectMultipleField(lazy_gettext('Data Catalog'), validators=[DataRequired()], choices=forms_vocabularies.CATALOGS,
                                   description=lazy_gettext('Choose one or more data catalog by clicking and pressing "strg"'))
     deskman = StringField(lazy_gettext('Deskman'), validators=[Optional()])
     apparent_dup = BooleanField(lazy_gettext('Apparent Duplicate'))
@@ -566,7 +566,7 @@ class SerialForm(PrintedWorkForm):
     ISSN = FieldList(StringField(lazy_gettext('ISSN'), widget=CustomTextInput(
         placeholder=lazy_gettext('e.g. 1932-6203'))), min_entries=1)
     ZDBID = StringField(lazy_gettext('ZDB-ID'), widget=CustomTextInput(placeholder=lazy_gettext('e.g. 2267670-3')))
-    frequency = SelectField(lazy_gettext('Frequency'), validators=[Optional()], choices=vocabularies.FREQUENCY)
+    frequency = SelectField(lazy_gettext('Frequency'), validators=[Optional()], choices=forms_vocabularies.FREQUENCY)
     external = BooleanField(lazy_gettext('External'))
 
     person = FieldList(FormField(PersonAsEditorForm), min_entries=1)
@@ -1564,7 +1564,7 @@ class ResearchDataForm(WorkForm):
     repository = StringField(lazy_gettext('Repository / Publisher'), validators=[Optional()])
     #key_publication = BooleanField(lazy_gettext('Key Publication'),
                                    #description=lazy_gettext('A very important title to be included on a special publication list.'))
-    resource_type = SelectField(lazy_gettext('Resource Type'), validators=[Optional()], choices=vocabularies.RESOURCE_TYPES,
+    resource_type = SelectField(lazy_gettext('Resource Type'), validators=[Optional()], choices=forms_vocabularies.RESOURCE_TYPES,
                                 description=lazy_gettext('The general type of a resource based on the vocabulary of DataCite.'))
     size = StringField(lazy_gettext('Size'), validators=[Optional()])
     format = StringField(lazy_gettext('Format'), validators=[Optional()])
@@ -1763,7 +1763,7 @@ class PatentFormNew(WorkForm):
     ipc_keyword = FieldList(FormField(IDLForm), min_entries=1)
 
     publication_status = SelectField(lazy_gettext('Publication Status'), validators=[DataRequired()],
-                                     choices=vocabularies.PUB_STATUS.append(('granted', lazy_gettext('Granted'))),
+                                     choices=forms_vocabularies.PUB_STATUS.append(('granted', lazy_gettext('Granted'))),
                                      default='granted')
     person = FieldList(FormField(PatentPersonForm), min_entries=1)
     corporation = FieldList(FormField(PatentCorporationForm), min_entries=1)

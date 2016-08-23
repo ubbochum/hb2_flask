@@ -41,11 +41,19 @@ orcid_sandbox_client_secret = ''
 
 orcid_app_data = {
     'tudo': {
+        'sandbox': True,
         'sandbox_client_id': '',
         'sandbox_client_secret': '',
         'client_id': '',
         'client_secret': '',
-        'affiliation_string': ''
+        'organization': {
+            'name': '',
+            'address': {
+                'city': '',
+                'region': '',
+                'country': ''
+            }
+        }
     }
 }
 
@@ -64,16 +72,10 @@ MODS_FILES_PATH = ''
 
 RESULTS_DIR = ''
 
-BACKUP_DIR = ''
+BACKUP_DIR = '..'
 
 SOLR_HOST = '127.0.0.1'
 SOLR_PORT = '8983'
-
-SOLR_MASTER_HOST = '127.0.0.1'
-SOLR_MASTER_PORT = '8983'
-
-SOLR_SLAVE_HOST = '127.0.0.1'
-SOLR_SLAVE_PORT = '8984'
 
 SOLR_APP = 'solr'
 SOLR_CORE = 'hb2'

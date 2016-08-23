@@ -3,20 +3,53 @@
 {% block site_content %}
     {{ super() }}
     <div class="row">
-        <div class="col-sm-offset-1 col-sm-10">
-            <h3>{{ _('ORCID') }}</h3>
-            <div class="col-sm-8">
-                <span style="color: #BDBDBD"> {{ _('Integrate with ORCID') }}</span></h4>
+        <div class="col-sm-10 col-sm-offset-1">
+            {% if not is_linked or token_revoked %}
+                <h2>{{ _('Integrate with ORCID') }}</h2>
                 <p>{{ _('With just a few clicks we will make you and your work individually recognisable on the web and in important data sources.') }}</p>
-            </div>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-sm-offset-1 col-sm-10">
-            <h3>{{ _('Link ORCID to Institutional Account') }}</h3>
-            <div class="col-sm-3">
-                <a class="btn btn-default btn-lg" href="{{ url_for('orcid_login') }}">{{ _('Do it!') }}</a><br/>
-            </div>
+                <form method="post" class="form-horizontal">
+                    {{ form.csrf_token }}
+                    <div class="form-group">
+                        {{ form.read_limited.label(class='col-sm-2 control-label') }}
+                        <div class="col-sm-6">
+                            {{ form.read_limited(class='checkbox') }}
+                        </div>
+                        <div class="clearfix"></div>
+                        <div class="col-sm-offset-2">
+                            <p class="help-block" style="margin-top: 8px;margin-left:15px;">{{ _('This scope is used to get access to read public and limited visibility items on an ORCID record.<br/>We will use this scope to read your publication data.') }}</p>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        {{ form.update_activities.label(class='col-sm-2 control-label') }}
+                        <div class="col-sm-6">
+                            {{ form.update_activities(class='checkbox') }}
+                        </div>
+                        <div class="clearfix"></div>
+                        <div class="col-sm-offset-2">
+                            <p class="help-block" style="margin-top: 8px;margin-left:15px;">{{ _('This scope is used to write, update and delete items in the education, employment, funding, works and peer-review sections of an ORCID record.<br/>We will use this scope to add new publications and a normalized description of your affiliation to your ORCID Profile.') }}</p>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        {{ form.update_orcid_bio.label(class='col-sm-2 control-label') }}
+                        <div class="col-sm-6">
+                            {{ form.update_orcid_bio(class='checkbox') }}
+                        </div>
+                        <div class="clearfix"></div>
+                        <div class="col-sm-offset-2">
+                            <p class="help-block" style="margin-top: 8px;margin-left:15px;">{{ _('This scope is used to write, update and delete items in the other-names, keywords, countries, researcher-urls, websites, and personal external identifiers sections of the record.<br/>We will user this scope only to add external identifiers such as the researcher id to your ORCID profile.') }}</p>
+                        </div>
+                    </div>
+                    <p>{{ _('If you click on "Do it", you will be redirected to the ORCID login page for authentication or registration and authorization of the above scopes. We will only request this marked scopes. Please be sure to check "Allow this permission until I revoke it." on the following page.') }}</p>
+                    <div class="form-group">
+                        <div class="col-sm-6">
+                            <button type="submit" class="btn btn-primary submit">{{ _('Do it!') }}</button>
+                        </div>
+                    </div>
+                </form>
+            {% else %}
+                <h2>{{ _('Linked with ORCID') }}</h2>
+                {{ _('You are currently linked to ORCID and have granted us rights to update your ORCID profile as follows:') }}<br/>{{ orcid_scopes }}
+            {% endif %}
         </div>
     </div>
 {% endblock %}
