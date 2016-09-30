@@ -16,9 +16,10 @@
                 {{ drill_down.boolean_filter('dfg', heading='DFG funded', target=target) }}
                 {{ drill_down.facets(facet_data.editorial_status, 'editorial_status', heading='Editorial Status', target=target) }}
                 {{ drill_down.facets(facet_data.publication_status, 'publication_status', heading='Publication Status', target=target) }}
-                {{ drill_down.facets(facet_data.deskman, 'deskman', heading='Deskman', target=target) }}
-                {{ drill_down.facets(facet_data.owner, 'owner', heading='Owner', target=target) }}
+                {# drill_down.facets(facet_data.deskman, 'deskman', heading='Deskman', target=target) #}
+                {# drill_down.facets(facet_data.owner, 'owner', heading='Owner', target=target) #}
                 {{ drill_down.boolean_filter('locked', heading='Locked Records', target=target) }}
+                {{ drill_down.boolean_filter('apparent_dup', heading='Apparent Duplicate', target=target) }}
             </div>
             <div class="col-sm-9">
                 {{ pagination.info }}
@@ -31,8 +32,8 @@
                             <td>#</td>
                             <td>{{ _('Editorial Status') }}</td>
                             <td>{{ _('Title') }}</td>
-                            <td>{{ _('Created') }}</td>
-                            <td>{{ _('Changed') }}</td>
+                            <td>{{ _('Created') }} <a href="{{ url_for('dashboard') }}?sort=recordCreationDate desc{% if filterquery %}{% for fq in filterquery %}&amp;filter={{ fq }}{% endfor %}{% endif %}"><i class="glyphicon glyphicon-triangle-top"></i></a>  <a href="{{ url_for('dashboard') }}?sort=recordCreationDate asc{% if filterquery %}{% for fq in filterquery %}&amp;filter={{ fq }}{% endfor %}{% endif %}"><i class="glyphicon glyphicon-triangle-bottom"></i></a></td>
+                            <td>{{ _('Changed') }} <a href="{{ url_for('dashboard') }}?sort=recordChangeDate desc{% if filterquery %}{% for fq in filterquery %}&amp;filter={{ fq }}{% endfor %}{% endif %}"><i class="glyphicon glyphicon-triangle-top"></i></a>  <a href="{{ url_for('dashboard') }}?sort=recordChangeDate asc{% if filterquery %}{% for fq in filterquery %}&amp;filter={{ fq }}{% endfor %}{% endif %}"><i class="glyphicon glyphicon-triangle-bottom"></i></a></td>
 {#                            <td>{{ _('Owner') }}</td>#}
 {#                            <td>{{ _('Deskman') }}</td>#}
                             <td>{{ _('Action') }}</td>

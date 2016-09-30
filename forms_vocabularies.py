@@ -51,6 +51,9 @@ LANGUAGES = [
     ('bos', lazy_gettext('Bosnian')),
     ('lit', lazy_gettext('Lithuanian')),
     ('slv', lazy_gettext('Slovenian')),
+    ('baq', lazy_gettext('Basque')),
+    ('gag', lazy_gettext('Galician')),
+    # Baskisch und Galicisch
 ]
 
 USER_ROLES = [
@@ -108,7 +111,7 @@ ADMIN_ROLES.extend([
     ('pmn', lazy_gettext('Production Manager')),
     ('prg', lazy_gettext('Programmer')),
     ('pro', lazy_gettext('Producer')),
-    ('red', lazy_gettext('Redactor')),
+    ('red', lazy_gettext('Redaktor')),
     ('sng', lazy_gettext('Singer')),
     ('spk', lazy_gettext('Speaker')),
     ('std', lazy_gettext('Set designer')),
@@ -123,19 +126,19 @@ USER_PUBTYPES = [
     ('ArticleJournal', lazy_gettext('Article in Journal')),
     ('Chapter', lazy_gettext('Chapter in...')),
     ('Collection', lazy_gettext('Collection')),
-    ('MultivolumeWork', lazy_gettext('MultivolumeWork')),
     ('Monograph', lazy_gettext('Monograph')),
-    ('Other', lazy_gettext('Other')),
-    ('Report', lazy_gettext('Report')),
-    ('Patent', lazy_gettext('Patent')),
-    ('Thesis', lazy_gettext('Thesis')),
-    ('Software', lazy_gettext('Software')),
-    ('ResearchData', lazy_gettext('Research Data')),
+    ('Report', lazy_gettext('Report / Other')),
+    ('ResearchData', lazy_gettext('Research Data including Software')),
 ]
 
-ADMIN_PUBTYPES = USER_PUBTYPES[:]
-
-ADMIN_PUBTYPES.extend([
+ADMIN_PUBTYPES = [
+    ('', lazy_gettext('Select a Publication Type')),
+    ('ArticleJournal', lazy_gettext('Article in Journal')),
+    ('Chapter', lazy_gettext('Chapter in...')),
+    ('Collection', lazy_gettext('Collection')),
+    ('Monograph', lazy_gettext('Monograph')),
+    ('Report', lazy_gettext('Report')),
+    ('ResearchData', lazy_gettext('Research Data including Software')),
     ('ArticleNewspaper', lazy_gettext('Article in Newspaper')),
     ('AudioVideoDocument', lazy_gettext('Audio or Video Document')),
     ('ChapterInLegalCommentary', lazy_gettext('Chapter in a Legal Commentary')),
@@ -146,12 +149,13 @@ ADMIN_PUBTYPES.extend([
     ('Lecture', lazy_gettext('Lecture')),
     ('LegalCommentary', lazy_gettext('Legal Commentary')),
     ('Newspaper', lazy_gettext('Newspaper')),
+    ('Patent', lazy_gettext('Patent')),
     ('PressRelease', lazy_gettext('Press Release')),
     ('RadioTVProgram', lazy_gettext('Radio or TV program')),
     ('Series', lazy_gettext('Series')),
     ('SpecialIssue', lazy_gettext('Special Issue')),
     ('Standard', lazy_gettext('Standard')),
-])
+]
 
 EDITORIAL_STATUS = [
     ('', lazy_gettext('Select an Editorial Status')),
@@ -260,9 +264,31 @@ PUB_STATUS = [
     ('unpublished', lazy_gettext('Unpublished'))
 ]
 
+PATENT_PUB_STATUS = PUB_STATUS
+
+PATENT_PUB_STATUS.extend([
+    ('granted', lazy_gettext('Granted'))
+])
+
 CATALOGS = [
     ('Ruhr-Universität Bochum', lazy_gettext('Ruhr-Universität Bochum')),
     ('Technische Universität Dortmund', lazy_gettext('Technische Universität Dortmund')),
     ('Temporäre Daten', lazy_gettext('Temporäre Daten')),
 ]
 
+RELATION_TYPES = [
+    ('', lazy_gettext('Select a Relation Type')),
+    ('cited', lazy_gettext('cited by this upload')),
+    ('is_cited_by', lazy_gettext('is cited by this upload')),
+    ('is_supplement_by', lazy_gettext('is supplement by this upload')),
+    ('is_supplement_to', lazy_gettext('is a supplement to this upload')),
+    ('is_referenced_by', lazy_gettext('is referenced by this upload')),
+    ('references', lazy_gettext('references this upload')),
+    ('is_previous_version_of', lazy_gettext('is previous version of this upload')),
+    ('is_new_version_of', lazy_gettext('is new version of this upload')),
+    ('has_part', lazy_gettext('has this upload as part')),
+    ('is_part_of', lazy_gettext('is part of this upload')),
+    ('is_created_by', lazy_gettext('is compiled/created by this upload')),
+    ('is_created_by', lazy_gettext('compiled/created this upload')),
+    ('identical', lazy_gettext('is identical to this upload')),
+]

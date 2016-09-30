@@ -137,7 +137,7 @@ class Solr(object):
             if len(self.facet_tree) > 0:
                 params += '&facet.pivot='
                 for field in self.facet_tree:
-                    #params += '&facet.pivot=%s,%s' % (self.facet_tree[0], self.facet_tree[1])
+                    # params += '&facet.pivot=%s,%s' % (self.facet_tree[0], self.facet_tree[1])
                     params += '%s,' % field
                 params = params[:-1]
         else:
@@ -148,20 +148,22 @@ class Solr(object):
                 params += '&boost=recip(ms(NOW/YEAR,year_boost),3.16e-11,1,1)'
             if self.writer == 'csv':
                 params += '&csv.separator=%s' % self.csv_separator
-            #logging.info(self.json_facet)
+            # logging.info(self.json_facet)
             if self.json_facet:
                 params += '&json.facet=%s' % (json.dumps(self.json_facet))
         if len(self.fquery) > 0:
             for fq in (self.fquery):
                 try:
-                    #params += '&fq=%s' % urllib.parse.unquote(fq.encode('utf8'))
-                    params += '&fq=%s' % urllib.parse.unquote(fq)
+                    # params += '&fq=%s' % urllib.parse.unquote(fq.encode('utf8'))
+                    val = urllib.parse.unquote(fq).replace('#', '\%23')
+                    # logging.info('%s >> %s' % (fq,val))
+                    params += '&fq=%s' % val
                 except UnicodeDecodeError:
                     params += '&fq=%s' % urllib.parse.unquote(fq)
         if self.sort:
-            #if self.cursor:
-                #params += '&sort=katkey+asc&cursorMark=%s' % self.cursor
-            #elif self.sort != 'score desc':
+            # if self.cursor:
+                # params += '&sort=katkey+asc&cursorMark=%s' % self.cursor
+            # elif self.sort != 'score desc':
             if self.sort != 'score desc':
                 params += '&sort=%s' % self.sort
         if len(self.fields) > 0:
@@ -175,9 +177,9 @@ class Solr(object):
                 self.writer, self.defType)
             # if self.boost_most_recent == 'true':
             #     params += '&boost=recip(ms(NOW/YEAR,year_boost),3.16e-11,1,1)'
-            #self.response = eval(urllib.request.urlopen('%s%s' % (url, mparams)).read())
-            #logging.info(url)
-            #logging.info(mparams)
+            # self.response = eval(urllib.request.urlopen('%s%s' % (url, mparams)).read())
+            # logging.info(url)
+            # logging.info(mparams)
             self.response = eval(requests.get('%s%s' % (url, mparams)).text)
             for mlt in self.response.get('moreLikeThis'):
                 self.mlt_results = self.response.get('moreLikeThis').get(mlt).get('docs')
@@ -196,12 +198,13 @@ class Solr(object):
             params += '&qf=%s' % self.queryField
         if self.stats == 'true':
             params += '&stats=true&stats.field=' + '&stats.field='.join(self.stats_fl)
+        # TODO 2016-09-20, hagbeck: the following line blocks OR queries
         params += '&q.op=AND'
 
         self.request_url = '%s%s' % (url, params)
-        #logging.fatal(iri_to_uri(self.request_url))
-        #logging.info(self.request_url)
-        if self.compress == True:
+        # logging.fatal(iri_to_uri(self.request_url))
+        # logging.info(self.request_url)
+        if self.compress:
             import urllib2
             import StringIO
             import gzip
@@ -215,23 +218,23 @@ class Solr(object):
 
             self.response = eval(gzipper.read())
         else:
-            #logging.error(self.request_url)
+            # logging.error(self.request_url)
             try:
-                #self.response = eval(urllib.request.urlopen(iri_to_uri(self.request_url)).read())
+                # self.response = eval(urllib.request.urlopen(iri_to_uri(self.request_url)).read())
                 self.response = eval(requests.get(iri_to_uri(self.request_url)).text)
             except NameError:
-                #self.response = urllib.request.urlopen(iri_to_uri(self.request_url)).read()
+                # self.response = urllib.request.urlopen(iri_to_uri(self.request_url)).read()
                 self.response = requests.get(iri_to_uri(self.request_url)).text
             except SyntaxError:
-                #self.response = urllib.request.urlopen(iri_to_uri(self.request_url)).read()
+                # self.response = urllib.request.urlopen(iri_to_uri(self.request_url)).read()
                 self.response = requests.get(iri_to_uri(self.request_url)).text
-            #self.response = eval(urllib.request.urlopen(self.request_url).read())
-        #logging.error(self.response)
+            # self.response = eval(urllib.request.urlopen(self.request_url).read())
+        # logging.error(self.response)
         try:
             self.results = self.response.get('response').get('docs')
         except AttributeError: # Grouped results...
-            #logging.fatal(e)
-            #logging.error(self.response)
+            # logging.fatal(e)
+            # logging.error(self.response)
             try:
                 if self.response.get('grouped'):
                     self.results = self.response.get('grouped').get(self.group_field[0]).get('groups')
@@ -239,11 +242,11 @@ class Solr(object):
                 pass
         if self.facet == 'true':
             self.facets = self.response.get('facet_counts').get('facet_fields')
-            #logging.info(self.facets)
+            # logging.info(self.facets)
         if len(self.facet_tree) > 0:
             self.tree = self.response.get('facet_counts').get('facet_pivot')
         if self.json_facet:
-            #logging.info(self.response.get('facets'))
+            # logging.info(self.response.get('facets'))
             self.facets = self.response.get('facets')
         if self.spellcheck == 'true' or self.handler.endswith('suggest'):
             try:
@@ -252,7 +255,7 @@ class Solr(object):
                 pass
         if self.omitHeader != 'true':
             self.qtime = float(self.response.get('responseHeader').get('QTime')) / 1000
-            #logging.error(self.qtime)
+            # logging.error(self.qtime)
 
     def suggest(self):
         url = 'http://%s:%s/%s/' % (self.host, self.port, self.application)
@@ -263,7 +266,7 @@ class Solr(object):
                                                                                self.suggest_query),
                                                                            self.writer, self.json_nl, self.omitHeader)
         self.request_url = '%s%s' % (url, params)
-        #self.response = eval(urllib.request.urlopen(iri_to_uri(self.request_url)).read())
+        # self.response = eval(urllib.request.urlopen(iri_to_uri(self.request_url)).read())
         self.response = eval(requests.get(iri_to_uri(self.request_url)).text)
         self.suggestions = self.response.get('spellcheck').get('suggestions')
 

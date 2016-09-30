@@ -21,8 +21,9 @@
         <div class="col-sm-3" id="facets">
             {{ drill_down.facets(facet_data.catalog, 'catalog', heading='Catalog', target=target) }}
             {{ drill_down.facets(facet_data.fparent, 'fparent', heading='PARENTS', target='groups') }}
-            {{ drill_down.facets(facet_data.destatis_id, 'destatis_id', heading='DESTATIS', target='groups') }}
             {{ drill_down.simple_filter('gnd', heading='GND', target='groups') }}
+            {{ drill_down.facets(facet_data.ffunder, 'ffunder', heading='Funds', target='groups') }}
+            {{ drill_down.facets(facet_data.destatis_id, 'destatis_id', heading='DESTATIS', target='groups') }}
             {{ drill_down.facets(facet_data.editorial_status, 'editorial_status', heading='Editorial Status', target='groups') }}
             {{ drill_down.facets(facet_data.deskman, 'deskman', heading='Deskman', target='groups') }}
             {{ drill_down.facets(facet_data.owner, 'owner', heading='Owner', target='groups') }}
@@ -37,8 +38,8 @@
                         <td>#</td>
                         <td>{{ _('Editorial Status') }}</td>
                         <td>{{ _('Working Group') }}</td>
-                        <td>{{ _('Created') }}</td>
-                        <td>{{ _('Changed') }}</td>
+                        <td>{{ _('Created') }} <a href="{{ url_for('groups') }}?sort=created desc{% if filterquery %}{% for fq in filterquery %}&amp;filter={{ fq }}{% endfor %}{% endif %}"><i class="glyphicon glyphicon-triangle-top"></i></a>  <a href="{{ url_for('groups') }}?sort=created asc{% if filterquery %}{% for fq in filterquery %}&amp;filter={{ fq }}{% endfor %}{% endif %}"><i class="glyphicon glyphicon-triangle-bottom"></i></a></td>
+                        <td>{{ _('Changed') }} <a href="{{ url_for('groups') }}?sort=changed desc{% if filterquery %}{% for fq in filterquery %}&amp;filter={{ fq }}{% endfor %}{% endif %}"><i class="glyphicon glyphicon-triangle-top"></i></a>  <a href="{{ url_for('groups') }}?sort=changed asc{% if filterquery %}{% for fq in filterquery %}&amp;filter={{ fq }}{% endfor %}{% endif %}"><i class="glyphicon glyphicon-triangle-bottom"></i></a></td>
                         <td>{{ _('Action') }}</td>
                     </tr>
                 </thead>

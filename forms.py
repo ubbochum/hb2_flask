@@ -59,8 +59,9 @@ class TableOfContentsForm(Form):
     toc = TextAreaField(lazy_gettext('Table of Contents in textform'), validators=[Optional()])
 
 
-class AbstractForm(URIForm):
+class AbstractForm(Form):
     content = TextAreaField(lazy_gettext('Abstract'), validators=[Optional()])
+    address = StringField(lazy_gettext('URL'), validators=[URL(), Optional()])
     language = SelectField(lazy_gettext('Language'), validators=[Optional()], choices=forms_vocabularies.LANGUAGES)
     shareable = BooleanField(lazy_gettext('Shareable'), validators=[Optional()], description=lazy_gettext('I hereby declare that I own the rights to publish this abstract.'))
 
@@ -80,6 +81,17 @@ class PersonForm(Form):
     tudo = BooleanField(lazy_gettext('TUDO member'), validators=[Optional()])
 
     admin_only = ['gnd', 'rubi', 'tudo']
+
+
+class PersonUserForm(Form):
+    name = StringField(lazy_gettext('Name'), validators=[Optional()],
+                       widget=CustomTextInput(placeholder=lazy_gettext('Name, Given name')))
+    gnd = HiddenField(validators=[Optional()])
+    orcid = HiddenField(validators=[Optional()])
+    # author = BooleanField(lazy_gettext('Author'), validators=[Optional()])
+    # editor = BooleanField(lazy_gettext('Editor'), validators=[Optional()])
+    corresponding_author = BooleanField(lazy_gettext('Corresponding Author'), validators=[Optional()],
+                                        description=lazy_gettext('The person handling the publication process'))
 
 
 class PatentPersonForm(PersonForm):
@@ -142,6 +154,14 @@ class SEDForm(Form):
 class IDLForm(Form):
     id = StringField(lazy_gettext('ID'), validators=[Optional()])
     label = StringField(lazy_gettext('Label'), validators=[Optional()])
+
+
+class FundsForm(Form):
+    organisation = StringField(lazy_gettext('Funds Administration'))
+    organisation_id = StringField(lazy_gettext('Funds Administration ID'),
+                                 description=lazy_gettext('e.g. GND ID of the Funds Administration'))
+    project_id = StringField(lazy_gettext('Funds Administration Project ID'),
+                             description=lazy_gettext('Project ID given by the Funds Administration'))
 
 
 class IssueForm(SEDForm):
@@ -221,26 +241,17 @@ class PersonAdminForm(Form):
         ('f', lazy_gettext('Mrs./Ms.')),
     ])
     name = StringField(lazy_gettext('Name'), widget=CustomTextInput(placeholder=lazy_gettext('Family Name, Given Name')))
-    former_name = StringField(lazy_gettext('Former Name'), validators=[Optional()],
-                              widget=CustomTextInput(placeholder=lazy_gettext('Family Name Only')),
-                              description=lazy_gettext(
-                                  'If you have more than one former names, please separate them by semicolon.'))
-    email = StringField(lazy_gettext('E-Mail'), validators=[Optional()],
-                        widget=CustomTextInput(placeholder=lazy_gettext('Your e-mail address')))
+    # TODO also_known_as
+    also_known_as = FieldList(StringField(lazy_gettext('Former Name'), validators=[Optional()]))
+    email = StringField(lazy_gettext('E-Mail (IDM)'), validators=[Optional()],
+                        widget=CustomTextInput(placeholder=lazy_gettext('Your institutional e-mail address')))
+    contact = StringField(lazy_gettext('E-Mail (Contact)'), validators=[Optional()],
+                          widget=CustomTextInput(placeholder=lazy_gettext('Your contact e-mail address')))
     account = FieldList(StringField(lazy_gettext('Account'), validators=[Optional(), Length(min=7, max=7)], widget=CustomTextInput(placeholder=lazy_gettext('Your 7-digit account number'))))
     dwid = StringField(lazy_gettext('Verwaltungs-ID'), validators=[Optional()])
     affiliation = FieldList(FormField(AffiliationForm), min_entries=1)
     group = FieldList(FormField(GroupForm), min_entries=1)
     url = FieldList(FormField(URLProfileForm), min_entries=1)
-    # entfernt nach Diskussion mit Datenschutzbeauftragten: thesis = FieldList(FormField(ThesisProfileForm), min_entries=1)
-    # image = FileField(lazy_gettext('Image'))
-
-    # membership = FieldList(FormField(MembershipForm), validators=[Optional()], min_entries=1)
-    # award = FieldList(FormField(AwardForm), validators=[Optional()], min_entries=1)
-    # cv = FieldList(FormField(CVForm), validators=[Optional()], min_entries=1)
-    # project = FieldList(FormField(ProjectForm), validators=[Optional()], min_entries=1)
-    # reviewer = FieldList(FormField(ReviewerForm), validators=[Optional()], min_entries=1)
-    # editor = FieldList(FormField(EditorForm), validators=[Optional()], min_entries=1)
 
     gnd = StringField(lazy_gettext('GND'), validators=[Optional(), Regexp('(1|10)\d{7}[0-9X]|[47]\d{6}-\d|[1-9]\d{0,7}-[0-9X]|3\d{7}[0-9X]')], description=Markup(lazy_gettext('<a href="https://portal.d-nb.de/opac.htm?method=showOptions#top" target="_blank">Find in GND</a>')))
     orcid = StringField(lazy_gettext('ORCID'), validators=[Optional()], description=Markup(lazy_gettext('<a href="https://orcid.org/orcid-search/search" target="_blank">Find in ORCID</a>')))
@@ -289,7 +300,8 @@ class PersonAdminForm(Form):
 
     def groups(self):
         yield [
-            {'group': [self.salutation, self.name, self.former_name, self.account, self.email, self.status,
+            {'group': [self.salutation, self.name, self.also_known_as, self.account, self.email, self.contact,
+                       self.status,
                        self.research_interest, self.url], 'label': lazy_gettext('Basic')},
             {'group': [self.gnd, self.orcid, self.dwid, self.viaf, self.isni, self.researcher_id, self.scopus_id,
                        self.arxiv_id], 'label': lazy_gettext('IDs')},
@@ -347,13 +359,14 @@ class OrgaAdminForm(Form):
     destatis = FieldList(FormField(DestatisForm), min_entries=1)
     # parents = FieldList(FormField(ParentForm), min_entries=1)
     children = FieldList(FormField(ChildForm), min_entries=1)
+    url = FieldList(FormField(URLProfileForm), min_entries=1)
 
     same_as = FieldList(StringField(lazy_gettext('Same As'), validators=[Optional()]), min_entries=1)
 
     def groups(self):
         yield [
             {'group': [self.pref_label, self.dwid, self.gnd, self.correction_request, self.start_date,
-                       self.end_date],
+                       self.end_date, self.url],
              'label': lazy_gettext('Basic')},
             {'group': [self.parent_id, self.parent_label],
              'label': lazy_gettext('Parent')},
@@ -370,8 +383,12 @@ class OrgaAdminForm(Form):
 class GroupAdminForm(Form):
     pref_label = StringField(lazy_gettext('Label'))
     id = StringField(lazy_gettext('Working Group ID'),
-                     description=lazy_gettext('An Working Group ID such as GND, ISNI or a URI'),
+                     description=lazy_gettext('A working group ID such as GND, ISNI or a URI'),
                      validators=[DataRequired()])
+    description = TextAreaField(lazy_gettext('Description'), validators=[Optional()], widget=CustomTextInput(
+        placeholder=lazy_gettext('Please put any information that does not fit other fields here.')))
+    funds = FieldList(FormField(FundsForm), min_entries=1)
+    url = FieldList(FormField(URLProfileForm), min_entries=1)
     parent_id = StringField(lazy_gettext('Parent ID'))
     parent_label = StringField(lazy_gettext('Parent Label'))
     start_date = StringField(lazy_gettext('Start Date'))
@@ -387,6 +404,23 @@ class GroupAdminForm(Form):
     deskman = StringField(lazy_gettext('Deskman'), validators=[Optional()], widget=CustomTextInput(admin_only='admin_only'))
     destatis = FieldList(FormField(DestatisForm), min_entries=1)
 
+    same_as = FieldList(StringField(lazy_gettext('Same As'), validators=[Optional()]), min_entries=1)
+
+    def groups(self):
+        yield [
+            {'group': [self.id, self.pref_label, self.description, self.start_date, self.end_date, self.url],
+             'label': lazy_gettext('Basic')},
+            {'group': [self.funds],
+             'label': lazy_gettext('Funds')},
+            {'group': [self.parent_id, self.parent_label],
+             'label': lazy_gettext('Parent')},
+            {'group': [self.destatis],
+             'label': lazy_gettext('Destatis')},
+            {'group': [self.id, self.created, self.changed, self.editorial_status, self.catalog, self.owner, self.deskman,
+                       self.same_as],
+             'label': lazy_gettext('Administrative')},
+        ]
+
 
 class PersonProfileForm(PersonForm):
     image = FileField(lazy_gettext('Image'))
@@ -400,6 +434,9 @@ class CorporationForm(Form):
     gnd = StringField(lazy_gettext('GND'), validators=[Optional(), Regexp('(1|10)\d{7}[0-9X]|[47]\d{6}-\d|[1-9]\d{0,7}-[0-9X]|3\d{7}[0-9X]')], description=Markup(lazy_gettext('<a href="https://portal.d-nb.de/opac.htm?method=showOptions#top" target="_blank">Find in GND</a>')))
     viaf = StringField(lazy_gettext('VIAF'), validators=[Optional()])
     isni = StringField(lazy_gettext('ISNI'), validators=[Optional()])
+
+    rubi = BooleanField(lazy_gettext('RUB member'), validators=[Optional()])
+    tudo = BooleanField(lazy_gettext('TUDO member'), validators=[Optional()])
 
     admin_only = ['gnd', 'viaf', 'isni']
 
@@ -416,6 +453,20 @@ class CorporationAsEditorForm(CorporationForm):
     end_year = StringField(lazy_gettext('Last Year'), validators=[Optional()])
     end_volume = StringField(lazy_gettext('Last Volume'), validators=[Optional()])
     end_issue = StringField(lazy_gettext('Last Issue'), validators=[Optional()])
+
+
+class EventForm(Form):
+    event_name = StringField(lazy_gettext('Name of the Event'), validators=[Optional()])
+    event_startdate = StringField(lazy_gettext('First day of the Event'),
+                                  validators=[Optional(), Regexp('[12]\d{3}-[01]\d-[0123]\d')],
+                                  widget=CustomTextInput(placeholder=lazy_gettext('YYYY-MM-DD')),
+                                  description=lazy_gettext("If you don't know the month and/or day please use 01"))
+    event_enddate = StringField(lazy_gettext('Last day of the Event'),
+                                validators=[Optional(), Regexp('[12]\d{3}-[01]\d-[0123]\d')],
+                                widget=CustomTextInput(placeholder=lazy_gettext('YYYY-MM-DD')),
+                                description=lazy_gettext("If you don't know the month and/or day please use 01"))
+    event_place = StringField(lazy_gettext('Location of the Event'), validators=[Optional()])
+    event_numbering = StringField(lazy_gettext('Numbering of the Event'), validators=[Optional()])
 
 
 class HasPartForm(Form):
@@ -480,8 +531,9 @@ class OtherTitleForm(Form):
 
 class WorkForm(Form):
     pubtype = SelectField(lazy_gettext('Type'), validators=[Optional()])
-    DOI = StringField(lazy_gettext('DOI'),
-                      validators=[Optional(), Regexp('^10\.[0-9]{4,}(?:\.[0-9]+)*\/[a-z0-9\-\._]+', IGNORECASE)])
+    DOI = FieldList(StringField(lazy_gettext('DOI'),
+                                validators=[Optional(), Regexp('^\s*10\.[0-9]{4,}(?:\.[0-9]+)*\/[a-z0-9\-\._\(\)]+', IGNORECASE, message=lazy_gettext('10.<NNNN>/<SOME-ID>'))]),
+                    min_entries=1)
     title = StringField(lazy_gettext('Title'), validators=[DataRequired()], widget=CustomTextInput(
         placeholder=lazy_gettext('The title of the work')))
     subtitle = StringField(lazy_gettext('Subtitle'), validators=[Optional()], widget=CustomTextInput(
@@ -506,7 +558,8 @@ class WorkForm(Form):
     person = FieldList(FormField(PersonForm), min_entries=1)
     corporation = FieldList(FormField(CorporationForm), min_entries=1)
 
-    uri = FieldList(StringField(lazy_gettext('Link to full text'), validators=[URL(), Optional()]), min_entries=1,
+    uri = FieldList(StringField(lazy_gettext('Link to full text'),
+                                validators=[URL(message=lazy_gettext('Is the URI starting with http:// or https:// or another schema?')), Optional()]), min_entries=1,
                     widget=CustomTextInput(placeholder=lazy_gettext('A URI, URL, or URN')))
     PMID = StringField(lazy_gettext('PubMed ID'), widget=CustomTextInput(placeholder=(lazy_gettext('e.g. 15894097'))))
     WOSID = StringField(lazy_gettext('Web of Science ID'), widget=CustomTextInput(
@@ -530,7 +583,7 @@ class WorkForm(Form):
     medium = SelectField(lazy_gettext('Medium'), validators=[Optional()], choices=forms_vocabularies.CARRIER)
     note = TextAreaField(lazy_gettext('Notes'), validators=[Optional()], widget=CustomTextInput(
         placeholder=lazy_gettext('Please put any information that does not fit other fields here.')))
-    license = SelectField(lazy_gettext('License'), choices=forms_vocabularies.LICENSE_MAP)
+    license = SelectField(lazy_gettext('License'), validators=[Optional()], choices=forms_vocabularies.LICENSE_MAP)
     license_text = StringField(lazy_gettext('Copyright'),
                                description=lazy_gettext("If you have granted the exclusive use of rights to a commercial service, please enter relevant information."))
     is_part_of = FieldList(FormField(IsPartOfForm), min_entries=1)
@@ -544,8 +597,8 @@ class WorkForm(Form):
     changed = StringField(lazy_gettext('Record Change Date'), widget=CustomTextInput(readonly='readonly'))
     editorial_status = SelectField(lazy_gettext('Editorial Status'), validators=[DataRequired()],
                                    choices=forms_vocabularies.EDITORIAL_STATUS, default='new')
-    owner = FieldList(StringField(lazy_gettext('Owner'), validators=[DataRequired()]), min_entries=1)
-    catalog = SelectMultipleField(lazy_gettext('Data Catalog'), validators=[DataRequired()], choices=forms_vocabularies.CATALOGS,
+    owner = FieldList(StringField(lazy_gettext('Owner')), min_entries=1)
+    catalog = SelectMultipleField(lazy_gettext('Data Catalog'), choices=forms_vocabularies.CATALOGS,
                                   description=lazy_gettext('Choose one or more data catalog by clicking and pressing "strg"'))
     deskman = StringField(lazy_gettext('Deskman'), validators=[Optional()])
     apparent_dup = BooleanField(lazy_gettext('Apparent Duplicate'))
@@ -560,13 +613,19 @@ class PrintedWorkForm(WorkForm):
     edition = StringField(lazy_gettext('Edition'), validators=[Optional()])
     table_of_contents = FieldList(FormField(TableOfContentsForm), min_entries=1)
     has_part = FieldList(FormField(HasPartForm), min_entries=1)
+    hbz_id = FieldList(StringField(lazy_gettext('HBZ-ID'), validators=[Optional()]), min_entries=1)
 
 
 class SerialForm(PrintedWorkForm):
+    subseries = StringField(lazy_gettext('Subseries'), validators=[Optional()], widget=CustomTextInput(
+        placeholder=lazy_gettext('The title of a subseries')))
     ISSN = FieldList(StringField(lazy_gettext('ISSN'), widget=CustomTextInput(
         placeholder=lazy_gettext('e.g. 1932-6203'))), min_entries=1)
-    ZDBID = StringField(lazy_gettext('ZDB-ID'), widget=CustomTextInput(placeholder=lazy_gettext('e.g. 2267670-3')))
-    frequency = SelectField(lazy_gettext('Frequency'), validators=[Optional()], choices=forms_vocabularies.FREQUENCY)
+    ZDBID = FieldList(StringField(lazy_gettext('ZDB-ID'),
+                                  widget=CustomTextInput(placeholder=lazy_gettext('e.g. 2267670-3'))),
+                      min_entries=1)
+    frequency = SelectField(lazy_gettext('Frequency'), validators=[Optional()],
+                            choices=forms_vocabularies.FREQUENCY)
     external = BooleanField(lazy_gettext('External'))
 
     person = FieldList(FormField(PersonAsEditorForm), min_entries=1)
@@ -581,7 +640,7 @@ class SeriesForm(SerialForm):
 
     def groups(self):
         yield [
-            {'group': [self.pubtype, self.publication_status, self.title, self.subtitle, self.language,
+            {'group': [self.pubtype, self.publication_status, self.title, self.subtitle, self.subseries, self.language,
                        self.title_supplement, self.other_title, self.number_of_volumes, self.publisher,
                        self.publisher_place, self.frequency, self.medium,
                        self.note, self.license, self.license_text, self.key_publication
@@ -611,7 +670,7 @@ class JournalForm(SerialForm):
 
     def groups(self):
         yield [
-            {'group': [self.pubtype, self.publication_status, self.title, self.subtitle,
+            {'group': [self.pubtype, self.publication_status, self.title, self.subtitle, self.subseries,
                        self.journal_abbreviation,
                        self.language, self.title_supplement, self.other_title, self.publisher,
                        self.publisher_place, self.frequency, self.medium,
@@ -642,12 +701,7 @@ class NewspaperForm(JournalForm):
 
 
 class ArticleForm(WorkForm):
-    parent_title = StringField(lazy_gettext('Parent Title'), validators=[Optional()], widget=CustomTextInput(
-        placeholder=lazy_gettext('The Title of the Parent Reference')))
-    parent_subtitle = StringField(lazy_gettext('Parent Subtitle'), validators=[Optional()], widget=CustomTextInput(
-        placeholder=lazy_gettext('The Subtitle of the Parent Reference')))
-
-    # user_only = ['parent_title', 'parent_subtitle']
+    pass
 
 
 class ArticleJournalForm(ArticleForm):
@@ -677,18 +731,7 @@ class ArticleJournalForm(ArticleForm):
     DFG = BooleanField(lazy_gettext('DFG Funded'), description=Markup(lazy_gettext('APCs funded by the DFG and the RUB OA Fund (<a href="https://github.com/OpenAPC/openapc-de/tree/master/data/rub">OpenAPC</a>)')))
     open_access = FormField(OpenAccessForm)
     other_version = FieldList(FormField(OtherVersionForm), min_entries=1)
-    event_name = StringField(lazy_gettext('Name of the event'), validators=[Optional()])
-    startdate_conference = StringField(lazy_gettext('First day of the event'),
-                                       validators=[Optional(), Regexp('[12]\d{3}-[01]\d-[0123]\d')],
-                                       widget=CustomTextInput(placeholder=lazy_gettext('YYYY-MM-DD')),
-                                       description=lazy_gettext("If you don't know the month and/or day please use 01"))
-    enddate_conference = StringField(lazy_gettext('Last day of the event'),
-                                     validators=[Optional(), Regexp('[12]\d{3}-[01]\d-[0123]\d')],
-                                     widget=CustomTextInput(placeholder=lazy_gettext('YYYY-MM-DD')),
-                                     description=lazy_gettext("If you don't know the month and/or day please use 01"))
-    event_place = StringField(lazy_gettext('Location of the event'), validators=[Optional()])
-    numbering = StringField(lazy_gettext('Numbering of the event'), validators=[Optional()])
-    table_of_contents = FieldList(FormField(TableOfContentsForm), min_entries=1)
+    event = FieldList(FormField(EventForm), min_entries=1)
 
     admin_only = ['gnd', 'viaf', 'isni']
 
@@ -704,10 +747,9 @@ class ArticleJournalForm(ArticleForm):
              'label': lazy_gettext('Person')},
             {'group': [self.corporation],
              'label': lazy_gettext('Corporation')},
-            {'group': [self.event_name, self.numbering, self.startdate_conference, self.enddate_conference,
-                       self.event_place],
+            {'group': [self.event],
              'label': lazy_gettext('Event')},
-            {'group': [self.parent_title, self.parent_subtitle, self.is_part_of],
+            {'group': [self.is_part_of],
              'label': lazy_gettext('Journal')},
             {'group': [self.other_version],
              'label': lazy_gettext('Other Version')},
@@ -724,22 +766,27 @@ class ArticleJournalForm(ArticleForm):
              'label': lazy_gettext('Administrative')},
         ]
 
+
+class ArticleJournalUserForm(ArticleJournalForm):
+    id = HiddenField(validators=[UUID(), Optional()])
+    created = HiddenField()
+    changed = HiddenField()
+    person = FieldList(FormField(PersonUserForm), min_entries=1)
+
     def simple_groups(self):
         yield [
-            {'group': [self.pubtype, self.publication_status, self.person, self.title, self.subtitle,
+            {'group': [self.pubtype, self.publication_status, self.title, self.subtitle,
                        self.language, self.issued, self.uri, self.DOI, self.peer_reviewed,
-                       self.key_publication],
+                       self.key_publication, self.note, self.id, self.created, self.changed],
              'label': lazy_gettext('Publication Details')},
-            {'group': [self.is_part_of, self.parent_title, self.parent_subtitle],
+            {'group': [self.person],
+             'label': lazy_gettext('Contributors')},
+            {'group': [self.is_part_of],
              'label': lazy_gettext('Journal')},
-            {'group': [self.keyword,
-                       self.mesh_subject, self.stw_subject, self.thesoz_subject],
+            {'group': [self.keyword],
              'label': lazy_gettext('Keywords')},
             {'group': [self.abstract],
              'label': lazy_gettext('Abstract')},
-            {'group': [self.id, self.catalog,
-                       self.created, self.changed, self.owner],
-             'label': lazy_gettext('Information on the Record')},
         ]
 
 
@@ -750,8 +797,7 @@ class ArticleNewspaperForm(ArticleForm):
         ('interview', lazy_gettext('Interview')),
     ])
     is_part_of = FieldList(FormField(NewspaperRelationForm), min_entries=1)
-
-    user_only = ['parent_title', 'parent_subtitle']
+    other_version = FieldList(FormField(OtherVersionForm), min_entries=1)
 
     def groups(self):
         yield [
@@ -766,8 +812,10 @@ class ArticleNewspaperForm(ArticleForm):
              'label': lazy_gettext('Person')},
             {'group': [self.corporation],
              'label': lazy_gettext('Corporation')},
-            {'group': [self.parent_title, self.parent_subtitle, self.is_part_of],
+            {'group': [self.is_part_of],
              'label': lazy_gettext('Newspaper')},
+            {'group': [self.other_version],
+             'label': lazy_gettext('Other Version')},
             {'group': [self.keyword, self.keyword_temporal, self.keyword_geographic, self.swd_subject, self.ddc_subject,
                        self.mesh_subject, self.stw_subject, self.lcsh_subject, self.thesoz_subject
                        ],
@@ -820,8 +868,6 @@ class SpecialIssueForm(JournalForm):
 
 class ContainerForm(PrintedWorkForm):
     number_of_volumes = StringField(lazy_gettext('Number of Volumes'), validators=[Optional()])
-    hbz_id = StringField(lazy_gettext('HBZ-ID'), validators=[Optional()])
-    # hbz_id = FieldList(StringField(lazy_gettext('HBZ-ID'), validators=[Optional(), Isbn]), min_entries=1)
     open_access = FormField(OpenAccessForm)
     external = BooleanField(lazy_gettext('External'))
     is_part_of = FieldList(FormField(ContainerRelationForm), min_entries=1)
@@ -843,6 +889,7 @@ class CollectionForm(ContainerForm):
         ('unpublished', lazy_gettext('Unpublished'))
     ], default='published')
     peer_reviewed = BooleanField(lazy_gettext('Peer Reviewed'))
+    author_editor = FieldList(FormField(PersonUserForm), min_entries=1)
 
     def groups(self):
         yield [
@@ -873,37 +920,34 @@ class CollectionForm(ContainerForm):
              'label': lazy_gettext('Administrative')},
         ]
 
+
+class CollectionUserForm(CollectionForm):
+    id = HiddenField()
+    created = HiddenField()
+    changed = HiddenField()
+    person = FieldList(FormField(PersonUserForm), min_entries=1)
+
     def simple_groups(self):
         yield [
-            {'group': [self.pubtype, self.publication_status, self.person, self.title, self.subtitle, self.language,
+            {'group': [self.pubtype, self.publication_status, self.title, self.subtitle, self.language,
                        self.issued, self.edition, self.number_of_volumes,
-                       self.publisher, self.publisher_place, self.uri, self.DOI, self.ISBN,
-                       self.note, self.peer_reviewed, self.key_publication],
+                       self.publisher, self.publisher_place,
+                       self.uri, self.DOI, self.ISBN, self.peer_reviewed, self.key_publication, self.note,
+                       self.id, self.created, self.changed],
              'label': lazy_gettext('Publication Details')},
-            {'group': [self.abstract],
-             'label': lazy_gettext('Abstract')},
-            {'group': [self.keyword,
-                       self.mesh_subject, self.stw_subject, self.thesoz_subject],
+            {'group': [self.person],
+             'label': lazy_gettext('Contributors')},
+            {'group': [self.keyword],
              'label': lazy_gettext('Keywords')},
-            {'group': [self.id, self.catalog,
-                       self.created, self.changed, self.owner],
-             'label': lazy_gettext('Information on the Record')},
+            {'group': [self.abstract],
+             'label':lazy_gettext('Abstract')},
         ]
 
 
 class ConferenceForm(CollectionForm):
-    event_name = StringField(lazy_gettext('Name of the event'), validators=[Optional()])
-    startdate_conference = StringField(lazy_gettext('First day of the event'),
-                                       validators=[Optional(), Regexp('[12]\d{3}-[01]\d-[0123]\d')],
-                                       widget=CustomTextInput(placeholder=lazy_gettext('YYYY-MM-DD')),
-                                       description=lazy_gettext("If you don't know the month and/or day please use 01"))
-    enddate_conference = StringField(lazy_gettext('Last day of the event'),
-                                     validators=[Optional(), Regexp('[12]\d{3}-[01]\d-[0123]\d')],
-                                     widget=CustomTextInput(placeholder=lazy_gettext('YYYY-MM-DD')),
-                                     description=lazy_gettext("If you don't know the month and/or day please use 01"))
-    place = StringField(lazy_gettext('Location of the event'), validators=[Optional()])
-    numbering = StringField(lazy_gettext('Numbering of the event'), validators=[Optional()])
+    event = FieldList(FormField(EventForm), min_entries=1)
     peer_reviewed = BooleanField(lazy_gettext('Peer Reviewed'))
+    # TODO event = FieldList(FormField(EventForm), min_entries=1)
 
     def groups(self):
         yield [
@@ -918,7 +962,7 @@ class ConferenceForm(CollectionForm):
              'label': lazy_gettext('Person')},
             {'group': [self.corporation],
              'label': lazy_gettext('Corporation')},
-            {'group': [self.event_name, self.numbering, self.startdate_conference, self.enddate_conference, self.place],
+            {'group': [self.event],
              'label': lazy_gettext('Event')},
             {'group': [self.is_part_of],
              'label': lazy_gettext('Is Part of')},
@@ -1043,18 +1087,7 @@ class ChapterForm(WorkForm):
         'APCs funded by the DFG and the RUB OA Fund (<a href="https://github.com/OpenAPC/openapc-de/tree/master/data/rub">OpenAPC</a>)')))
     is_part_of = FieldList(FormField(ChapterRelationForm), min_entries=1)
     other_version = FieldList(FormField(OtherVersionForm), min_entries=1)
-    event_name = StringField(lazy_gettext('Name of the event'), validators=[Optional()])
-    startdate_conference = StringField(lazy_gettext('First day of the event'),
-                                       validators=[Optional(), Regexp('[12]\d{3}-[01]\d-[0123]\d')],
-                                       widget=CustomTextInput(placeholder=lazy_gettext('YYYY-MM-DD')),
-                                       description=lazy_gettext("If you don't know the month and/or day please use 01"))
-    enddate_conference = StringField(lazy_gettext('Last day of the event'),
-                                     validators=[Optional(), Regexp('[12]\d{3}-[01]\d-[0123]\d')],
-                                     widget=CustomTextInput(placeholder=lazy_gettext('YYYY-MM-DD')),
-                                     description=lazy_gettext("If you don't know the month and/or day please use 01"))
-    event_place = StringField(lazy_gettext('Location of the event'), validators=[Optional()])
-    numbering = StringField(lazy_gettext('Numbering of the event'), validators=[Optional()])
-    ISBN = FieldList(StringField(lazy_gettext('ISBN'), validators=[Optional(), Isbn]), min_entries=1)
+    event = FieldList(FormField(EventForm), min_entries=1)
 
     user_only = ['parent_title', 'parent_subtitle', 'ISBN']
 
@@ -1070,8 +1103,7 @@ class ChapterForm(WorkForm):
              'label': lazy_gettext('Person')},
             {'group': [self.corporation],
              'label': lazy_gettext('Corporation')},
-            {'group': [self.event_name, self.numbering, self.startdate_conference, self.enddate_conference,
-                       self.event_place],
+            {'group': [self.event],
              'label': lazy_gettext('Event')},
             {'group': [self.is_part_of, self.parent_title, self.parent_subtitle],
              'label': lazy_gettext('Is Part of')},
@@ -1090,21 +1122,27 @@ class ChapterForm(WorkForm):
              'label': lazy_gettext('Administrative')},
         ]
 
+
+class ChapterUserForm(ChapterForm):
+    id = HiddenField()
+    created = HiddenField()
+    changed = HiddenField()
+    person = FieldList(FormField(PersonUserForm), min_entries=1)
+
     def simple_groups(self):
         yield [
-            {'group': [self.pubtype, self.publication_status, self.person, self.title, self.subtitle, self.language,
-                       self.issued, self.uri, self.DOI, self.note, self.peer_reviewed, self.key_publication],
+            {'group': [self.pubtype, self.publication_status, self.title, self.subtitle, self.language,
+                       self.issued, self.uri, self.DOI, self.peer_reviewed, self.key_publication, self.note,
+                       self.id, self.created, self.changed],
              'label': lazy_gettext('Publication Details')},
-            {'group': [self.is_part_of, self.parent_title, self.parent_subtitle, self.ISBN],
+            {'group': [self.person],
+             'label': lazy_gettext('Contributors')},
+            {'group': [self.is_part_of],
              'label': lazy_gettext('Is published in')},
-            {'group': [self.keyword,
-                       self.mesh_subject, self.stw_subject, self.thesoz_subject],
+            {'group': [self.keyword],
              'label': lazy_gettext('Keywords')},
             {'group': [self.abstract],
              'label':lazy_gettext('Abstract')},
-            {'group': [self.id, self.catalog,
-                       self.created, self.changed, self.owner],
-             'label': lazy_gettext('Information on the Record')},
         ]
 
 
@@ -1215,17 +1253,7 @@ class InternetDocumentForm(WorkForm):
     has_part = FieldList(FormField(HasPartForm), min_entries=1)
     other_version = FieldList(FormField(OtherVersionForm), min_entries=1)
     table_of_contents = FieldList(FormField(TableOfContentsForm), min_entries=1)
-    event_name = StringField(lazy_gettext('Name of the event'), validators=[Optional()])
-    startdate_conference = StringField(lazy_gettext('First day of the event'),
-                                       validators=[Optional(), Regexp('[12]\d{3}-[01]\d-[0123]\d')],
-                                       widget=CustomTextInput(placeholder=lazy_gettext('YYYY-MM-DD')),
-                                       description=lazy_gettext("If you don't know the month and/or day please use 01"))
-    enddate_conference = StringField(lazy_gettext('Last day of the event'),
-                                     validators=[Optional(), Regexp('[12]\d{3}-[01]\d-[0123]\d')],
-                                     widget=CustomTextInput(placeholder=lazy_gettext('YYYY-MM-DD')),
-                                     description=lazy_gettext("If you don't know the month and/or day please use 01"))
-    event_place = StringField(lazy_gettext('Location of the event'), validators=[Optional()])
-    numbering = StringField(lazy_gettext('Numbering of the event'), validators=[Optional()])
+    event = FieldList(FormField(EventForm), min_entries=1)
 
     def groups(self):
         yield [
@@ -1240,8 +1268,7 @@ class InternetDocumentForm(WorkForm):
              'label': lazy_gettext('Person')},
             {'group': [self.corporation],
              'label': lazy_gettext('Corporation')},
-            {'group': [self.event_name, self.numbering, self.startdate_conference, self.enddate_conference,
-                       self.event_place],
+            {'group': [self.event],
              'label': lazy_gettext('Event')},
             {'group': [self.is_part_of],
              'label': lazy_gettext('Is Part of')},
@@ -1269,17 +1296,7 @@ class LectureForm(WorkForm):
     lecture_title = StringField(lazy_gettext('Lecture Series'),
                                 validators=[Optional()],
                                 widget=CustomTextInput(placeholder=lazy_gettext('The Title of the Lecture Series')))
-    event_name = StringField(lazy_gettext('Name of the event'), validators=[Optional()])
-    startdate_conference = StringField(lazy_gettext('First day of the event'),
-                                       validators=[Optional(), Regexp('[12]\d{3}-[01]\d-[0123]\d')],
-                                       widget=CustomTextInput(placeholder=lazy_gettext('YYYY-MM-DD')),
-                                       description=lazy_gettext("If you don't know the month and/or day please use 01"))
-    enddate_conference = StringField(lazy_gettext('Last day of the event'),
-                                     validators=[Optional(), Regexp('[12]\d{3}-[01]\d-[0123]\d')],
-                                     widget=CustomTextInput(placeholder=lazy_gettext('YYYY-MM-DD')),
-                                     description=lazy_gettext("If you don't know the month and/or day please use 01"))
-    place = StringField(lazy_gettext('Location of the event'), validators=[Optional()])
-    numbering = StringField(lazy_gettext('Numbering of the event'), validators=[Optional()])
+    event = FieldList(FormField(EventForm), min_entries=1)
     open_access = FormField(OpenAccessForm)
     has_part = FieldList(FormField(HasPartForm), min_entries=1)
     other_version = FieldList(FormField(OtherVersionForm), min_entries=1)
@@ -1287,7 +1304,7 @@ class LectureForm(WorkForm):
 
     def groups(self):
         yield [
-            {'group': [self.pubtype, self.subtype, self.publication_status, self.version, self.title, self.subtitle, self.language,
+            {'group': [self.pubtype, self.subtype, self.version, self.title, self.subtitle, self.language,
                        self.title_supplement, self.other_title, self.lecture_title, self.issued, self.number_of_pages,
                        self.medium, self.accessed, self.additions, self.note, self.license, self.license_text, self.key_publication],
              'label': lazy_gettext('Basic')},
@@ -1297,7 +1314,7 @@ class LectureForm(WorkForm):
              'label': lazy_gettext('Person')},
             {'group': [self.corporation],
              'label': lazy_gettext('Corporation')},
-            {'group': [self.event_name, self.numbering, self.startdate_conference, self.enddate_conference, self.place],
+            {'group': [self.event],
              'label': lazy_gettext('Event')},
             {'group': [self.is_part_of],
              'label': lazy_gettext('Is Part of')},
@@ -1322,8 +1339,8 @@ class MonographForm(PrintedWorkForm):
     subtype = SelectField(lazy_gettext('Subtype'), validators=[Optional()], choices=[
         ('', lazy_gettext('Select a Subtype')),
         ('dissertation', lazy_gettext('Dissertation')),
-        ('festschrift', lazy_gettext('Festschrift')),
         ('habilitation', lazy_gettext('Habilitation')),
+        ('festschrift', lazy_gettext('Festschrift')),
         ('notated_music', lazy_gettext('Notated Music')),
     ])
     publication_status = SelectField(lazy_gettext('Publication Status'), validators=[DataRequired()], choices=[
@@ -1334,13 +1351,13 @@ class MonographForm(PrintedWorkForm):
     ], default='published')
     ISBN = FieldList(StringField(lazy_gettext('ISBN'), validators=[Optional(), Isbn]), min_entries=1)
     ISMN = FieldList(StringField(lazy_gettext('ISMN'), validators=[Optional()]), min_entries=1)
-    hbz_id = StringField(lazy_gettext('HBZ-ID'), validators=[Optional()])
-    # hbz_id = FieldList(StringField(lazy_gettext('HBZ-ID'), validators=[Optional(), Isbn]), min_entries=1)
+    hbz_id = FieldList(StringField(lazy_gettext('HBZ-ID'), validators=[Optional()]), min_entries=1)
     number_of_volumes = StringField('Number of Volumes', validators=[Optional()])
     open_access = FormField(OpenAccessForm)
     other_version = FieldList(FormField(OtherVersionForm), min_entries=1)
     is_part_of = FieldList(FormField(MonographRelationForm), min_entries=1)
     peer_reviewed = BooleanField(lazy_gettext('Peer Reviewed'))
+    author_editor = FieldList(FormField(PersonUserForm), min_entries=1)
 
     def groups(self):
         yield [
@@ -1374,20 +1391,27 @@ class MonographForm(PrintedWorkForm):
              'label': lazy_gettext('Administrative')},
         ]
 
+
+class MonographUserForm(MonographForm):
+    id = HiddenField()
+    created = HiddenField()
+    changed = HiddenField()
+    person = FieldList(FormField(PersonUserForm), min_entries=1)
+
     def simple_groups(self):
         yield [
-            {'group': [self.pubtype, self.publication_status, self.person, self.title, self.subtitle, self.language,
-                       self.issued, self.edition, self.number_of_volumes,
-                       self.publisher, self.uri, self.DOI, self.ISBN, self.note, self.peer_reviewed, self.key_publication],
+            {'group': [self.pubtype, self.publication_status, self.title, self.subtitle, self.language,
+                       self.issued, self.edition,
+                       self.publisher, self.publisher_place,
+                       self.uri, self.DOI, self.ISBN, self.peer_reviewed, self.key_publication, self.note,
+                       self.id, self.created, self.changed],
              'label': lazy_gettext('Publication Details')},
-            {'group': [self.abstract],
-             'label': lazy_gettext('Abstract')},
-            {'group': [self.keyword,
-                       self.mesh_subject, self.stw_subject, self.thesoz_subject],
+            {'group': [self.person],
+             'label': lazy_gettext('Contributors')},
+            {'group': [self.keyword],
              'label': lazy_gettext('Keywords')},
-            {'group': [self.id, self.catalog,
-                       self.created, self.changed, self.owner],
-             'label': lazy_gettext('Information on the Record')},
+            {'group': [self.abstract],
+             'label':lazy_gettext('Abstract')},
         ]
 
 
@@ -1407,8 +1431,7 @@ class MultivolumeWorkForm(PrintedWorkForm):
     ], default='published')
     ISBN = FieldList(StringField(lazy_gettext('ISBN'), validators=[Optional(), Isbn]), min_entries=1)
     ISMN = FieldList(StringField(lazy_gettext('ISMN'), validators=[Optional()]), min_entries=1)
-    hbz_id = StringField(lazy_gettext('HBZ-ID'), validators=[Optional()])
-    # hbz_id = FieldList(StringField(lazy_gettext('HBZ-ID'), validators=[Optional(), Isbn]), min_entries=1)
+    hbz_id = FieldList(StringField(lazy_gettext('HBZ-ID'), validators=[Optional()]), min_entries=1)
     number_of_volumes = StringField('Number of Volumes', validators=[Optional()])
     open_access = FormField(OpenAccessForm)
     other_version = FieldList(FormField(OtherVersionForm), min_entries=1)
@@ -1453,38 +1476,6 @@ class MultivolumeWorkForm(PrintedWorkForm):
              'label': lazy_gettext('Administrative')},
         ]
 
-    def simple_groups(self):
-        yield [
-            {'group': [self.pubtype, self.subtype, self.publication_status, self.version, self.title, self.subtitle, self.language,
-                       self.title_supplement, self.other_title, self.issued, self.edition, self.number_of_volumes,
-                       self.publisher, self.publisher_place, self.number_of_pages, self.medium, self.accessed,
-                       self.additions, self.note, self.license, self.license_text, self.key_publication],
-             'label': lazy_gettext('Basic')},
-            {'group': [self.uri, self.DOI, self.PMID, self.WOSID, self.ISBN, self.ISMN, self.hbz_id],
-             'label': lazy_gettext('IDs')},
-            {'group': [self.person],
-             'label': lazy_gettext('Person')},
-            {'group': [self.corporation],
-             'label': lazy_gettext('Corporation')},
-            {'group': [self.is_part_of],
-             'label': lazy_gettext('Is Part of')},
-            {'group': [self.has_part],
-             'label': lazy_gettext('Volume')},
-            {'group': [self.other_version],
-             'label': lazy_gettext('Other Version')},
-            {'group': [self.keyword, self.keyword_temporal, self.keyword_geographic, self.swd_subject, self.ddc_subject,
-                       self.mesh_subject, self.stw_subject, self.lcsh_subject, self.thesoz_subject],
-             'label': lazy_gettext('Keyword')},
-            {'group': [self.abstract, self.table_of_contents],
-             'label': lazy_gettext('Content')},
-            {'group': [self.open_access],
-             'label': lazy_gettext('Open Access')},
-            {'group': [self.id, self.affiliation_context, self.group_context, self.apparent_dup, self.editorial_status,
-                       self.created, self.changed, self.catalog, self.owner, self.deskman,
-                       self.same_as],
-             'label': lazy_gettext('Administrative')},
-        ]
-
 
 class ReportForm(WorkForm):
     parent_title = StringField(lazy_gettext('Parent Title'), validators=[Optional()], widget=CustomTextInput(placeholder=lazy_gettext('The Title of the Parent Reference')))
@@ -1496,13 +1487,10 @@ class ReportForm(WorkForm):
     has_part = FieldList(FormField(HasPartForm), min_entries=1)
     is_part_of = FieldList(FormField(OtherRelationForm), min_entries=1)
     other_version = FieldList(FormField(OtherVersionForm), min_entries=1)
-    #key_publication = BooleanField(lazy_gettext('Key Publication'),
-                                   #description='A very important title to be included on a special publication list.')
     table_of_contents = FieldList(FormField(TableOfContentsForm), min_entries=1)
     peer_reviewed = BooleanField(lazy_gettext('Peer Reviewed'))
     ISBN = FieldList(StringField(lazy_gettext('ISBN'), validators=[Optional(), Isbn]), min_entries=1)
-
-    #user_only = ['key_publication']
+    author_editor = FieldList(FormField(PersonUserForm), min_entries=1)
 
     def groups(self):
         yield [
@@ -1534,24 +1522,36 @@ class ReportForm(WorkForm):
              'label': lazy_gettext('Administrative')},
         ]
 
+
+class ReportUserForm(ReportForm):
+    id = HiddenField()
+    created = HiddenField()
+    changed = HiddenField()
+    person = FieldList(FormField(PersonUserForm), min_entries=1)
+
     def simple_groups(self):
         yield [
-            {'group': [self.pubtype, self.publication_status, self.person, self.title, self.subtitle, self.language,
-                       self.issued, self.edition, self.place,
-                       self.number, self.uri, self.DOI, self.ISBN, self.note, self.peer_reviewed, self.key_publication
-                       ],
+            {'group': [self.pubtype, self.publication_status, self.title, self.subtitle, self.language,
+                       self.issued, self.edition, self.place, self.number,
+                       self.uri, self.DOI, self.ISBN, self.peer_reviewed, self.key_publication, self.note,
+                       self.id, self.created, self.changed],
              'label': lazy_gettext('Publication Details')},
-            {'group': [self.is_part_of, self.parent_title, self.parent_subtitle],
+            {'group': [self.person],
+             'label': lazy_gettext('Contributors')},
+            {'group': [self.is_part_of],
              'label': lazy_gettext('Is published in')},
+            {'group': [self.keyword],
+             'label': lazy_gettext('Keywords')},
             {'group': [self.abstract],
              'label':lazy_gettext('Abstract')},
-            {'group': [self.keyword,
-                       self.mesh_subject, self.stw_subject, self.thesoz_subject],
-             'label': lazy_gettext('Keywords')},
-            {'group': [self.id,
-                       self.created, self.changed, self.catalog, self.owner],
-             'label': lazy_gettext('Information on the Record')},
         ]
+
+
+class RelatedIdentifiersForm(Form):
+    related_identifier = StringField(lazy_gettext('Related Identifier'), validators=[Optional()])
+    relation_type = SelectField(lazy_gettext('Resource Type'), validators=[Optional()],
+                                choices=forms_vocabularies.RELATION_TYPES,
+                                description=lazy_gettext('Specify identifiers of related publications and datasets.'))
 
 
 class ResearchDataForm(WorkForm):
@@ -1559,13 +1559,10 @@ class ResearchDataForm(WorkForm):
     version = StringField(lazy_gettext('Version'), validators=[Optional()])
     has_part = FieldList(FormField(HasPartForm), min_entries=1)
     is_part_of = FieldList(FormField(IsPartOfForm), min_entries=1)
-    is_supplement_of = FieldList(FormField(OtherRelationForm), min_entries=1)
-    has_supplement = FieldList(FormField(OtherRelationForm), min_entries=1)
+    related_identifiers = FieldList(FormField(RelatedIdentifiersForm), min_entries=1)
     repository = StringField(lazy_gettext('Repository / Publisher'), validators=[Optional()])
-    #key_publication = BooleanField(lazy_gettext('Key Publication'),
-                                   #description=lazy_gettext('A very important title to be included on a special publication list.'))
-    resource_type = SelectField(lazy_gettext('Resource Type'), validators=[Optional()], choices=forms_vocabularies.RESOURCE_TYPES,
-                                description=lazy_gettext('The general type of a resource based on the vocabulary of DataCite.'))
+    resource_type = SelectField(lazy_gettext('Resource Type'), validators=[Optional()],
+                                choices=forms_vocabularies.RESOURCE_TYPES)
     size = StringField(lazy_gettext('Size'), validators=[Optional()])
     format = StringField(lazy_gettext('Format'), validators=[Optional()])
     peer_reviewed = BooleanField(lazy_gettext('Peer Reviewed'))
@@ -1586,7 +1583,7 @@ class ResearchDataForm(WorkForm):
              'label': lazy_gettext('Person')},
             {'group': [self.corporation],
              'label': lazy_gettext('Corporation')},
-            {'group': [self.is_supplement_of, self.has_supplement, self.is_part_of, self.has_part],
+            {'group': [self.related_identifiers],
              'label': lazy_gettext('Relations')},
             {'group': [self.abstract],
              'label':lazy_gettext('Content')},
@@ -1598,25 +1595,31 @@ class ResearchDataForm(WorkForm):
              'label': lazy_gettext('Administrative')},
         ]
 
+
+class ResearchDataUserForm(ResearchDataForm):
+    id = HiddenField()
+    created = HiddenField()
+    changed = HiddenField()
+    person = FieldList(FormField(PersonUserForm), min_entries=1)
+
     def simple_groups(self):
         yield [
-            {'group': [self.pubtype, self.publication_status, self.person, self.title, self.subtitle,
-                       self.issued, self.version, self.repository, self.place, self.uri, self.DOI,
-                       self.note, self.peer_reviewed, self.key_publication
-                       ],
+            {'group': [self.pubtype, self.resource_type, self.publication_status, self.title, self.subtitle,
+                       self.language,
+                       self.issued, self.version, self.repository, self.medium, self.size, self.format,
+                       self.uri, self.DOI, self.peer_reviewed, self.key_publication, self.note,
+                       self.id, self.created, self.changed],
              'label': lazy_gettext('Publication Details')},
+            {'group': [self.person],
+             'label': lazy_gettext('Contributors')},
             {'group': [self.license, self.license_text],
              'label': lazy_gettext('License')},
-            {'group': [self.is_supplement_of, self.has_supplement, self.is_part_of, self.has_part],
+            {'group': [self.related_identifiers],
              'label': lazy_gettext('Relations')},
-            {'group': [self.abstract],
-             'label': lazy_gettext('Abstract')},
-            {'group': [self.keyword,
-                       self.mesh_subject, self.stw_subject, self.thesoz_subject],
+            {'group': [self.keyword],
              'label': lazy_gettext('Keywords')},
-            {'group': [self.id, self.catalog,
-                       self.created, self.changed, self.owner],
-             'label': lazy_gettext('Information on the Record')},
+            {'group': [self.abstract],
+             'label':lazy_gettext('Abstract')},
         ]
 
 
@@ -1639,17 +1642,7 @@ class OtherForm(WorkForm):
     other_version = FieldList(FormField(OtherVersionForm), min_entries=1)
     #key_publication = BooleanField(lazy_gettext('Key Publication'),
                                    #description='A very important title to be included on a special publication list.')
-    event_name = StringField(lazy_gettext('Name of the event'), validators=[Optional()])
-    startdate_conference = StringField(lazy_gettext('First day of the event'),
-                                       validators=[Optional(), Regexp('[12]\d{3}-[01]\d-[0123]\d')],
-                                       widget=CustomTextInput(placeholder=lazy_gettext('YYYY-MM-DD')),
-                                       description=lazy_gettext("If you don't know the month and/or day please use 01"))
-    enddate_conference = StringField(lazy_gettext('Last day of the event'),
-                                     validators=[Optional(), Regexp('[12]\d{3}-[01]\d-[0123]\d')],
-                                     widget=CustomTextInput(placeholder=lazy_gettext('YYYY-MM-DD')),
-                                     description=lazy_gettext("If you don't know the month and/or day please use 01"))
-    event_place = StringField(lazy_gettext('Location of the event'), validators=[Optional()])
-    numbering = StringField(lazy_gettext('Numbering of the event'), validators=[Optional()])
+    event = FieldList(FormField(EventForm), min_entries=1)
     table_of_contents = FieldList(FormField(TableOfContentsForm), min_entries=1)
     ISBN = FieldList(StringField(lazy_gettext('ISBN'), validators=[Optional(), Isbn]), min_entries=1)
 
@@ -1668,8 +1661,7 @@ class OtherForm(WorkForm):
              'label': lazy_gettext('Person')},
             {'group': [self.corporation],
              'label': lazy_gettext('Corporation')},
-            {'group': [self.event_name, self.numbering, self.startdate_conference, self.enddate_conference,
-                       self.event_place],
+            {'group': [self.event],
              'label': lazy_gettext('Event')},
             {'group': [self.is_part_of],
              'label': lazy_gettext('Is Part of')},
@@ -1688,7 +1680,7 @@ class OtherForm(WorkForm):
         ]
 
 
-class PatentForm(WorkForm):
+class PatentFormOld(WorkForm):
     patent_number = StringField(lazy_gettext('Patent Number'), widget=CustomTextInput(
         placeholder=(lazy_gettext('The publication number for a patent, e.g. DE102004031250 A1'))))
     claims = StringField(lazy_gettext('Claims'), widget=CustomTextInput(
@@ -1744,7 +1736,7 @@ class PatentForm(WorkForm):
 ]
 
 
-class PatentFormNew(WorkForm):
+class PatentForm(WorkForm):
     publication_number = StringField(lazy_gettext('Publication Number'), widget=CustomTextInput(
         placeholder=(lazy_gettext('The publication number for a patent, e.g. DE102004031250A1'))))
     application_number = StringField(lazy_gettext('Application Number'), widget=CustomTextInput(
@@ -1763,7 +1755,7 @@ class PatentFormNew(WorkForm):
     ipc_keyword = FieldList(FormField(IDLForm), min_entries=1)
 
     publication_status = SelectField(lazy_gettext('Publication Status'), validators=[DataRequired()],
-                                     choices=forms_vocabularies.PUB_STATUS.append(('granted', lazy_gettext('Granted'))),
+                                     choices=forms_vocabularies.PATENT_PUB_STATUS,
                                      default='granted')
     person = FieldList(FormField(PatentPersonForm), min_entries=1)
     corporation = FieldList(FormField(PatentCorporationForm), min_entries=1)
@@ -1779,8 +1771,6 @@ class PatentFormNew(WorkForm):
                        self.application_number, self.application_country, self.application_date,
                        self.priority_number, self.priority_country, self.priority_date],
              'label': lazy_gettext('Specific')},
-            {'group': [self.uri],
-             'label': lazy_gettext('IDs')},
             {'group': [self.person],
              'label': lazy_gettext('Person')},
             {'group': [self.corporation],
@@ -1788,7 +1778,7 @@ class PatentFormNew(WorkForm):
             {'group': [self.keyword, self.keyword_temporal, self.keyword_geographic, self.ipc_keyword, self.swd_subject, self.ddc_subject,
                        self.mesh_subject, self.stw_subject, self.lcsh_subject, self.thesoz_subject],
              'label': lazy_gettext('Keyword')},
-            {'group': [self.abstract],
+            {'group': [self.abstract, self.uri],
              'label':lazy_gettext('Content')},
             {'group': [self.id, self.affiliation_context, self.group_context, self.apparent_dup, self.editorial_status,
                        self.created, self.changed, self.catalog, self.owner, self.deskman, self.same_as],
@@ -1997,7 +1987,7 @@ class ThesisForm(WorkForm):
         ('first_state_examination', lazy_gettext('1st State Examination')),
         ('second_state_examination', lazy_gettext('2nd State Examination')),
     ])
-    hbz_id = StringField(lazy_gettext('HBZ-ID'), validators=[Optional()])
+    hbz_id = FieldList(StringField(lazy_gettext('HBZ-ID'), validators=[Optional()]), min_entries=1)
     issued = StringField(lazy_gettext('Date issued'), validators=[Regexp('[12]\d{3}(?:-[01]\d)?(?:-[0123]\d)?')],
                          widget=CustomTextInput(placeholder=lazy_gettext('YYYY-MM-DD')),
                          description=lazy_gettext("If you don't know the month and/or day please use 01"))

@@ -37,9 +37,8 @@
                         <td>#</td>
                         <td>{{ _('Editorial Status') }}</td>
                         <td>{{ _('Organisation') }}</td>
-                        {#<td>{{ _('Account') }}</td>#}
-                        <td>{{ _('Created') }}</td>
-                        <td>{{ _('Changed') }}</td>
+                        <td>{{ _('Created') }} <a href="{{ url_for('orgas') }}?sort=created desc{% if filterquery %}{% for fq in filterquery %}&amp;filter={{ fq }}{% endfor %}{% endif %}"><i class="glyphicon glyphicon-triangle-top"></i></a>  <a href="{{ url_for('orgas') }}?sort=created asc{% if filterquery %}{% for fq in filterquery %}&amp;filter={{ fq }}{% endfor %}{% endif %}"><i class="glyphicon glyphicon-triangle-bottom"></i></a></td>
+                        <td>{{ _('Changed') }} <a href="{{ url_for('orgas') }}?sort=changed desc{% if filterquery %}{% for fq in filterquery %}&amp;filter={{ fq }}{% endfor %}{% endif %}"><i class="glyphicon glyphicon-triangle-top"></i></a>  <a href="{{ url_for('orgas') }}?sort=changed asc{% if filterquery %}{% for fq in filterquery %}&amp;filter={{ fq }}{% endfor %}{% endif %}"><i class="glyphicon glyphicon-triangle-bottom"></i></a></td>
                         <td>{{ _('Action') }}</td>
                     </tr>
                 </thead>

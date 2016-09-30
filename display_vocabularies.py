@@ -69,11 +69,11 @@ PUBTYPE2FORM = {
     'ChapterInLegalCommentary': ChapterInLegalCommentaryForm,
     'Conference': ConferenceForm,
     'Collection': CollectionForm,
+    'Edition': EditionForm,
     'Other': OtherForm,
     'Thesis': ThesisForm,
     'ArticleNewspaper': ArticleNewspaperForm,
     'AudioVideoDocument': AudioVideoDocumentForm,
-    'Edition': EditionForm,
     'InternetDocument': InternetDocumentForm,
     'Journal': JournalForm,
     'Lecture': LectureForm,
@@ -87,6 +87,15 @@ PUBTYPE2FORM = {
     'Standard': StandardForm,
     'Report': ReportForm,
     'ResearchData': ResearchDataForm,
+}
+
+PUBTYPE2USERFORM = {
+    'ArticleJournal': ArticleJournalUserForm,
+    'Monograph': MonographUserForm,
+    'Chapter': ChapterUserForm,
+    'Collection': CollectionUserForm,
+    'Report': ReportUserForm,
+    'ResearchData': ResearchDataUserForm,
 }
 
 ROLE_MAP = {
@@ -134,6 +143,7 @@ ROLE_MAP = {
     'ths': lazy_gettext('Thesis Advisor'),
 }
 
+
 # see: http://www.loc.gov/marc/languages/
 LANGUAGE_MAP = {
     'eng': lazy_gettext('English'),
@@ -176,6 +186,8 @@ LANGUAGE_MAP = {
     'bos': lazy_gettext('Bosnian'),
     'lit': lazy_gettext('Lithuanian'),
     'slv': lazy_gettext('Slovenian'),
+    'baq': lazy_gettext('Basque'),
+    'gag': lazy_gettext('Galician'),
 }
 
 FREQUENCY_MAP = {
@@ -251,6 +263,7 @@ LANGUAGES = {
 
 PUB_STATUS = {
     'published': lazy_gettext('Published'),
-    'unpublished': lazy_gettext('Unpublished')
+    'unpublished': lazy_gettext('Unpublished'),
+    'granted': lazy_gettext('Granted')
 }
 

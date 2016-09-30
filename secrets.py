@@ -39,6 +39,8 @@ DIFFERENT_PROXY_PATH = False
 orcid_sandbox_client_id = ''
 orcid_sandbox_client_secret = ''
 
+orcid_contact_mail = ''
+
 orcid_app_data = {
     'tudo': {
         'sandbox': True,
@@ -53,14 +55,15 @@ orcid_app_data = {
                 'region': '',
                 'country': ''
             }
-        }
+        },
+        'orcid_contact_mail': ''
     }
 }
 
 orcid_scopes = [
     '/read-limited',
+    '/person/update',
     '/activities/update',
-    '/orcid-bio/update',
 ]
 
 WAITING_FOR_REDIRECT = 5
@@ -103,15 +106,25 @@ SOLR_SEARCH_FACETS = {
             'type': 'terms',
             'field': 'fperson'
         },
-    'ftudo':
+    'ftudo_orga':
         {
             'type': 'terms',
-            'field': 'ftudo'
+            'field': 'ftudo_orga'
         },
-    'frubi':
+    'frubi_orga':
         {
             'type': 'terms',
-            'field': 'frubi'
+            'field': 'frubi_orga'
+        },
+    'ftudo_pers':
+        {
+            'type': 'terms',
+            'field': 'ftudo_pers'
+        },
+    'frubi_pers':
+        {
+            'type': 'terms',
+            'field': 'frubi_pers'
         },
     'fdate':
         {

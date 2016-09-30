@@ -1,0 +1,120 @@
+{% extends 'site_base.html' %}
+
+{% block site_content %}
+    {{ super() }}
+    <div class="row">
+        <div class="col-sm-10 col-sm-offset-1">
+            <h2>{{ header }}</h2>
+            <div class="section" id="my-amazing-bibliography">
+            <form class="form-horizontal" role="search">
+                <div class="form-group">
+                    <div class="input-group">
+                        <span class="input-group-addon"><i class="fa fa-search"></i></span>
+                        <input id="query_id" type="text" class="form-control" placeholder="{{ _('DOI, e.g. 10.1515/9783110278736.64') }}" name="q">
+                    </div>
+                </div>
+            </form>
+            <button id="btn btn-default" type="submit" class="submit">Search</button>
+            <h3>{{ _('Results')}}</h3>
+            <div id="csl-outer-block">
+              <div id="csl-inner-block">
+                <div id="csl-content-block"></div>
+              </div>
+            </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+{% block scripts %}
+    {{ super() }}
+    <script type="text/javascript" src="{{ url_for('static', filename='js/citeproc.js') }}"></script>
+    <script type="text/javascript">
+        $(document).on('click', '.submit', function (event)  {
+
+            // Library of Cornell Conservation Agriculture
+            //var chosenLibraryItems = "https://api.zotero.org/groups/459003/items?format=csljson&limit=6&itemType=journalArticle";
+            //var chosenLibraryItems = "https://api.crossref.org/works/10.1515/9783110278736";
+            //var chosenLibraryItems = "https://hb2.ub.tu-dortmund.de/manage-test/search?core=hb2&q=ftudo:%22Deuse%2C%20Jochen%22&format=csl";
+
+            //var chosenLibraryItems = "https://hb2.ub.tu-dortmund.de/manage-test/search?q=owner%3A%22Marek.Kropelnicki%40ruhr-uni-bochum.de%22&format=csl";
+            //var chosenLibraryItems = "https://hb2.ub.tu-dortmund.de/manage-test/search?q=owner%3A%22stefanie.buechter%40tu-dortmund.de%22&format=csl";
+
+            var chosenLibraryItems = "{{ url_for('search_crossref') }}?doi="
+            var doi = $('#query_id').val().trim();
+            chosenLibraryItems += doi;
+
+            // Chicago Manual of Style (Full Note)
+            // var chosenStyleID = "chicago-fullnote-bibliography";
+            // DIN 1505-2
+            // var chosenStyleID = "din-1505-2";
+            var chosenStyleID = "chicago-author-date";
+            //var chosenStyleID = "journal-of-medical-internet-research";
+            //var chosenStyleID = "national-library-of-medicine-grant-proposals";
+            //var chosenStyleID = "world-journal-of-gastroenterology";
+
+            // Fetch citation data
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', chosenLibraryItems, false);
+            xhr.send(null);
+            var citationData = JSON.parse(xhr.responseText);
+            console.log(citationData)
+
+            // Refactor citation data for keyed access
+            var citations = {};
+            var itemIDs = [];
+
+            for (var i=0,ilen=citationData.items.length;i<ilen;i++) {
+            var item = citationData.items[i];
+            if (!item.issued) continue;
+            if (item.URL) delete item.URL;
+            var id = item.id;
+            citations[id] = item;
+            itemIDs.push(id);
+            }
+
+            // Initialize a system object
+            citeprocSys = {
+            retrieveLocale: function (lang){
+              console.log(lang)
+              var xhr = new XMLHttpRequest();
+              xhr.open('GET', 'https://raw.githubusercontent.com/Juris-M/citeproc-js-docs/master/locales-' + lang + '.xml', false);
+              xhr.send(null);
+              return xhr.responseText;
+            },
+            retrieveItem: function(id){
+              return citations[id];
+            }
+            };
+
+            // Instantiate processor
+            function getProcessor(styleID) {
+            // Get the CSL style as a serialized string of XML
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', 'https://raw.githubusercontent.com/citation-style-language/styles/master/' + styleID + '.csl', false);
+            xhr.send(null);
+            var styleAsText = xhr.responseText;
+            var citeproc = new CSL.Engine(citeprocSys, styleAsText);
+            return citeproc;
+            };
+
+            // This runs at document ready, and renders the bibliography
+            function processorOutput() {
+            ret = '';
+            var citeproc = getProcessor(chosenStyleID);
+            citeproc.updateItems(itemIDs);
+            var bibResult = citeproc.makeBibliography();
+            results = bibResult[1].join('\n');
+            if (results == '')
+                return "{{ _('No Records found') }}";
+            else
+                return results + '<a href="' + '{{ url_for("new_by_identifiers") }}' + '?doi=' + doi + '">{{ _('Use this Record') }}</a>';
+            }
+
+            var button = document.getElementById('csl-cites-button');
+            var target = document.getElementById("csl-inner-block");
+            var content = document.getElementById("csl-content-block");
+            content.innerHTML = processorOutput();
+
+        });
+    </script>
+{% endblock %}

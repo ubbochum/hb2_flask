@@ -62,22 +62,23 @@
                     {% endif %}
                 </li>
                 <li class="{% if site == 'dortmund' %}list-group-item{% else %}{% endif %}">
-                    <a href="{{ url_for('new_record', pubtype='MultivolumeWork') }}">{{ _('MultivolumeWork') }}</a>
+                    {% if current_user.role == 'admin' or current_user.role == 'superadmin'%}
+                        <a href="{{ url_for('new_record', pubtype='Report') }}">{{ _('Report') }}</a>
+                    {% else %}
+                        <a href="{{ url_for('new_record', pubtype='Report') }}">{{ _('Report / Other') }}</a>
+                    {% endif %}
                 </li>
                 <li class="{% if site == 'dortmund' %}list-group-item{% else %}{% endif %}">
-                    <a href="{{ url_for('new_record', pubtype='Report') }}">{{ _('Report') }}</a>
-                </li>
-                <li class="{% if site == 'dortmund' %}list-group-item{% else %}{% endif %}">
-                    <a href="{{ url_for('new_record', pubtype='Software') }}">{{ _('Software') }}</a>
-                </li>
-                <li class="{% if site == 'dortmund' %}list-group-item{% else %}{% endif %}">
-                    <a href="{{ url_for('new_record', pubtype='ResearchData') }}">{{ _('Research Data') }}</a>
+                    <a href="{{ url_for('new_record', pubtype='ResearchData') }}">{{ _('Research Data including Software') }}</a>
                 </li>
             </ul>
         </div>
     {% if current_user.role == 'admin' or current_user.role == 'superadmin'%}
         <div class="col-sm-4">
             <ul class="{% if site == 'dortmund' %}list-group{% else %}list-unstyled{% endif %}">
+                <li class="{% if site == 'dortmund' %}list-group-item{% else %}{% endif %}">
+                    <a href="{{ url_for('new_record', pubtype='MultivolumeWork') }}">{{ _('MultivolumeWork') }}</a>
+                </li>
                 <li class="{% if site == 'dortmund' %}list-group-item{% else %}{% endif %}">
                     <a href="{{ url_for('new_record', pubtype='Thesis') }}">{{ _('Thesis') }}</a>
                     {% if site == 'bochum' %}

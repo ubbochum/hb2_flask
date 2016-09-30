@@ -9,9 +9,11 @@
                 {{ drill_down.facets(facet_data.catalog, 'catalog', heading='Catalog', target=target) }}
                 {{ drill_down.facets(facet_data.faffiliation, 'faffiliation', heading='Affiliation', target=target) }}
                 {{ drill_down.facets(facet_data.fgroup, 'fgroup', heading='Working Groups', target=target) }}
-                {{ drill_down.simple_filter('gnd', heading='GND', target=target) }}
-                {{ drill_down.simple_filter('orcid', heading='ORCID', target=target) }}
-                {{ drill_down.facets(facet_data.personal_status, 'personal_status', heading='Personal Status', target=target) }}
+                {% if current_user.role == 'admin' or current_user.role == 'superadmin' %}
+                    {{ drill_down.simple_filter('gnd', heading='GND', target=target) }}
+                    {{ drill_down.simple_filter('orcid', heading='ORCID', target=target) }}
+                    {{ drill_down.facets(facet_data.personal_status, 'personal_status', heading='Personal Status', target=target) }}
+                {% endif %}
             {% endif %}
         </div>
         <div class="col-sm-8">

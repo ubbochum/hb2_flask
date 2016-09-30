@@ -26,6 +26,7 @@
             {{ drill_down.boolean_filter('rubi', heading='RUB Member', target='persons') }}
             {{ drill_down.simple_filter('gnd', heading='GND', target='persons') }}
             {{ drill_down.simple_filter('orcid', heading='ORCID', target='persons') }}
+            {{ drill_down.date_filter('data_supplied', heading='Data Supplied', target='persons') }}
             {{ drill_down.facets(facet_data.editorial_status, 'editorial_status', heading='Editorial Status', target='persons') }}
             {{ drill_down.facets(facet_data.personal_status, 'personal_status', heading='Personal Status', target='persons') }}
             {{ drill_down.facets(facet_data.deskman, 'deskman', heading='Deskman', target='persons') }}
@@ -35,14 +36,15 @@
             {{ pagination.info }}
             {{ remove_filters.remove_filter(target='persons') }}
             {{ pagination.links }}
+            <br/><span class="help-block">{{ _('Sort by date of last data supplied:') }} <a href="{{ url_for('persons') }}?sort=data_supplied asc{% if filterquery %}{% for fq in filterquery %}&amp;filter={{ fq }}{% endfor %}{% endif %}"><i class="glyphicon glyphicon-triangle-top"></i></a>  <a href="{{ url_for('persons') }}?sort=data_supplied desc{% if filterquery %}{% for fq in filterquery %}&amp;filter={{ fq }}{% endfor %}{% endif %}"><i class="glyphicon glyphicon-triangle-bottom"></i></a></span>
             <table class="table table-bordered">
                 <thead>
                     <tr>
                         <td>#</td>
                         <td>{{ _('Editorial Status') }}</td>
-                        <td>{{ _('Name') }}</td>
-                        <td>{{ _('Created') }}</td>
-                        <td>{{ _('Changed') }}</td>
+                        <td>{{ _('Name') }} <a href="{{ url_for('persons') }}?sort=fname asc{% if filterquery %}{% for fq in filterquery %}&amp;filter={{ fq }}{% endfor %}{% endif %}"><i class="glyphicon glyphicon-triangle-top"></i></a>  <a href="{{ url_for('persons') }}?sort=fname desc{% if filterquery %}{% for fq in filterquery %}&amp;filter={{ fq }}{% endfor %}{% endif %}"><i class="glyphicon glyphicon-triangle-bottom"></i></a></td>
+                        <td>{{ _('Created') }} <a href="{{ url_for('persons') }}?sort=created desc{% if filterquery %}{% for fq in filterquery %}&amp;filter={{ fq }}{% endfor %}{% endif %}"><i class="glyphicon glyphicon-triangle-top"></i></a>  <a href="{{ url_for('persons') }}?sort=created asc{% if filterquery %}{% for fq in filterquery %}&amp;filter={{ fq }}{% endfor %}{% endif %}"><i class="glyphicon glyphicon-triangle-bottom"></i></a></td>
+                        <td>{{ _('Changed') }} <a href="{{ url_for('persons') }}?sort=changed desc{% if filterquery %}{% for fq in filterquery %}&amp;filter={{ fq }}{% endfor %}{% endif %}"><i class="glyphicon glyphicon-triangle-top"></i></a>  <a href="{{ url_for('persons') }}?sort=changed asc{% if filterquery %}{% for fq in filterquery %}&amp;filter={{ fq }}{% endfor %}{% endif %}"><i class="glyphicon glyphicon-triangle-bottom"></i></a></td>
                         <td>{{ _('Action') }}</td>
                     </tr>
                 </thead>
@@ -53,7 +55,16 @@
                         <td>
                             <span class="label label-{% if record.editorial_status == 'new' %}info{% elif record.editorial_status == 'in_process' %}default{% elif record.editorial_status == 'processed' %}primary{% elif record.editorial_status == 'final_editing' %}warning{% elif record.editorial_status == 'deleted' %}danger{% elif record.editorial_status == 'finalized' or record.editorial_status == 'imported' %}success{% endif %}">{% if record.locked %} <i class="fa fa-lock"></i> {% endif %}{{ record.editorial_status|capitalize }}</span>
                         </td>
-                        <td><a href="{% if record.gnd %}{{ url_for('show_person', person_id=record.gnd) }}{% else %}{{ url_for('show_person', person_id=record.id) }}{% endif %}">{{ record|get_name }}</a>{% if record.gnd %}<br/> GND: {{ record.gnd }}{% endif %}{% if record.orcid %}<br/> ORCID: {{ record.orcid }}{% endif %}</td>
+                        <td>
+                            <a href="{% if record.gnd %}{{ url_for('show_person', person_id=record.gnd) }}{% else %}{{ url_for('show_person', person_id=record.id) }}{% endif %}">{{ record|get_name }}</a>{% if record.gnd %}
+                            <br/> <img src="https://portal.dnb.de/static/bilder/icon_gnd.gif"> <a href="http://d-nb.info/gnd/{{ record.gnd }}">{{ record.gnd }}</a>{% endif %}{% if record.orcid %}
+                            <br/> <img src="https://orcid.org/sites/default/files/images/orcid_16x16.png"> <a href="http://orcid.org/{{ record.orcid }}">http://orcid.org/{{ record.orcid }}</a>{% endif %}
+                            {% if current_user.role == 'admin' or current_user.role == 'superadmin' %}
+                                {% if record.data_supplied %}
+                                <br/><span class="help-block">{{ _('Last data supplied:') }} {{ record.data_supplied.split('T')[0] }}</span>
+                                {% endif %}
+                            {% endif %}
+                        </td>
                         <td>{{ (now - record.created|mk_time())|humanize() }}</td>
                         <td>{{ (now - record.changed|mk_time())|humanize() }}</td>
                         <td class="dropdown">

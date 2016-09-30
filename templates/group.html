@@ -29,7 +29,20 @@
                     </dd>
                 {% endif %}
                 <br/>
+                {% if record.data.funds and record.data.funds.0 and (record.data.funds.0.organisation_id != '' or record.data.funds.0.organisation != '') %}
+                    <dt>
+                        {{ _('Funds') }}
+                    </dt>
+                    <dd>
+                        {% for funds in record.data.funds %}
+                            {% if funds.organisation_id != '' or funds.organisation !='' %}
+                                {% if funds.organisation %}{{ funds.organisation }}{% if funds.organisation_id %} ({{ funds.organisation_id }}){% endif %}{% else %}{{ funds.organisation_id }}{% endif %}{% if funds.project_id %} | {{ funds.project_id }}{% endif %}<br/>
+                            {% endif %}
+                        {% endfor %}
+                    </dd>
+                {% endif %}
                 {% if record.data.destatis %}
+                    <hr/>
                     <dt>
                         {{ _('Destatis') }} <a href="https://www.destatis.de/DE/Methoden/Klassifikationen/BildungKultur/StudentenPruefungsstatistik.pdf?__blob=publicationFile">[Info]</a>
                     </dt>
@@ -45,7 +58,7 @@
                         {{ _('Parent') }}
                     </dt>
                     <dd>
-                        <a href="{{ url_for('show_group', group_id=record.data.parent_id) }}">{% if record.data.parent_label %}{{ record.data.parent_label }}{% else %}{{ record.data.parent_id }}{% endif %}</a><br/>
+                        <a href="{{ url_for('show_orga', orga_id=record.data.parent_id) }}">{% if record.data.parent_label %}{{ record.data.parent_label }}{% else %}{{ record.data.parent_id }}{% endif %}</a><br/>
                     </dd>
                 {% endif %}
                 <br/>
@@ -81,6 +94,8 @@
                         {{ record.data.owner }}
                     </dd>
                 {% endif %}
+                    <dt>{{ _('Editorial Status') }}</dt>
+                    <dd><span class="label label-{% if record.data.editorial_status == 'new' %}info{% elif record.data.editorial_status == 'in_process' %}default{% elif record.data.editorial_status == 'processed' %}primary{% elif record.data.editorial_status == 'final_editing' %}warning{% elif record.data.editorial_status == 'deleted' %}danger{% elif record.data.editorial_status == 'finalized' or record.data.editorial_status == 'imported' %}success{% endif %}">{% if record.locked %} <i class="fa fa-lock"></i> {% endif %}{{ record.data.editorial_status|capitalize }}</span></dd>
             </dl>
                 {% if config.DEBUG and (current_user.role == 'admin' or current_user.role == 'superadmin') %}
                     <div>

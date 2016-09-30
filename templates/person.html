@@ -20,25 +20,14 @@
                         {% if record.data.salutation == 'm' %}{{ _('Mr.') }}<br/>{% endif %}
                         {% if record.data.salutation == 'f' %}{{ _('Mrs./Ms.') }}<br/>{% endif %}
                         {{ record.data.name }}
-                        {% if record.data.tudo %} | <img src="http://www.tu-dortmund.de/favicon.ico">{% endif %}
-                        {% if record.data.rubi %} | <img src="http://www.rub.de/favicon.ico">{% endif %}
                     </dd>
                 {% endif %}
-                {% if record.data.former_name %}
-                    <dt>
-                        {{ _('Former Name') }}
-                    </dt>
-                    <dd>
-                        {{ record.data.former_name }}
-                    </dd>
-                {% endif %}
-                <br/>
                 {% if record.data.gnd %}
                     <dt>
                         {{ _('GND') }}
                     </dt>
                     <dd>
-                        {{ record.data.gnd }} | <a href="http://d-nb.info/gnd/{{ record.data.gnd }}">{{ _('GND') }}</a>
+                        <img src="https://portal.dnb.de/static/bilder/icon_gnd.gif"> <a href="http://d-nb.info/gnd/{{ record.data.gnd }}">{{ record.data.gnd }}</a>
                     </dd>
                 {% endif %}
                 {% if record.data.orcid %}
@@ -46,66 +35,87 @@
                         {{ _('ORCID') }}
                     </dt>
                     <dd>
-                        {{ record.data.orcid }} | <a href="http://orcid.org/{{ record.data.orcid }}">{{ _('ORCID') }}</a>
+                        <img src="https://orcid.org/sites/default/files/images/orcid_16x16.png"> <a href="http://orcid.org/{{ record.data.orcid }}">http://orcid.org/{{ record.data.orcid }}</a>
                     </dd>
                 {% endif %}
-                {% if record.data.scopus_id and record.data.scopus_id.0 != '' %}
-                    <dt>
-                        {{ _('Scopus ID') }}
-                    </dt>
-                    <dd>
-                        {% for sid in record.data.scopus_id %}
-                            {{ sid }}{% if not loop.last %} | {% endif %}
-                        {% endfor %}
-                    </dd>
-                {% endif %}
-                {% if record.data.researcher_id %}
-                    <dt>
-                        {{ _('Researcher ID') }}
-                    </dt>
-                    <dd>
-                        {{ record.data.researcher_id }}
-                    </dd>
-                {% endif %}
-                {% if record.data.arxiv_id %}
-                    <dt>
-                        {{ _('Arxiv ID') }}
-                    </dt>
-                    <dd>
-                        {{ record.data.arxiv_id }}
-                    </dd>
-                {% endif %}
-                {% if record.data.viaf %}
-                    <dt>
-                        {{ _('VIAF') }}
-                    </dt>
-                    <dd>
-                        {{ record.data.viaf }}
-                    </dd>
-                {% endif %}
-                {% if record.data.isni %}
-                    <dt>
-                        {{ _('ISNI') }}
-                    </dt>
-                    <dd>
-                        {{ record.data.isni }}
-                    </dd>
-                {% endif %}
-                {% if record.data.dwid %}
-                    <dt>
-                        {{ _('Local Admin ID') }}
-                    </dt>
-                    <dd>
-                        {{ record.data.dwid }}
-                    </dd>
-                {% endif %}
-                {% if record.data.email %}
-                    <dt>
-                        {{ _('E-Mail') }}
-                    </dt>
-                    <dd>
-                        <a href="mailto:{{ record.data.email }}">{{ record.data.email }}</a>
-                    </dd>
+                {% if current_user.role == 'admin' or current_user.role == 'superadmin' %}
+                    {% if record.data.also_known_as %}
+                        <dt>
+                            {{ _('Also known as') }}
+                        </dt>
+                        <dd>
+                            {% for name in record.data.also_known_as %}
+                                {{ name }}{% if not loop.last %}<br/>{% endif %}
+                            {% endfor %}
+                        </dd>
+                    {% endif %}
+                    <br/>
+                    {% if record.data.scopus_id and record.data.scopus_id.0 != '' %}
+                        <dt>
+                            {{ _('Scopus ID') }}
+                        </dt>
+                        <dd>
+                            {% for sid in record.data.scopus_id %}
+                                {{ sid }}{% if not loop.last %} | {% endif %}
+                            {% endfor %}
+                        </dd>
+                    {% endif %}
+                    {% if record.data.researcher_id %}
+                        <dt>
+                            {{ _('Researcher ID') }}
+                        </dt>
+                        <dd>
+                            {{ record.data.researcher_id }}
+                        </dd>
+                    {% endif %}
+                    {% if record.data.arxiv_id %}
+                        <dt>
+                            {{ _('Arxiv ID') }}
+                        </dt>
+                        <dd>
+                            {{ record.data.arxiv_id }}
+                        </dd>
+                    {% endif %}
+                    {% if record.data.viaf %}
+                        <dt>
+                            {{ _('VIAF') }}
+                        </dt>
+                        <dd>
+                            {{ record.data.viaf }}
+                        </dd>
+                    {% endif %}
+                    {% if record.data.isni %}
+                        <dt>
+                            {{ _('ISNI') }}
+                        </dt>
+                        <dd>
+                            {{ record.data.isni }}
+                        </dd>
+                    {% endif %}
+                    {% if record.data.dwid %}
+                        <dt>
+                            {{ _('Local Admin ID') }}
+                        </dt>
+                        <dd>
+                            {{ record.data.dwid }}
+                        </dd>
+                    {% endif %}
+                    {% if record.data.email %}
+                        <dt>
+                            {{ _('E-Mail (IDM)') }}
+                        </dt>
+                        <dd>
+                            <a href="mailto:{{ record.data.email }}">{{ record.data.email }}</a>
+                        </dd>
+                    {% endif %}
+                    {% if record.data.contact %}
+                        <dt>
+                            {{ _('E-Mail (Contact)') }}
+                        </dt>
+                        <dd>
+                            <a href="mailto:{{ record.data.contact }}">{{ record.data.contact }}</a>
+                        </dd>
+                    {% endif %}
                 {% endif %}
                 <br/>
                 {% if record.data.affiliation and record.data.affiliation[0].organisation_id %}
@@ -113,115 +123,125 @@
                         {{ _('Affiliation') }}
                     </dt>
                     <dd>
+                        {% if record.data.tudo %}<img src="http://www.tu-dortmund.de/favicon.ico"> {% endif %}
+                        {% if record.data.rubi %}<img src="http://www.rub.de/favicon.ico">{% endif %}
+                        {% if record.data.tudo or record.data.rubi%}<br/>{% endif %}
                         {% for affiliation in record.data.affiliation %}
                             <a href="{{ url_for('show_orga', orga_id=affiliation.organisation_id) }}">{% if affiliation.label %}{{ affiliation.label }}{% else %}{{ affiliation.organisation_id }}{% endif %}</a><br/>
-                            {% if not loop.last %}<hr/>{% endif %}
+                            {% if not loop.last %}<br/>{% endif %}
                         {% endfor %}
+                        <hr/>
                     </dd>
                 {% endif %}
-                {% if record.data.group and record.data.group[0].group_id %}
+                {% if record.data.group and (record.data.group[0].group_id or record.data.group[0].label) %}
                     <dt>
                         {{ _('Working Group') }}
                     </dt>
                     <dd>
                         {% for group in record.data.group %}
                             <a href="{{ url_for('show_group', group_id=group.group_id) }}">{% if group.label %}{{ group.label }}{% else %}{{ group.group_id }}{% endif %}</a><br/>
-                            {% if not loop.last %}<hr/>{% endif %}
-                        {% endfor %}
-                    </dd>
-                {% endif %}
-                <hr/>
-                {% if record.data.url and record.data.url.0.label != "None" and record.data.url.0.label != "" %}
-                    <dt>
-                        {{ _('URL') }}
-                    </dt>
-                    <dd>
-                        {% for url in record.data.url %}
-                            <a href="{{ url.url }}">{{ url_map.get(url.label) }}</a>
                             {% if not loop.last %}<br/>{% endif %}
                         {% endfor %}
                     </dd>
                 {% endif %}
-                {% if record.data.research_interest %}
-                    <dt>
-                        {{ _('Research Interest') }}
-                    </dt>
-                    <dd>
-                        {% for research_interest in record.data.research_interest %}
-                            {{ research_interest }}{% if not loop.last %} | {% endif %}
-                        {% endfor %}
-                    </dd>
-                {% endif %}
                 <hr/>
+                {% if current_user.role == 'admin' or current_user.role == 'superadmin' %}
+                    {% if record.data.url and record.data.url.0.label != "None" and record.data.url.0.label != "" %}
+                        <dt>
+                            {{ _('URL') }}
+                        </dt>
+                        <dd>
+                            {% for url in record.data.url %}
+                                <a href="{{ url.url }}">{{ url_map.get(url.label) }}</a>
+                                {% if not loop.last %}<br/>{% endif %}
+                            {% endfor %}
+                        </dd>
+                    {% endif %}
+                    {% if record.data.research_interest and record.data.research_interest.0 %}
+                        <dt>
+                            {{ _('Research Interest') }}
+                        </dt>
+                        <dd>
+                            {% for research_interest in record.data.research_interest %}
+                                {{ research_interest }}{% if not loop.last %} | {% endif %}
+                            {% endfor %}
+                        </dd>
+                    {% endif %}
+                    <hr/>
+                {% endif %}
                     <dt>
                         {{ _('Links') }}
                     </dt>
                     <dd>
-                        <a href="{{ url_for('search') }}?q=*:*&core=hb2&filter=fperson:&quot;{{ record.data.name }}&quot;">{{ _('Show Publications') }}</a><br/>
+                        {% if record.data.gnd %}
+                        <a href="{{ url_for('search') }}?q=*:*&core=hb2&filter=pnd:&quot;{{ record.data.gnd.strip() }}%23{{ record.data.name }}&quot;">{{ _('Show Works') }}</a><br/>
+                        {% else %}
+                        <a href="{{ url_for('search') }}?q=*:*&core=hb2&filter=fperson:&quot;{{ record.data.name }}&quot;">{{ _('Show Works') }}</a><br/>
+                        {% endif %}
                     </dd>
+                <hr/>
                 {% if config.DEBUG and (current_user.role == 'admin' or current_user.role == 'superadmin') %}
-                <hr/>
-                {% if record.data.id %}
-                    <dt>
-                        {{ _('ID') }}
-                    </dt>
-                    <dd>
-                        {{ record.data.id }}
-                    </dd>
-                {% endif %}
-                {% if record.data.status %}
-                    <dt>
-                        {{ _('Status') }}
-                    </dt>
-                    <dd>
-                        {% for status in record.data.status %}
-                            {{ pers_status_map.get(status) }}{% if not loop.last %} | {% endif %}
-                        {% endfor %}
-                    </dd>
-                {% endif %}
-                {% if record.data.created %}
-                    <dt>
-                        {{ _('Record creation date') }}
-                    </dt>
-                    <dd>
-                        {{ record.data.created }}
-                    </dd>
-                {% endif %}
-                {% if record.data.changed %}
-                    <dt>
-                        {{ _('Record creation date') }}
-                    </dt>
-                    <dd>
-                        {{ record.data.changed }}
-                    </dd>
-                {% endif %}
-                {% if record.data.owner %}
-                    <dt>
-                        {{ _('Owner') }}
-                    </dt>
-                    <dd>
-                        {{ record.data.owner }}
-                    </dd>
-                {% endif %}
-                <dt>{{ _('Editorial Status') }}</dt>
-                <dd><span class="label label-{% if record.data.editorial_status == 'new' %}info{% elif record.data.editorial_status == 'in_process' %}default{% elif record.data.editorial_status == 'processed' %}primary{% elif record.data.editorial_status == 'final_editing' %}warning{% elif record.data.editorial_status == 'deleted' %}danger{% elif record.data.editorial_status == 'finalized' or record.data.editorial_status == 'imported' %}success{% endif %}">{% if record.locked %} <i class="fa fa-lock"></i> {% endif %}{{ record.data.editorial_status|capitalize }}</span></dd>
-                <hr/>
-                {% if record.data.data_supplied %}
-                    <dt>
-                        {{ _('Data supplied') }}
-                    </dt>
-                    <dd>
-                        {{ record.data.data_supplied }}
-                    </dd>
-                {% endif %}
-                {% if record.data.id %}
-                    <dt>
-                        {{ _('Note') }}
-                    </dt>
-                    <dd>
-                        {{ record.data.note }}
-                    </dd>
-                {% endif %}
+                    {% if record.data.id %}
+                        <dt>
+                            {{ _('ID') }}
+                        </dt>
+                        <dd>
+                            {{ record.data.id }}
+                        </dd>
+                    {% endif %}
+                    {% if record.data.status %}
+                        <dt>
+                            {{ _('Status') }}
+                        </dt>
+                        <dd>
+                            {% for status in record.data.status %}
+                                {{ pers_status_map.get(status) }}{% if not loop.last %} | {% endif %}
+                            {% endfor %}
+                        </dd>
+                    {% endif %}
+                    {% if record.data.created %}
+                        <dt>
+                            {{ _('Record creation date') }}
+                        </dt>
+                        <dd>
+                            {{ record.data.created }}
+                        </dd>
+                    {% endif %}
+                    {% if record.data.changed %}
+                        <dt>
+                            {{ _('Record creation date') }}
+                        </dt>
+                        <dd>
+                            {{ record.data.changed }}
+                        </dd>
+                    {% endif %}
+                    {% if record.data.owner %}
+                        <dt>
+                            {{ _('Owner') }}
+                        </dt>
+                        <dd>
+                            {{ record.data.owner.0 }}
+                        </dd>
+                    {% endif %}
+                    <dt>{{ _('Editorial Status') }}</dt>
+                    <dd><span class="label label-{% if record.data.editorial_status == 'new' %}info{% elif record.data.editorial_status == 'in_process' %}default{% elif record.data.editorial_status == 'processed' %}primary{% elif record.data.editorial_status == 'final_editing' %}warning{% elif record.data.editorial_status == 'deleted' %}danger{% elif record.data.editorial_status == 'finalized' or record.data.editorial_status == 'imported' %}success{% endif %}">{% if record.locked %} <i class="fa fa-lock"></i> {% endif %}{{ record.data.editorial_status|capitalize }}</span></dd>
+                    <hr/>
+                    {% if record.data.data_supplied %}
+                        <dt>
+                            {{ _('Data supplied') }}
+                        </dt>
+                        <dd>
+                            {{ record.data.data_supplied }}
+                        </dd>
+                    {% endif %}
+                    {% if record.data.id %}
+                        <dt>
+                            {{ _('Note') }}
+                        </dt>
+                        <dd>
+                            {{ record.data.note }}
+                        </dd>
+                    {% endif %}
                 {% endif %}
             </dl>
                 {% if config.DEBUG and (current_user.role == 'admin' or current_user.role == 'superadmin') %}

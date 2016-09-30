@@ -32,6 +32,10 @@ header h1 {
     font-size: 1.5em;
     color:#7b7c7e;
 }
+header h1 a:link, header h1 a:visited {
+    color:#7b7c7e;
+    text-decoration: none;
+}
 header h2 {
     font-size: 1.25em;
     margin-top: .75em;
@@ -116,9 +120,6 @@ a.btn, .col-sm-3 a, .nav a {text-decoration:none;}
         background: #e0eacc;
         color: #000;
 }
-.news {
-        background: #d9edf7;
-}
 .btn-primary, .btn-primary:active, .btn-primary:hover, .btn-primary:focus {background: #649600;}
 .btn-default:active, .btn-default:hover, .btn-default:focus {background: #649600;color:#fff;}
 .btn-danger, .btn-danger:active, .btn-danger:hover, .btn-danger:focus {background:#fff;color:#000;border-color:#000;}
@@ -126,6 +127,11 @@ ul.pagination li a {color:#000;}
 ul.pagination li.active a, ul.nav li.active a {background:#649600 !important;}
 li.active > .dropdown-menu li a {color: #000; background-color: #fff !important; border: none;}
 li.active > .dropdown-menu li a:active, li.active > .dropdown-menu li a:hover, li.active > .dropdown-menu li a:focus {background:#649600 !important;}
+.control-label {
+        margin-left:1em;
+        margin-right:1.25em;
+        padding-left:.5em;
+}
 .navbar {margin-bottom:.5em;}
 .navbar a {
         background: #fff;
@@ -143,16 +149,3 @@ li.active > .dropdown-menu li a:active, li.active > .dropdown-menu li a:hover, l
 .label-success {background:#649600;}
 .list-group-item {overflow:auto;}
 hr {margin:.75em 0;}
-
-@media (min-width:768px){
-  #username {width:130%;margin-left:4em;}
-  #password {width:160%;margin-left:1.5em;}
-  .btn {white-space:normal;}
-}
-@media (min-width:992px){
-  #username, #password {width:120%;margin-left:3em;}
-}
-@media (min-width:1200px){
-  #username, #password {width:100%;margin-left:2em;}
-  .btn {white-space:nowrap;}
-}

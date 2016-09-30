@@ -922,8 +922,7 @@ try:
         # },
         # "./m:note[@type='publication status']": lambda elem : {'': elem.text},
         "./m:originInfo/m:dateIssued[@encoding='iso8601']": {
-            'wtf': get_wtf_issued,
-            'solr': get_solr_issued
+            'wtf': get_wtf_issued
         },
         "./m:originInfo/m:dateIssued[@point='start' and @encoding='iso8601']": {
             'wtf': lambda elem: {'issued': elem[0].text},
@@ -1003,8 +1002,8 @@ try:
         # u"./m:relatedItem/note[@displayLabel='Nachträge']": lambda elem : {'': elem.text},
         # u"./m:relatedItem/note[@displayLabel='Titelzusätze']": lambda elem : {'': elem.text},
         # "./m:relatedItem/originInfo": lambda elem : {'': elem.text},
-        "./m:relatedItem/originInfo/dateIssued[@encoding='iso8601']": {
-            'wtf': lambda elem: {'issued': elem[0].text},
+        "./m:relatedItem/m:originInfo/m:dateIssued[@encoding='iso8601']": {
+            'wtf': get_wtf_issued,
             'solr': get_solr_issued
         },
         # "./m:relatedItem/originInfo/edition": lambda elem : {'': elem.text},
