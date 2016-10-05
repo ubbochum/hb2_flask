@@ -137,6 +137,7 @@ ADMIN_PUBTYPES = [
     ('Chapter', lazy_gettext('Chapter in...')),
     ('Collection', lazy_gettext('Collection')),
     ('Monograph', lazy_gettext('Monograph')),
+    ('MultivolumeWork', lazy_gettext('MultivolumeWork')),
     ('Report', lazy_gettext('Report')),
     ('ResearchData', lazy_gettext('Research Data including Software')),
     ('ArticleNewspaper', lazy_gettext('Article in Newspaper')),
@@ -155,6 +156,8 @@ ADMIN_PUBTYPES = [
     ('Series', lazy_gettext('Series')),
     ('SpecialIssue', lazy_gettext('Special Issue')),
     ('Standard', lazy_gettext('Standard')),
+    ('Thesis', lazy_gettext('Thesis')),
+    ('Other', lazy_gettext('Other')),
 ]
 
 EDITORIAL_STATUS = [

@@ -40,6 +40,8 @@ logging.basicConfig(level=logging.DEBUG,
                     datefmt='%a, %d %b %Y %H:%M:%S',
                     )
 
+# https://github.com/CrossRef/rest-api-doc/blob/master/rest_api.md
+
 CROSSREF_PUBTYPES = {
     'book': 'Monograph',
     'book-chapter': 'Chapter',
@@ -69,34 +71,53 @@ CROSSREF_PUBTYPES = {
 }
 
 
-def crossref2csl(doi=''):
+def crossref2csl(doi='', query=''):
+
+    rows = 10
 
     csl_json = []
     csl_record = {}
 
+    record = {}
     try:
-        record = requests.get('http://api.crossref.org/works/%s' % doi).json()
+        if doi != '':
+            record = requests.get('http://api.crossref.org/works/%s' % doi).json()
+        elif query != '':
+            record = requests.get('http://api.crossref.org/works?rows=%s&query=%s' % (rows, query)).json()
+        else:
+            record.setdefault('message', [])
+    except JSONDecodeError:
+        pass
+
+    if doi != '':
+        crossref_items = [record.get('message')]
+    elif query != '':
+        crossref_items = record.get('message').get('items')
+    else:
+        crossref_items = []
+
+    for item in crossref_items:
 
         csl_record.setdefault('id', doi)
 
-        csl_type = record.get('message').get('type')
+        csl_type = item.get('type')
         csl_record.setdefault('type', csl_type)
 
-        title = record.get('message').get('title')[0]
+        title = item.get('title')[0]
         csl_record.setdefault('title', title)
 
-        issued = record.get('message').get('created').get('date-parts')[0][0]
-        if record.get('message').get('created').get('date-parts')[0][1]:
-            issued = '%s-%s' % (issued, record.get('message').get('created').get('date-parts')[0][1])
-        if record.get('message').get('created').get('date-parts')[0][2]:
-            issued = '%s-%s' % (issued, record.get('message').get('created').get('date-parts')[0][2])
+        issued = item.get('created').get('date-parts')[0][0]
+        if item.get('created').get('date-parts')[0][1]:
+            issued = '%s-%s' % (issued, item.get('created').get('date-parts')[0][1])
+        if item.get('created').get('date-parts')[0][2]:
+            issued = '%s-%s' % (issued, item.get('created').get('date-parts')[0][2])
 
         csl_issued = {'raw': issued}
 
         csl_record.setdefault('issued', csl_issued)
 
         journal_title = None
-        for jtitle in record.get('message').get('container-title'):
+        for jtitle in item.get('container-title'):
             if jtitle != '':
                 journal_title = jtitle
                 break
@@ -105,31 +126,29 @@ def crossref2csl(doi=''):
             csl_record.setdefault('parent_title', journal_title)
 
         authors = []
-        if record.get('message').get('author'):
-            for author in record.get('message').get('author'):
+        if item.get('author'):
+            for author in item.get('author'):
                 authors.append({'family': author.get('family'), 'given': author.get('given')})
 
-        if record.get('message').get('editor'):
-            for editor in record.get('message').get('editor'):
+        if item.get('editor'):
+            for editor in item.get('editor'):
                 authors.append({'family': editor.get('family'), 'given': editor.get('given')})
 
         if len(authors) > 0:
             csl_record.setdefault('author', authors)
 
-        publisher = record.get('message').get('publisher')
+        publisher = item.get('publisher')
         csl_record.setdefault('publisher', publisher)
 
-        doi_from_data = record.get('message').get('DOI')
+        doi_from_data = item.get('DOI')
         csl_record.setdefault('doi', doi_from_data)
 
-        if record.get('message').get('ISBN'):
+        if item.get('ISBN'):
             isbns = []
-            for isbn in record.get('message').get('ISBN'):
+            for isbn in item.get('ISBN'):
                 isbns.append(isbn.strip().split('isbn/')[1])
 
         csl_json.append(csl_record)
-    except JSONDecodeError:
-        pass
 
     return {'items': csl_json}
 
@@ -180,6 +199,7 @@ def crossref2wtfjson(doi=''):
                     if len(page) > 1:
                         part.setdefault('page_last',  page[1])
                 is_part_of.append(part)
+                break
 
     if record.get('message').get('parent-title'):
         for jtitle in record.get('message').get('parent-title'):
@@ -200,6 +220,7 @@ def crossref2wtfjson(doi=''):
                     if len(page) > 1:
                         part.setdefault('page_last',  page[1])
                 is_part_of.append(part)
+                break
 
     if len(is_part_of) > 0:
         wtf.setdefault('is_part_of', is_part_of)

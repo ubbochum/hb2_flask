@@ -46,7 +46,7 @@ class Solr(object):
                  terms_fl='', terms_limit=10, terms_prefix='', terms_sort='count', mlt=False, mlt_fields=[],
                  omitHeader='false', query_field='', sort_facet_by_index={}, fuzzy='false',
                  compress=False, facet_sort='count', facet_tree=(), spellcheck='false', spellcheck_collate='false',
-                 spellcheck_count=5, suggest_query='', group='false', group_field='', group_limit=1,
+                 spellcheck_count=5, suggest_query='', group=False, group_field='', group_limit=1,
                  group_sort='score desc', group_ngroups='true', coordinates='0,0', json_nl='arrmap',# cursor='',
                  boost_most_recent='false', csv_separator='\t', core=secrets.SOLR_CORE, stats='false', stats_fl=[],
                  data='', del_id='', export_field='', json_facet={}):
@@ -186,7 +186,7 @@ class Solr(object):
         if self.spellcheck == 'true':
             params += '&spellcheck=true&spellcheck.collate=%s&spellcheck.count=%s' % (
                 self.spellcheck_collate, self.spellcheck_count)
-        if self.group[0] == 'true':
+        if self.group[0]:
             params += '&group=true&group.field=%s&group.limit=%s&group.sort=%s&group.ngroups=%s' % (
                 self.group_field[0], self.group_limit[0], self.group_sort[0], self.group_ngroups[0])
         if self.coordinates != '0,0':
@@ -203,7 +203,7 @@ class Solr(object):
 
         self.request_url = '%s%s' % (url, params)
         # logging.fatal(iri_to_uri(self.request_url))
-        # logging.info(self.request_url)
+        # logging.info('REQUEST: %s' % self.request_url)
         if self.compress:
             import urllib2
             import StringIO

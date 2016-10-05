@@ -115,6 +115,14 @@
                     {% endif %}
                     <dt>{{ _('Editorial Status') }}</dt>
                     <dd><span class="label label-{% if record.data.editorial_status == 'new' %}info{% elif record.data.editorial_status == 'in_process' %}default{% elif record.data.editorial_status == 'processed' %}primary{% elif record.data.editorial_status == 'final_editing' %}warning{% elif record.data.editorial_status == 'deleted' %}danger{% elif record.data.editorial_status == 'finalized' or record.data.editorial_status == 'imported' %}success{% endif %}">{% if record.locked %} <i class="fa fa-lock"></i> {% endif %}{{ record.data.editorial_status|capitalize }}</span></dd>
+                    {% if record.data.catalog and record.data.catalog[0] != '' %}
+                        <dt>{{ _('Data Catalog') }}</dt>
+                        <dd>
+                            {% for catalog in record.data.catalog %}
+                                {{ catalog }}{% if not loop.last %} | {% endif %}
+                            {% endfor %}
+                        </dd>
+                    {% endif %}
                 {% endif %}
             </dl>
                 {% if config.DEBUG and (current_user.role == 'admin' or current_user.role == 'superadmin') %}

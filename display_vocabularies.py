@@ -267,3 +267,12 @@ PUB_STATUS = {
     'granted': lazy_gettext('Granted')
 }
 
+EDT_STATUS = {
+    'new': lazy_gettext('New'),
+    'in_process': lazy_gettext('Editing'),
+    'processed': lazy_gettext('Edited'),
+    'final_editing': lazy_gettext('Final Editing'),
+    'finalized': lazy_gettext('Finalized'),
+    'imported': lazy_gettext('Imported'),
+    'deleted': lazy_gettext('Deleted'),
+}

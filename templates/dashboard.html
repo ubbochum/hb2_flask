@@ -11,13 +11,11 @@
                 {{ drill_down.facets(facet_data.catalog, 'catalog', heading='Catalog', target=target) }}
                 {{ drill_down.facets(facet_data.fperson, 'fperson', heading='Person', target=target) }}
                 {{ drill_down.facets(facet_data.fakultaet, 'fakultaet', heading='Affiliation', target=target) }}
-                {{ drill_down.facets(facet_data.pubtype, 'pubtype', heading='Publication Type', target=target) }}
-                {{ drill_down.facets(facet_data.subtype, 'subtype', heading='Publication Subtype', target=target) }}
+                {{ drill_down.facets(facet_data.pubtype, 'pubtype', heading='Publication Type', vocabulary=pubtype_map, target=target) }}
+                {{ drill_down.facets(facet_data.subtype, 'subtype', heading='Publication Subtype', vocabulary=subtype_map, target=target) }}
                 {{ drill_down.boolean_filter('dfg', heading='DFG funded', target=target) }}
-                {{ drill_down.facets(facet_data.editorial_status, 'editorial_status', heading='Editorial Status', target=target) }}
-                {{ drill_down.facets(facet_data.publication_status, 'publication_status', heading='Publication Status', target=target) }}
-                {# drill_down.facets(facet_data.deskman, 'deskman', heading='Deskman', target=target) #}
-                {# drill_down.facets(facet_data.owner, 'owner', heading='Owner', target=target) #}
+                {{ drill_down.facets(facet_data.editorial_status, 'editorial_status', heading='Editorial Status', vocabulary=edtstatus_map, target=target) }}
+                {{ drill_down.facets(facet_data.publication_status, 'publication_status', heading='Publication Status', vocabulary=pubstatus_map, target=target) }}
                 {{ drill_down.boolean_filter('locked', heading='Locked Records', target=target) }}
                 {{ drill_down.boolean_filter('apparent_dup', heading='Apparent Duplicate', target=target) }}
             </div>

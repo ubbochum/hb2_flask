@@ -48,6 +48,6 @@ def export_solr_query(core='', query='*:*', filename=''):
             fo.write(json.dumps(export_docs, indent=4))
             fo.close()
 
-export_solr_query('hb2', 'pubtype:Patent', 'pubtype_Patent.json')
-export_solr_query('hb2', '-pubtype:Patent', 'pubtype_without_Patent.json')
+# export_solr_query('hb2', 'pubtype:Patent', 'pubtype_Patent.json')
+export_solr_query('hb2', '-date:["" TO *]', 'not_issued.json')
 

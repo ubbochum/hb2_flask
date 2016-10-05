@@ -241,7 +241,7 @@
                 queryTokenizer: Bloodhound.tokenizers.whitespace,
                 remote: {
                     ajax: {datatype: 'jsonp', jsonp: 'json.wrf'},
-                    url: 'https://hb2.ub.tu-dortmund.de/solr/hb2/tsuggest?q=%QUERY',
+                    url: '{{ request.script_root.replace('/beta', '') }}/solr/hb2/tsuggest/?q=%QUERY',
                     filter: function(data){
                         return data.response.docs;
                     }
@@ -257,7 +257,7 @@
                 queryTokenizer: Bloodhound.tokenizers.whitespace,
                 remote: {
                     ajax: {datatype: 'jsonp', jsonp: 'json.wrf'},
-                    url: 'https://hb2.ub.tu-dortmund.de/solr/organisation/tsuggest?q=%QUERY',
+                    url: '{{ request.script_root.replace('/beta', '') }}/solr/organisation/tsuggest/?q=%QUERY',
                     filter: function(data){
                         return data.response.docs;
                     }
@@ -273,7 +273,7 @@
                 queryTokenizer: Bloodhound.tokenizers.whitespace,
                 remote: {
                     ajax: {datatype: 'jsonp', jsonp: 'json.wrf'},
-                    url: 'https://hb2.ub.tu-dortmund.de/solr/group/tsuggest?q=%QUERY',
+                    url: '{{ request.script_root.replace('/beta', '') }}/solr/group/tsuggest/?q=%QUERY',
                     filter: function(data){
                         return data.response.docs;
                     }
@@ -289,7 +289,7 @@
                 queryTokenizer: Bloodhound.tokenizers.whitespace,
                 remote: {
                     ajax: {datatype: 'jsonp', jsonp: 'json.wrf'},
-                    url: 'https://hb2.ub.tu-dortmund.de/solr/person/tsuggest?q=%QUERY',
+                    url: '{{ request.script_root.replace('/beta', '') }}/solr/person/tsuggest/?q=%QUERY',
                     filter: function(data){
                         return data.response.docs;
                     }

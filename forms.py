@@ -241,8 +241,7 @@ class PersonAdminForm(Form):
         ('f', lazy_gettext('Mrs./Ms.')),
     ])
     name = StringField(lazy_gettext('Name'), widget=CustomTextInput(placeholder=lazy_gettext('Family Name, Given Name')))
-    # TODO also_known_as
-    also_known_as = FieldList(StringField(lazy_gettext('Former Name'), validators=[Optional()]))
+    also_known_as = FieldList(StringField(lazy_gettext('Also known as'), validators=[Optional()]), min_entries=1)
     email = StringField(lazy_gettext('E-Mail (IDM)'), validators=[Optional()],
                         widget=CustomTextInput(placeholder=lazy_gettext('Your institutional e-mail address')))
     contact = StringField(lazy_gettext('E-Mail (Contact)'), validators=[Optional()],
@@ -253,7 +252,10 @@ class PersonAdminForm(Form):
     group = FieldList(FormField(GroupForm), min_entries=1)
     url = FieldList(FormField(URLProfileForm), min_entries=1)
 
-    gnd = StringField(lazy_gettext('GND'), validators=[Optional(), Regexp('(1|10)\d{7}[0-9X]|[47]\d{6}-\d|[1-9]\d{0,7}-[0-9X]|3\d{7}[0-9X]')], description=Markup(lazy_gettext('<a href="https://portal.d-nb.de/opac.htm?method=showOptions#top" target="_blank">Find in GND</a>')))
+    gnd = StringField(lazy_gettext('GND'),
+                      validators=[Optional(),
+                                  Regexp('(1|10)\d{7}[0-9X]|[47]\d{6}-\d|[1-9]\d{0,7}-[0-9X]|3\d{7}[0-9X]', message=lazy_gettext('Invalid value!'))],
+                      description=Markup(lazy_gettext('<a href="https://portal.d-nb.de/opac.htm?method=showOptions#top" target="_blank">Find in GND</a>')))
     orcid = StringField(lazy_gettext('ORCID'), validators=[Optional()], description=Markup(lazy_gettext('<a href="https://orcid.org/orcid-search/search" target="_blank">Find in ORCID</a>')))
     viaf = StringField(lazy_gettext('VIAF'), validators=[Optional()], description=Markup(lazy_gettext('<a href="http://www.viaf.org" target="_blank">Find in VIAF</a>')))
     isni = StringField(lazy_gettext('ISNI'), validators=[Optional()], description=Markup(lazy_gettext('<a href="http://www.isni.org" target="_blank">Find in ISNI</a>')))
@@ -307,13 +309,6 @@ class PersonAdminForm(Form):
                        self.arxiv_id], 'label': lazy_gettext('IDs')},
             {'group': [self.affiliation, self.group], 'label': lazy_gettext('Affiliation')},
             {'group': [self.note, self.data_supplied], 'label': lazy_gettext('Notes')},
-            # {'group': [self.editor], 'label': lazy_gettext('Editor')},
-            # {'group': [self.cv], 'label': lazy_gettext('CV') + ' (P)'},
-            # {'group': [self.thesis], 'label': lazy_gettext('Thesis')},
-            # {'group': [self.membership], 'label': lazy_gettext('Membership') + ' (P)'},
-            # {'group': [self.award], 'label': lazy_gettext('Award') + ' (P)'},
-            # {'group': [self.project], 'label': lazy_gettext('Project') + ' (P)'},
-            # {'group': [self.reviewer], 'label': lazy_gettext('Reviewer') + ' (P)'},
             {'group': [self.id, self.created, self.changed, self.editorial_status, self.catalog, self.owner,
                        self.deskman, self.same_as], 'label': lazy_gettext('Administrative')},
         ]
@@ -341,7 +336,7 @@ class OrgaAdminForm(Form):
     id = StringField(lazy_gettext('ID'), validators=[Optional()], widget=CustomTextInput(readonly='readonly'))
     dwid = FieldList(StringField(lazy_gettext('Verwaltungs-ID')), min_entries=1)
     gnd = StringField(lazy_gettext('GND'),
-                      validators=[Optional(), Regexp('(1|10)\d{7}[0-9X]|[47]\d{6}-\d|[1-9]\d{0,7}-[0-9X]|3\d{7}[0-9X]')],
+                      validators=[Optional(), Regexp('(1|10)\d{7}[0-9X]|[47]\d{6}-\d|[1-9]\d{0,7}-[0-9X]|3\d{7}[0-9X]', message=lazy_gettext('Invalid value!'))],
                       description=Markup(lazy_gettext('<a href="https://portal.d-nb.de/opac.htm?method=showOptions#top" target="_blank">Find in GND</a>')))
     parent_id = StringField(lazy_gettext('Parent ID'))
     parent_label = StringField(lazy_gettext('Parent Label'))
@@ -532,7 +527,7 @@ class OtherTitleForm(Form):
 class WorkForm(Form):
     pubtype = SelectField(lazy_gettext('Type'), validators=[Optional()])
     DOI = FieldList(StringField(lazy_gettext('DOI'),
-                                validators=[Optional(), Regexp('^\s*10\.[0-9]{4,}(?:\.[0-9]+)*\/[a-z0-9\-\._\(\)]+', IGNORECASE, message=lazy_gettext('10.<NNNN>/<SOME-ID>'))]),
+                                validators=[Optional(), Regexp('^\s*10\.[0-9]{4,}(?:\.[0-9]+)*\/[a-z0-9\-\._\(\)]+', IGNORECASE, message=lazy_gettext('Invalid value! Schema: 10.<NNNN>/<SOME-ID>'))]),
                     min_entries=1)
     title = StringField(lazy_gettext('Title'), validators=[DataRequired()], widget=CustomTextInput(
         placeholder=lazy_gettext('The title of the work')))
@@ -559,7 +554,7 @@ class WorkForm(Form):
     corporation = FieldList(FormField(CorporationForm), min_entries=1)
 
     uri = FieldList(StringField(lazy_gettext('Link to full text'),
-                                validators=[URL(message=lazy_gettext('Is the URI starting with http:// or https:// or another schema?')), Optional()]), min_entries=1,
+                                validators=[URL(message=lazy_gettext('Invalid value! The URI has to start with http:// or https:// or another schema?')), Optional()]), min_entries=1,
                     widget=CustomTextInput(placeholder=lazy_gettext('A URI, URL, or URN')))
     PMID = StringField(lazy_gettext('PubMed ID'), widget=CustomTextInput(placeholder=(lazy_gettext('e.g. 15894097'))))
     WOSID = StringField(lazy_gettext('Web of Science ID'), widget=CustomTextInput(
@@ -604,7 +599,6 @@ class WorkForm(Form):
     apparent_dup = BooleanField(lazy_gettext('Apparent Duplicate'))
 
     same_as = FieldList(StringField(lazy_gettext('Same As'), validators=[Optional()]), min_entries=1)
-    key_publication = BooleanField(lazy_gettext('Key Publication'), description='A very important title to be included on a special publication list.')
 
 
 class PrintedWorkForm(WorkForm):
@@ -643,7 +637,7 @@ class SeriesForm(SerialForm):
             {'group': [self.pubtype, self.publication_status, self.title, self.subtitle, self.subseries, self.language,
                        self.title_supplement, self.other_title, self.number_of_volumes, self.publisher,
                        self.publisher_place, self.frequency, self.medium,
-                       self.note, self.license, self.license_text, self.key_publication
+                       self.note, self.license, self.license_text
                        ],
              'label': lazy_gettext('Basic')},
             {'group': [self.ISSN, self.ZDBID, self.uri, self.DOI, self.PMID, self.WOSID], 'label': lazy_gettext('IDs')},
@@ -674,7 +668,7 @@ class JournalForm(SerialForm):
                        self.journal_abbreviation,
                        self.language, self.title_supplement, self.other_title, self.publisher,
                        self.publisher_place, self.frequency, self.medium,
-                       self.note, self.license, self.license_text, self.key_publication],
+                       self.note, self.license, self.license_text],
              'label': lazy_gettext('Basic')},
             {'group': [self.ISSN, self.ZDBID, self.uri, self.DOI, self.PMID, self.WOSID],
              'label': lazy_gettext('IDs')},
@@ -727,8 +721,8 @@ class ArticleJournalForm(ArticleForm):
     ], default='published')
     peer_reviewed = BooleanField(lazy_gettext('Peer Reviewed'))
     is_part_of = FieldList(FormField(ArticleRelationForm), min_entries=1)
-    # TODO Markup depends on RUB/TUDO
-    DFG = BooleanField(lazy_gettext('DFG Funded'), description=Markup(lazy_gettext('APCs funded by the DFG and the RUB OA Fund (<a href="https://github.com/OpenAPC/openapc-de/tree/master/data/rub">OpenAPC</a>)')))
+    DFG = BooleanField(lazy_gettext('DFG Funded'),
+                       description=Markup(lazy_gettext('APCs funded by the DFG and the institutional OA Fund.')))
     open_access = FormField(OpenAccessForm)
     other_version = FieldList(FormField(OtherVersionForm), min_entries=1)
     event = FieldList(FormField(EventForm), min_entries=1)
@@ -737,9 +731,10 @@ class ArticleJournalForm(ArticleForm):
 
     def groups(self):
         yield [
-            {'group': [self.pubtype, self.subtype, self.publication_status, self.version, self.title, self.subtitle, self.language,
+            {'group': [self.pubtype, self.subtype, self.publication_status, self.version, self.title, self.subtitle,
+                       self.language,
                        self.title_supplement, self.other_title, self.issued, self.number_of_pages, self.medium,
-                       self.accessed, self.additions, self.note, self.license, self.license_text, self.key_publication],
+                       self.accessed, self.additions, self.note, self.license, self.license_text, self.peer_reviewed],
              'label': lazy_gettext('Basic')},
             {'group': [self.uri, self.DOI, self.PMID, self.WOSID],
              'label': lazy_gettext('IDs')},
@@ -760,7 +755,7 @@ class ArticleJournalForm(ArticleForm):
              'label':lazy_gettext('Content')},
             {'group': [self.open_access, self.DFG],
              'label': lazy_gettext('Open Access')},
-            {'group': [self.id, self.affiliation_context, self.group_context, self.apparent_dup, self.peer_reviewed, self.editorial_status,
+            {'group': [self.id, self.affiliation_context, self.group_context, self.apparent_dup, self.editorial_status,
                        self.created, self.changed, self.catalog, self.owner, self.deskman,
                        self.same_as],
              'label': lazy_gettext('Administrative')},
@@ -777,7 +772,7 @@ class ArticleJournalUserForm(ArticleJournalForm):
         yield [
             {'group': [self.pubtype, self.publication_status, self.title, self.subtitle,
                        self.language, self.issued, self.uri, self.DOI, self.peer_reviewed,
-                       self.key_publication, self.note, self.id, self.created, self.changed],
+                       self.note, self.id, self.created, self.changed],
              'label': lazy_gettext('Publication Details')},
             {'group': [self.person],
              'label': lazy_gettext('Contributors')},
@@ -804,7 +799,7 @@ class ArticleNewspaperForm(ArticleForm):
             {'group': [self.pubtype, self.subtype, self.publication_status, self.version, self.title, self.subtitle,
                        self.language,
                        self.title_supplement, self.other_title, self.issued, self.number_of_pages, self.medium,
-                       self.accessed, self.additions, self.note, self.license, self.license_text, self.key_publication],
+                       self.accessed, self.additions, self.note, self.license, self.license_text],
              'label': lazy_gettext('Basic')},
             {'group': [self.uri, self.DOI, self.PMID, self.WOSID],
              'label': lazy_gettext('IDs')},
@@ -843,7 +838,7 @@ class SpecialIssueForm(JournalForm):
                        self.language,
                        self.title_supplement, self.other_title, self.issued, self.publisher,
                        self.publisher_place, self.frequency, self.number_of_pages, self.medium, self.accessed,
-                       self.additions, self.note, self.license, self.license_text, self.key_publication],
+                       self.additions, self.note, self.license, self.license_text],
              'label': lazy_gettext('Basic')},
             {'group': [self.ISSN, self.ISBN, self.ISMN, self.ZDBID, self.uri, self.DOI, self.PMID, self.WOSID],
              'label': lazy_gettext('IDs')},
@@ -893,10 +888,11 @@ class CollectionForm(ContainerForm):
 
     def groups(self):
         yield [
-            {'group': [self.pubtype, self.subtype, self.publication_status, self.version, self.title, self.subtitle, self.language,
+            {'group': [self.pubtype, self.subtype, self.publication_status, self.version, self.title, self.subtitle,
+                       self.language,
                        self.title_supplement, self.other_title, self.issued, self.edition, self.number_of_volumes,
                        self.publisher, self.publisher_place, self.number_of_pages, self.medium, self.accessed,
-                       self.additions, self.note, self.license, self.license_text, self.key_publication],
+                       self.additions, self.note, self.license, self.license_text, self.peer_reviewed],
              'label': lazy_gettext('Basic')},
             {'group': [self.uri, self.DOI, self.PMID, self.WOSID, self.ISBN, self.ISMN, self.hbz_id],
              'label': lazy_gettext('IDs')},
@@ -915,7 +911,7 @@ class CollectionForm(ContainerForm):
              'label': lazy_gettext('Content')},
             {'group': [self.open_access],
              'label': lazy_gettext('Open Access')},
-            {'group': [self.id, self.affiliation_context, self.group_context, self.peer_reviewed, self.apparent_dup, self.editorial_status,
+            {'group': [self.id, self.affiliation_context, self.group_context, self.apparent_dup, self.editorial_status,
                        self.created, self.changed, self.catalog, self.owner, self.deskman, self.same_as],
              'label': lazy_gettext('Administrative')},
         ]
@@ -932,7 +928,7 @@ class CollectionUserForm(CollectionForm):
             {'group': [self.pubtype, self.publication_status, self.title, self.subtitle, self.language,
                        self.issued, self.edition, self.number_of_volumes,
                        self.publisher, self.publisher_place,
-                       self.uri, self.DOI, self.ISBN, self.peer_reviewed, self.key_publication, self.note,
+                       self.uri, self.DOI, self.ISBN, self.peer_reviewed, self.note,
                        self.id, self.created, self.changed],
              'label': lazy_gettext('Publication Details')},
             {'group': [self.person],
@@ -947,14 +943,13 @@ class CollectionUserForm(CollectionForm):
 class ConferenceForm(CollectionForm):
     event = FieldList(FormField(EventForm), min_entries=1)
     peer_reviewed = BooleanField(lazy_gettext('Peer Reviewed'))
-    # TODO event = FieldList(FormField(EventForm), min_entries=1)
 
     def groups(self):
         yield [
             {'group': [self.pubtype, self.subtype, self.publication_status, self.version, self.title, self.subtitle, self.language,
                        self.title_supplement, self.other_title, self.issued, self.edition, self.number_of_volumes,
                        self.publisher, self.publisher_place, self.number_of_pages, self.medium, self.accessed,
-                       self.additions, self.note, self.license, self.license_text, self.key_publication],
+                       self.additions, self.note, self.license, self.license_text, self.peer_reviewed],
              'label': lazy_gettext('Basic')},
             {'group': [self.uri, self.DOI, self.PMID, self.WOSID, self.ISBN, self.ISMN, self.hbz_id],
              'label': lazy_gettext('IDs')},
@@ -975,7 +970,7 @@ class ConferenceForm(CollectionForm):
              'label': lazy_gettext('Content')},
             {'group': [self.open_access],
              'label': lazy_gettext('Open Access')},
-            {'group': [self.id, self.affiliation_context, self.group_context, self.peer_reviewed, self.apparent_dup,
+            {'group': [self.id, self.affiliation_context, self.group_context, self.apparent_dup,
                        self.editorial_status, self.created, self.changed, self.catalog, self.owner, self.deskman,
                        self.same_as],
              'label': lazy_gettext('Administrative')},
@@ -994,7 +989,7 @@ class EditionForm(CollectionForm):
             {'group': [self.pubtype, self.subtype, self.publication_status, self.version, self.title, self.subtitle, self.language,
                        self.title_supplement, self.other_title, self.issued, self.edition, self.number_of_volumes,
                        self.publisher, self.publisher_place, self.number_of_pages, self.medium, self.accessed,
-                       self.additions, self.note, self.license, self.license_text, self.key_publication],
+                       self.additions, self.note, self.license, self.license_text],
              'label': lazy_gettext('Basic')},
             {'group': [self.uri, self.DOI, self.PMID, self.WOSID, self.ISBN, self.ISMN, self.hbz_id],
              'label': lazy_gettext('IDs')},
@@ -1035,7 +1030,7 @@ class LegalCommentaryForm(CollectionForm):
             {'group': [self.pubtype, self.subtype, self.publication_status, self.version, self.title, self.subtitle, self.language,
                        self.title_supplement, self.other_title, self.standard_abbreviation, self.issued, self.edition,
                        self.number_of_volumes, self.publisher, self.publisher_place, self.number_of_pages, self.medium,
-                       self.accessed, self.additions, self.note, self.license, self.license_text, self.key_publication],
+                       self.accessed, self.additions, self.note, self.license, self.license_text],
              'label': lazy_gettext('Basic')},
             {'group': [self.uri, self.DOI, self.PMID, self.WOSID, self.ISBN, self.ISMN, self.hbz_id],
              'label': lazy_gettext('IDs')},
@@ -1095,7 +1090,7 @@ class ChapterForm(WorkForm):
         yield [
             {'group': [self.pubtype, self.subtype, self.publication_status, self.version, self.title, self.subtitle, self.language,
                        self.title_supplement, self.other_title, self.issued, self.number_of_pages, self.medium,
-                       self.accessed, self.additions, self.note, self.license, self.license_text, self.key_publication],
+                       self.accessed, self.additions, self.note, self.license, self.license_text, self.peer_reviewed],
              'label': lazy_gettext('Basic')},
             {'group': [self.uri, self.DOI, self.PMID, self.WOSID],
              'label': lazy_gettext('IDs')},
@@ -1116,7 +1111,7 @@ class ChapterForm(WorkForm):
              'label':lazy_gettext('Content')},
             {'group': [self.open_access, self.DFG],
              'label': lazy_gettext('Open Access')},
-            {'group': [self.id, self.affiliation_context, self.group_context, self.peer_reviewed, self.apparent_dup,
+            {'group': [self.id, self.affiliation_context, self.group_context, self.apparent_dup,
                        self.editorial_status, self.created, self.changed, self.catalog, self.owner, self.deskman,
                        self.same_as],
              'label': lazy_gettext('Administrative')},
@@ -1132,7 +1127,7 @@ class ChapterUserForm(ChapterForm):
     def simple_groups(self):
         yield [
             {'group': [self.pubtype, self.publication_status, self.title, self.subtitle, self.language,
-                       self.issued, self.uri, self.DOI, self.peer_reviewed, self.key_publication, self.note,
+                       self.issued, self.uri, self.DOI, self.peer_reviewed, self.note,
                        self.id, self.created, self.changed],
              'label': lazy_gettext('Publication Details')},
             {'group': [self.person],
@@ -1162,7 +1157,7 @@ class ChapterInLegalCommentaryForm(ChapterForm):
             {'group': [self.pubtype, self.subtype, self.publication_status, self.version, self.title, self.subtitle, self.language,
                        self.title_supplement, self.other_title, self.supplement, self.issued, self.date_updated,
                        self.number_of_pages, self.medium, self.accessed, self.additions, self.note, self.license,
-                       self.license_text, self.key_publication],
+                       self.license_text, self.peer_reviewed],
              'label': lazy_gettext('Basic')},
             {'group': [self.uri, self.DOI, self.PMID, self.WOSID],
              'label': lazy_gettext('IDs')},
@@ -1181,7 +1176,7 @@ class ChapterInLegalCommentaryForm(ChapterForm):
              'label':lazy_gettext('Content')},
             {'group': [self.open_access, self.DFG],
              'label': lazy_gettext('Open Access')},
-            {'group': [self.id, self.affiliation_context, self.group_context, self.peer_reviewed, self.apparent_dup,
+            {'group': [self.id, self.affiliation_context, self.group_context, self.apparent_dup,
                        self.editorial_status, self.created, self.changed, self.catalog, self.owner, self.deskman,
                        self.same_as],
              'label': lazy_gettext('Administrative')},
@@ -1206,7 +1201,7 @@ class AudioVideoDocumentForm(PrintedWorkForm):
             {'group': [self.pubtype, self.subtype, self.publication_status, self.version, self.title, self.subtitle, self.language,
                        self.title_supplement, self.other_title, self.issued, self.edition, self.publisher,
                        self.publisher_place, self.number_of_pages, self.medium, self.accessed, self.additions,
-                       self.note, self.license, self.license_text, self.key_publication],
+                       self.note, self.license, self.license_text],
              'label': lazy_gettext('Basic')},
             {'group': [self.uri, self.DOI, self.PMID, self.WOSID, self.ISBN, self.ISMN],
              'label': lazy_gettext('IDs')},
@@ -1260,7 +1255,7 @@ class InternetDocumentForm(WorkForm):
             {'group': [self.pubtype, self.subtype, self.publication_status, self.version, self.title, self.subtitle, self.language,
                        self.title_supplement, self.other_title, self.issued, self.place, self.number_of_pages,
                        self.number, self.medium, self.accessed, self.last_update, self.additions, self.note,
-                       self.license, self.license_text, self.key_publication],
+                       self.license, self.license_text],
              'label': lazy_gettext('Basic')},
             {'group': [self.uri, self.DOI, self.PMID, self.WOSID],
              'label': lazy_gettext('IDs')},
@@ -1306,7 +1301,7 @@ class LectureForm(WorkForm):
         yield [
             {'group': [self.pubtype, self.subtype, self.version, self.title, self.subtitle, self.language,
                        self.title_supplement, self.other_title, self.lecture_title, self.issued, self.number_of_pages,
-                       self.medium, self.accessed, self.additions, self.note, self.license, self.license_text, self.key_publication],
+                       self.medium, self.accessed, self.additions, self.note, self.license, self.license_text],
              'label': lazy_gettext('Basic')},
             {'group': [self.uri, self.DOI, self.PMID, self.WOSID],
              'label': lazy_gettext('IDs')},
@@ -1364,7 +1359,7 @@ class MonographForm(PrintedWorkForm):
             {'group': [self.pubtype, self.subtype, self.publication_status, self.version, self.title, self.subtitle, self.language,
                        self.title_supplement, self.other_title, self.issued, self.edition, self.number_of_volumes,
                        self.publisher, self.publisher_place, self.number_of_pages, self.medium, self.accessed,
-                       self.additions, self.note, self.license, self.license_text, self.key_publication],
+                       self.additions, self.note, self.license, self.license_text, self.peer_reviewed],
              'label': lazy_gettext('Basic')},
             {'group': [self.uri, self.DOI, self.PMID, self.WOSID, self.ISBN, self.ISMN, self.hbz_id],
              'label': lazy_gettext('IDs')},
@@ -1386,7 +1381,7 @@ class MonographForm(PrintedWorkForm):
             {'group': [self.open_access],
              'label': lazy_gettext('Open Access')},
             {'group': [self.id, self.affiliation_context, self.group_context, self.apparent_dup, self.editorial_status,
-                       self.created, self.changed, self.catalog, self.owner, self.deskman, self.peer_reviewed,
+                       self.created, self.changed, self.catalog, self.owner, self.deskman,
                        self.same_as],
              'label': lazy_gettext('Administrative')},
         ]
@@ -1403,7 +1398,7 @@ class MonographUserForm(MonographForm):
             {'group': [self.pubtype, self.publication_status, self.title, self.subtitle, self.language,
                        self.issued, self.edition,
                        self.publisher, self.publisher_place,
-                       self.uri, self.DOI, self.ISBN, self.peer_reviewed, self.key_publication, self.note,
+                       self.uri, self.DOI, self.ISBN, self.peer_reviewed, self.note,
                        self.id, self.created, self.changed],
              'label': lazy_gettext('Publication Details')},
             {'group': [self.person],
@@ -1436,20 +1431,15 @@ class MultivolumeWorkForm(PrintedWorkForm):
     open_access = FormField(OpenAccessForm)
     other_version = FieldList(FormField(OtherVersionForm), min_entries=1)
     is_part_of = FieldList(FormField(MonographRelationForm), min_entries=1)
-    #key_publication = BooleanField(lazy_gettext('Key Publication'),
-                                   #description='A very important title to be included on a special publication list.')
-    # issued = FormField(IssueForm)
     issued = StringField(lazy_gettext('Date'), validators=[Optional(), Regexp('[12]\d{3}(?:-[01]\d)?(?:-[0123]\d)?')],
                          widget=CustomTextInput(placeholder=lazy_gettext('YYYY-MM-DD')))
-
-    #user_only = ['key_publication']
 
     def groups(self):
         yield [
             {'group': [self.pubtype, self.subtype, self.publication_status, self.version, self.title, self.subtitle, self.language,
                        self.title_supplement, self.other_title, self.issued, self.edition, self.number_of_volumes,
                        self.publisher, self.publisher_place, self.number_of_pages, self.medium, self.accessed,
-                       self.additions, self.note, self.license, self.license_text, self.key_publication],
+                       self.additions, self.note, self.license, self.license_text],
              'label': lazy_gettext('Basic')},
             {'group': [self.uri, self.DOI, self.PMID, self.WOSID, self.ISBN, self.ISMN, self.hbz_id],
              'label': lazy_gettext('IDs')},
@@ -1478,9 +1468,10 @@ class MultivolumeWorkForm(PrintedWorkForm):
 
 
 class ReportForm(WorkForm):
-    parent_title = StringField(lazy_gettext('Parent Title'), validators=[Optional()], widget=CustomTextInput(placeholder=lazy_gettext('The Title of the Parent Reference')))
-    parent_subtitle = StringField(lazy_gettext('Parent Subtitle'), validators=[Optional()], widget=CustomTextInput(
-    placeholder=lazy_gettext('The Subtitle of the Parent Reference')))
+    parent_title = StringField(lazy_gettext('Parent Title'), validators=[Optional()],
+                               widget=CustomTextInput(placeholder=lazy_gettext('The Title of the Parent Reference')))
+    parent_subtitle = StringField(lazy_gettext('Parent Subtitle'), validators=[Optional()],
+                                  widget=CustomTextInput(placeholder=lazy_gettext('The Subtitle of the Parent Reference')))
     place = StringField(lazy_gettext('Place'), validators=[Optional()])
     edition = StringField(lazy_gettext('Edition'), validators=[Optional()])
     number = FieldList(StringField(lazy_gettext('Number'), validators=[Optional()]), min_entries=1)
@@ -1497,7 +1488,7 @@ class ReportForm(WorkForm):
             {'group': [self.pubtype, self.publication_status, self.version, self.title, self.subtitle, self.language,
                        self.title_supplement, self.other_title, self.issued, self.edition, self.place,
                        self.number_of_pages, self.number, self.medium, self.accessed, self.additions, self.note,
-                       self.license, self.license_text, self.key_publication
+                       self.license, self.license_text, self.peer_reviewed
                        ],
              'label': lazy_gettext('Basic')},
             {'group': [self.uri, self.ISBN, self.DOI, self.PMID, self.WOSID],
@@ -1518,7 +1509,7 @@ class ReportForm(WorkForm):
             {'group': [self.abstract, self.table_of_contents],
              'label':lazy_gettext('Content')},
             {'group': [self.id, self.affiliation_context, self.group_context, self.apparent_dup, self.editorial_status,
-                       self.created, self.changed, self.catalog, self.owner, self.deskman, self.same_as, self.peer_reviewed],
+                       self.created, self.changed, self.catalog, self.owner, self.deskman, self.same_as],
              'label': lazy_gettext('Administrative')},
         ]
 
@@ -1533,7 +1524,7 @@ class ReportUserForm(ReportForm):
         yield [
             {'group': [self.pubtype, self.publication_status, self.title, self.subtitle, self.language,
                        self.issued, self.edition, self.place, self.number,
-                       self.uri, self.DOI, self.ISBN, self.peer_reviewed, self.key_publication, self.note,
+                       self.uri, self.DOI, self.ISBN, self.peer_reviewed, self.note,
                        self.id, self.created, self.changed],
              'label': lazy_gettext('Publication Details')},
             {'group': [self.person],
@@ -1572,7 +1563,7 @@ class ResearchDataForm(WorkForm):
             {'group': [self.pubtype, self.resource_type, self.publication_status, self.title, self.subtitle,
                        self.title_supplement,
                        self.issued, self.version, self.repository, self.place,
-                       self.medium, self.size, self.format, self.accessed, self.note, self.key_publication
+                       self.medium, self.size, self.format, self.accessed, self.note, self.peer_reviewed
                        ],
              'label': lazy_gettext('Basic')},
             {'group': [self.license, self.license_text],
@@ -1591,7 +1582,7 @@ class ResearchDataForm(WorkForm):
                        self.mesh_subject, self.stw_subject, self.lcsh_subject, self.thesoz_subject],
              'label': lazy_gettext('Keyword')},
             {'group': [self.id, self.affiliation_context, self.group_context, self.apparent_dup, self.editorial_status,
-                       self.created, self.changed, self.catalog, self.owner, self.deskman, self.same_as, self.peer_reviewed],
+                       self.created, self.changed, self.catalog, self.owner, self.deskman, self.same_as],
              'label': lazy_gettext('Administrative')},
         ]
 
@@ -1607,7 +1598,7 @@ class ResearchDataUserForm(ResearchDataForm):
             {'group': [self.pubtype, self.resource_type, self.publication_status, self.title, self.subtitle,
                        self.language,
                        self.issued, self.version, self.repository, self.medium, self.size, self.format,
-                       self.uri, self.DOI, self.peer_reviewed, self.key_publication, self.note,
+                       self.uri, self.DOI, self.peer_reviewed, self.note,
                        self.id, self.created, self.changed],
              'label': lazy_gettext('Publication Details')},
             {'group': [self.person],
@@ -1640,20 +1631,16 @@ class OtherForm(WorkForm):
     has_part = FieldList(FormField(HasPartForm), min_entries=1)
     is_part_of = FieldList(FormField(OtherRelationForm), min_entries=1)
     other_version = FieldList(FormField(OtherVersionForm), min_entries=1)
-    #key_publication = BooleanField(lazy_gettext('Key Publication'),
-                                   #description='A very important title to be included on a special publication list.')
     event = FieldList(FormField(EventForm), min_entries=1)
     table_of_contents = FieldList(FormField(TableOfContentsForm), min_entries=1)
     ISBN = FieldList(StringField(lazy_gettext('ISBN'), validators=[Optional(), Isbn]), min_entries=1)
-
-    #user_only = ['key_publication']
 
     def groups(self):
         yield [
             {'group': [self.pubtype, self.subtype, self.publication_status, self.version, self.title, self.subtitle, self.language,
                        self.title_supplement, self.other_title, self.issued, self.edition, self.place,
                        self.number_of_pages, self.number, self.medium, self.accessed, self.additions, self.note,
-                       self.license, self.license_text, self.key_publication],
+                       self.license, self.license_text],
              'label': lazy_gettext('Basic')},
             {'group': [self.uri, self.ISBN, self.DOI, self.PMID, self.WOSID],
              'label': lazy_gettext('IDs')},
@@ -1701,8 +1688,6 @@ class PatentFormOld(WorkForm):
         placeholder=(lazy_gettext('e.g. 60/744,997, 17.04.2006, US')))), min_entries=1)
     open_access = FormField(OpenAccessForm)
     has_part = FieldList(FormField(HasPartForm), min_entries=1)
-
-    user_only = ['key_publication']
 
     def groups(self):
         yield [
@@ -1760,12 +1745,10 @@ class PatentForm(WorkForm):
     person = FieldList(FormField(PatentPersonForm), min_entries=1)
     corporation = FieldList(FormField(PatentCorporationForm), min_entries=1)
 
-    user_only = ['key_publication']
-
     def groups(self):
         yield [
             {'group': [self.pubtype, self.publication_status, self.title, self.language,
-                       self.other_title, self.number_of_pages, self.accessed, self.note, self.key_publication],
+                       self.other_title, self.number_of_pages, self.accessed, self.note],
              'label': lazy_gettext('Basic')},
             {'group': [self.publication_number,
                        self.application_number, self.application_country, self.application_date,
@@ -1794,7 +1777,7 @@ class PressReleaseForm(WorkForm):
         yield [
             {'group': [self.pubtype, self.publication_status, self.version, self.title, self.subtitle, self.language,
                        self.title_supplement, self.other_title, self.issued, self.place, self.number_of_pages,
-                       self.medium, self.accessed, self.additions, self.note, self.license, self.license_text, self.key_publication],
+                       self.medium, self.accessed, self.additions, self.note, self.license, self.license_text],
              'label': lazy_gettext('Basic')},
             {'group': [self.uri, self.DOI, self.PMID, self.WOSID],
              'label': lazy_gettext('IDs')},
@@ -1832,7 +1815,7 @@ class RadioTVProgramForm(WorkForm):
         yield [
             {'group': [self.pubtype, self.subtype, self.publication_status, self.version, self.title, self.subtitle, self.language,
                        self.title_supplement, self.other_title, self.issued,self.number_of_pages, self.medium,
-                       self.accessed, self.additions, self.note, self.license, self.license_text, self.key_publication],
+                       self.accessed, self.additions, self.note, self.license, self.license_text],
              'label': lazy_gettext('Basic')},
             {'group': [self.uri, self.DOI, self.PMID, self.WOSID],
              'label': lazy_gettext('IDs')},
@@ -1869,7 +1852,7 @@ class SoftwareForm(PrintedWorkForm):
             {'group': [self.pubtype, self.publication_status, self.version, self.title, self.subtitle, self.language,
                        self.title_supplement, self.other_title, self.issued, self.edition, self.publisher,
                        self.publisher_place, self.number_of_pages, self.operating_system, self.medium, self.accessed,
-                       self.additions, self.note, self.license, self.license_text, self.key_publication],
+                       self.additions, self.note, self.license, self.license_text],
              'label': lazy_gettext('Basic')},
             {'group': [self.uri, self.DOI, self.PMID, self.WOSID],
              'label': lazy_gettext('IDs')},
@@ -1900,7 +1883,7 @@ class SoftwareForm(PrintedWorkForm):
             {'group': [self.pubtype, self.publication_status, self.version, self.title, self.subtitle, self.language,
                        self.title_supplement, self.other_title, self.issued, self.edition, self.publisher,
                        self.publisher_place, self.number_of_pages, self.operating_system, self.medium, self.accessed,
-                       self.additions, self.note, self.license, self.license_text, self.key_publication],
+                       self.additions, self.note, self.license, self.license_text],
              'label': lazy_gettext('Basic')},
             {'group': [self.uri, self.DOI, self.PMID, self.WOSID],
              'label': lazy_gettext('IDs')},
@@ -1936,17 +1919,12 @@ class StandardForm(PrintedWorkForm):
     other_version = FieldList(FormField(OtherVersionForm), min_entries=1)
     ISBN = FieldList(StringField(lazy_gettext('ISBN of the Collection'), validators=[Optional(), Isbn]), min_entries=1)
 
-    #key_publication = BooleanField(lazy_gettext('Key Publication'),
-                                   #description='A very important title to be included on a special publication list.')
-
-    #user_only = ['key_publication']
-
     def groups(self):
         yield [
             {'group': [self.pubtype, self.publication_status, self.version, self.title, self.subtitle, self.language,
                        self.title_supplement, self.other_title, self.issued, self.edition, self.publisher,
                        self.publisher_place, self.number_of_pages, self.medium, self.accessed, self.additions,
-                       self.note, self.license, self.license_text, self.key_publication],
+                       self.note, self.license, self.license_text],
              'label': lazy_gettext('Basic')},
             {'group': [self.number_revision, self.type_of_standard, self.ICS_notation],
              'label': lazy_gettext('Specific')},
@@ -1999,11 +1977,7 @@ class ThesisForm(WorkForm):
                         widget=CustomTextInput(placeholder=lazy_gettext('Where the thesis was submitted')))
     open_access = FormField(OpenAccessForm)
     has_part = FieldList(FormField(HasPartForm), min_entries=1)
-    #key_publication = BooleanField(lazy_gettext('Key Publication'),
-                                   #description='A very important title to be included on a special publication list.')
     table_of_contents = FieldList(FormField(TableOfContentsForm), min_entries=1)
-
-    #user_only = ['key_publication']
 
     def groups(self):
         yield [
@@ -2011,7 +1985,7 @@ class ThesisForm(WorkForm):
                        self.language,
                        self.title_supplement, self.other_title, self.issued, self.day_of_oral_exam, self.place,
                        self.number_of_pages, self.medium, self.accessed, self.additions, self.note, self.license,
-                       self.license_text, self.key_publication],
+                       self.license_text],
              'label': lazy_gettext('Basic')},
             {'group': [self.uri, self.DOI, self.PMID, self.WOSID, self.hbz_id],
              'label': lazy_gettext('IDs')},

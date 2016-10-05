@@ -329,7 +329,7 @@
                 </dt>
                 <dd>
                     {% for event in record.data.event %}
-                        {{ event.event_name }}{% if event.event_numbering %}, {{ event.event_numbering }}{% endif %} | {{ event.event_place }}{% if event.event_startdate %} | {{ event.event_startdate }}{% if event.event_enddate %} - {{ event.event_enddate }}{% endif %}{% endif %}
+                        {{ event.event_name }}{% if event.event_numbering %}, {{ event.event_numbering }}.{% endif %} | {{ event.event_place }}{% if event.event_startdate %} | {{ event.event_startdate }}{% if event.event_enddate %} - {{ event.event_enddate }}{% endif %}{% endif %}
                         {% if not loop.last %}<br/>{% endif %}
                     {% endfor %}
                 </dd>
@@ -496,7 +496,7 @@
                         {{ record.data.priority_date.split(' ')[0] }}
                     </dd>
                 {% endif %}
-                {% if record.data.ipc_keyword %}
+                {% if record.data.ipc_keyword and record.data.ipc_keyword.0 %}
                 <dt>
                     {% trans count=record.data.ipc_keyword|length %}
                     IPC keyword
@@ -652,7 +652,7 @@
                     {% endfor %}
                 </dd>
             {% endif %}
-            {% if record.data.ZDBID %}
+            {% if record.data.ZDBID and record.data.ZDBID.0 %}
                 <dt>
                     {% trans count=record.data.ZDBID|length %}
                     ZDB ID
@@ -784,6 +784,14 @@
                 <dd>{{ _('Created %(created)s by %(owner)s.', created=record.data.created|mk_time|humanize(), owner=record.data.owner) }}{% if record.data.created != record.data.changed %} {{ _('Last changed %(changed)s.', changed=record.data.changed|mk_time|humanize()) }}{% endif %}</dd>
                 <dt>{{ _('Editorial Status') }}</dt>
                 <dd><span class="label label-{% if record.data.editorial_status == 'new' %}info{% elif record.data.editorial_status == 'in_process' %}default{% elif record.data.editorial_status == 'processed' %}primary{% elif record.data.editorial_status == 'final_editing' %}warning{% elif record.data.editorial_status == 'deleted' %}danger{% elif record.data.editorial_status == 'finalized' or record.data.editorial_status == 'imported' %}success{% endif %}">{% if record.locked %} <i class="fa fa-lock"></i> {% endif %}{{ record.data.editorial_status|capitalize }}</span></dd>
+                {% if record.data.catalog and record.data.catalog[0] != '' %}
+                    <dt>{{ _('Data Catalog') }}</dt>
+                    <dd>
+                        {% for catalog in record.data.catalog %}
+                            {{ catalog }}{% if not loop.last %} | {% endif %}
+                        {% endfor %}
+                    </dd>
+                {% endif %}
             {% endif %}
         </dl>
         {% if config.DEBUG and (current_user.role == 'admin' or current_user.role == 'superadmin') %}

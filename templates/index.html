@@ -4,6 +4,29 @@
     {{ super() }}
     {% if current_user.is_authenticated %}
         <div class="row">
+            {% if current_user.orcidid %}
+            <div class="col-sm-offset-1 col-sm-10">
+                <h3>{{ _('You are linked with ORCID') }}</h3>
+                <div class="col-sm-8">
+                    <a class="btn btn-default btn-lg" href="{{ url_for('orcid_start') }}">
+                        <img id="orcid-id-logo" src="https://orcid.org/sites/default/files/images/orcid_24x24.png" width='24' height='24' alt="ORCID logo"/> {{ _('More information about your ORCID integration') }}
+                    </a>
+                </div>
+            </div>
+            {% else %}
+            <div class="col-sm-offset-1 col-sm-10">
+                <h3>{{ _('Integrate with ORCID') }}</h3>
+                <p>{{ _('With just a few clicks we will make you and your work individually recognisable on the web and in important data sources.') }}</p>
+                <p>Learn more in this short <a href="https://vimeo.com/97150912">video clip</a>.</p>
+                <div class="col-sm-8">
+                    <a class="btn btn-default btn-lg" href="{{ url_for('orcid_start') }}">
+                        <img id="orcid-id-logo" src="https://orcid.org/sites/default/files/images/orcid_24x24.png" width='24' height='24' alt="ORCID logo"/> {{ _('Create or Connect your ORCID iD') }}
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        <div class="row">
             <div class="col-sm-offset-1 col-sm-10">
                 <h3>{{ _('Register works') }}</h3>
                 <div class="col-sm-3">
@@ -11,7 +34,7 @@
                     <span class="help-block">{{ _('Import one or more ISBNs, DOIs, or PubMed IDs') }}</span>
                 </div>
                 <div class="col-sm-3">
-                    <a class="btn btn-default btn-lg" href="{{ url_for('new_by_form') }}" disabled="disabled"><i class="fa fa-keyboard-o"></i> {{ _("I don't have IDs") }}</a><br/>
+                    <a class="btn btn-default btn-lg" href="{{ url_for('new_by_form') }}"><i class="fa fa-keyboard-o"></i> {{ _("I don't have IDs") }}</a><br/>
                     <span class="help-block">{{ _('Enter data manually') }}</span>
                 </div>
                 <div class="col-sm-3">
@@ -51,14 +74,23 @@
         </div>
         <div class="row">
             <div class="col-sm-offset-1 col-sm-10">
-                <h3>{{ _('Integrate with ORCID') }}</h3>
-                <p>{{ _('With just a few clicks we will make you and your work individually recognisable on the web and in important data sources.') }}</p>
-                <p>Learn more in this short <a href="https://vimeo.com/97150912">video clip</a>.</p>
-                <p>
-                    <a class="btn btn-default btn-lg" href="{{ url_for('orcid_start') }}">
-                        <img id="orcid-id-logo" src="https://orcid.org/sites/default/files/images/orcid_24x24.png" width='24' height='24' alt="ORCID logo"/> Create or Connect your ORCID iD
-                    </a>
-                </p>
+                <h3>{{ _('Embed your work list') }}</h3>
+                <p>{{ _('If you maintain your works in our research bibliography, you can embed this list on your own homepage and have it perpetually updated by registering new titles with us.') }}</p>
+                {% if site == 'rub' %}
+                    <p>
+                        If you are currently interested in using this service,
+                        please
+                        consult <a href="http://bibliographie-trac.ub.rub.de/wiki/Publikationslisten">our docs</a> or
+                        <a href="{{ url_for('contact') }}">contac us</a>.
+                    </p>
+                {% endif %}
+                <p>{{ _('Examples') }}:</p>
+                <ul>
+                    <li><a href="{{ url_for('bibliography', agent='person', agent_id=gnd_id, style='ieee-with-url') }}" target="_blank">{{ _('simple work list in citation style "IEEE"') }}</a></li>
+                    <li><a href="{{ url_for('bibliography', agent='person', agent_id=gnd_id, style='harvard1') }}?group_by_year=true" target="_blank">{{ _('work list grouped by year in citation style "Harvard1"') }}</a></li>
+                    <li><a href="{{ url_for('bibliography', agent='person', agent_id=gnd_id, style='modern-language-association-with-url') }}?group_by_type=true" target="_blank">{{ _('work list grouped by publication type in citation style "MLA"') }}</a></li>
+                </ul>
+                <p class="alert alert-info">{{ _('This feature will be available soon!') }}</p>
             </div>
         </div>
     {% else %}

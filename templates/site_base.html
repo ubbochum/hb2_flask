@@ -22,6 +22,7 @@
             {% include 'tudo-header.html' %}
         {% endif %}
         {% include 'navbar.html' %}
+        <div id="feedback"><a href="{{ url_for('contact') }}">Feedback</a></div>
         {% block site_content %}{% endblock %}
         {% include 'footer.html' %}
     </div>

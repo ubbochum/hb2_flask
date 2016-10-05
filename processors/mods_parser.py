@@ -715,6 +715,7 @@ def other_title(elems):
         other_titles.append({'other_title': title.text, 'language': ''})
     return {'other_title': other_titles}
 
+
 def get_value(input):
     value = ''
     # logging.info(input)

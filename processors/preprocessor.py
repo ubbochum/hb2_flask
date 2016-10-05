@@ -102,6 +102,60 @@ def works(filename=''):
         fo.write(json.dumps(newdata, indent=4))
         fo.close()
 
-# persons('../../person.json')
-works('../../works.json')
 
+def issued_data(filename='', data_file=''):
+    if filename != '':
+        fr = open(filename, 'r', encoding="utf8")
+        thedata = json.loads(fr.read())
+        fr.close()
+        print('%s records' % len(thedata))
+
+        # read external data
+        fr = open(data_file, 'r', encoding="utf8")
+        extdata = json.loads(fr.read())
+        fr.close()
+        print('%s records' % len(extdata))
+
+        newdata = []
+        for work in thedata:
+
+            if not work.get('issued') or len(work.get('issued')) == 0:
+
+                if work.get('id') in extdata:
+                    work['issued'] = extdata.get(work.get('id'))
+                    newdata.append(work)
+
+        logging.info('works: %s' % len(thedata))
+        logging.info('new_works: %s' % len(newdata))
+
+        fo = open('/data/issued/new_works.json', 'w')
+        fo.write(json.dumps(newdata, indent=4))
+        fo.close()
+
+
+def delete_issued(filename=''):
+    if filename != '':
+        fr = open(filename, 'r', encoding="utf8")
+        thedata = json.loads(fr.read())
+        fr.close()
+        print('%s records' % len(thedata))
+
+        newdata = []
+        for work in thedata:
+
+            if work.get('issued') and len(work.get('issued')) > 0:
+                del work['issued']
+
+            # print(json.dumps(work, indent=4))
+
+            newdata.append(work)
+
+        fo = open('../../new_works.json', 'w')
+        fo.write(json.dumps(newdata, indent=4))
+        fo.close()
+
+
+# persons('../../person.json')
+# works('../../works.json')
+# issued_data('/data/backup/Samstag/2016-10-01_15-28-31_hb2.not_issued.json', '/data/issued/issuedData.json')
+delete_issued('/data/backup/Montag/2016-10-03_09-39-18_hb2.pubtype_Journal.json')

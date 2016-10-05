@@ -7,13 +7,6 @@
         {% endif %}
     {% endif %}
     <div class="col-sm-6">
-        {% if field.errors %}
-            <ul class="alert alert-danger list-unstyled">
-                {% for error in field.errors %}
-                    <li>{{ error }}</li>
-                {% endfor %}
-            </ul>
-        {% endif %}
         {% if field.flags.required %}
             {% if 'title' in field.name %}
                 {{ field(class='form-control typeahead_title',required='required') }}

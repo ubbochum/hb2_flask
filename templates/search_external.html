@@ -6,21 +6,22 @@
         <div class="col-sm-10 col-sm-offset-1">
             <h2>{{ header }}</h2>
             <div class="section" id="my-amazing-bibliography">
-            <form class="form-horizontal" role="search">
-                <div class="form-group">
-                    <div class="input-group">
-                        <span class="input-group-addon"><i class="fa fa-search"></i></span>
-                        <input id="query_id" type="text" class="form-control" placeholder="{{ _('DOI, e.g. 10.1515/9783110278736.64') }}" name="q">
+                <h3>{{ _('Search in external databases') }}</h3>
+                <form class="form-horizontal" role="search">
+                    <div class="form-group">
+                        <div class="input-group">
+                            <span class="input-group-addon"><i class="fa fa-search"></i></span>
+                            <input id="query_id" type="text" class="form-control" placeholder="{{ _('DOI, e.g. 10.1515/9783110278736.64') }}" name="q">
+                        </div>
                     </div>
+                </form>
+                <button id="btn btn-default" type="submit" class="submit">Search</button>
+                <h3>{{ _('Results')}}</h3>
+                <div id="csl-outer-block">
+                  <div id="csl-inner-block">
+                    <div id="csl-content-block"></div>
+                  </div>
                 </div>
-            </form>
-            <button id="btn btn-default" type="submit" class="submit">Search</button>
-            <h3>{{ _('Results')}}</h3>
-            <div id="csl-outer-block">
-              <div id="csl-inner-block">
-                <div id="csl-content-block"></div>
-              </div>
-            </div>
             </div>
         </div>
     </div>
