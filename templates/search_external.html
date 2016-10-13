@@ -2,120 +2,154 @@
 
 {% block site_content %}
     {{ super() }}
-    <div class="row">
-        <div class="col-sm-10 col-sm-offset-1">
-            <h2>{{ header }}</h2>
-            <div class="section" id="my-amazing-bibliography">
-                <h3>{{ _('Search in external databases') }}</h3>
-                <form class="form-horizontal" role="search">
-                    <div class="form-group">
-                        <div class="input-group">
-                            <span class="input-group-addon"><i class="fa fa-search"></i></span>
+    {% if type == 'by_id' %}
+        <div class="row">
+            <div class="col-sm-10 col-sm-offset-1">
+                <h2>{{ header }}</h2>
+                <div class="section" id="my-amazing-bibliography">
+                    <h3>{{ _('Search') }}</h3>
+                    <form class="form-horizontal col-sm-offset-1" role="search">
+                        <div class="form-group">
+                            <label class="radio-inline">
+                              <input type="radio" name="id_type" id="doi" value="doi" checked="checked"> DOI
+                            </label>
+                            <label class="radio-inline">
+                              <input type="radio" name="id_type" id="isbn" value="isbn"> ISBN
+                            </label>
+                            <label class="radio-inline disabled">
+                              <input type="radio" name="id_type" id="pmid" value="pmid" disabled> PMID
+                            </label>
+                        </div>
+                        <div class="form-group">
                             <input id="query_id" type="text" class="form-control" placeholder="{{ _('DOI, e.g. 10.1515/9783110278736.64') }}" name="q">
                         </div>
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-default submit">Search</button>
+                        </div>
+                    </form>
+                    <h3>{{ _('Results')}}</h3>
+                    <div id="section csl-outer-block">
+                          <div id="csl-inner-block">
+                            <div id="csl-content-block"></div>
+                          </div>
                     </div>
-                </form>
-                <button id="btn btn-default" type="submit" class="submit">Search</button>
-                <h3>{{ _('Results')}}</h3>
-                <div id="csl-outer-block">
-                  <div id="csl-inner-block">
-                    <div id="csl-content-block"></div>
-                  </div>
                 </div>
             </div>
         </div>
-    </div>
+    {% elif type == 'by_search' %}
+        <div class="row">
+            <div class="col-sm-10 col-sm-offset-1">
+                <h2>{{ header }}</h2>
+                <div class="section" id="my-amazing-bibliography">
+                    <h3>{{ _('Search') }}</h3>
+                    <form class="form-horizontal col-sm-offset-1" role="search">
+                        <div class="form-group">
+                            <div class="input-group">
+                                <span class="input-group-addon"><i class="fa fa-search"></i></span>
+                                <input id="query" type="text" class="form-control" placeholder="{{ _('anything you want') }}" name="q">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-default submit_new">Search</button>
+                    </form>
+                    <h3>{{ _('Results')}}</h3>
+                    <div id="csl-outer-block">
+                      <div id="csl-inner-block">
+                          <div id="csl-books-block"></div>
+                      </div>
+                      <div id="csl-inner-block">
+                          <div id="csl-articles-block"></div>
+                      </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
 {% endblock %}
 {% block scripts %}
     {{ super() }}
     <script type="text/javascript" src="{{ url_for('static', filename='js/citeproc.js') }}"></script>
     <script type="text/javascript">
+        $(document).on('click', '#doi', function (event)  {
+            //console.log('DOI')
+            $('#query_id').attr({placeholder:"{{ _('DOI, e.g. 10.1515/9783110278736.64') }}"});
+            $('#doi').attr('checked', true);
+            $('#isbn').attr('checked', false);
+            $('#pmid').attr('checked', false);
+        });
+        $(document).on('click', '#isbn', function (event)  {
+            //console.log('ISBN')
+            $('#query_id').attr({placeholder:"{{ _('ISBN, e.g. 978-3-89701-956-0') }}"});
+            $('#doi').attr('checked', false);
+            $('#isbn').attr('checked', true);
+            $('#pmid').attr('checked', false);
+        });
+        $(document).on('click', '#pmid', function (event)  {
+            console.log('PMID')
+            $('#query_id').attr({placeholder:"{{ _('PMID, e.g. 15894097') }}"});
+            $('#doi').attr('checked', false);
+            $('#isbn').attr('checked', false);
+            $('#pmid').attr('checked', true);
+        });
+
         $(document).on('click', '.submit', function (event)  {
 
-            // Library of Cornell Conservation Agriculture
-            //var chosenLibraryItems = "https://api.zotero.org/groups/459003/items?format=csljson&limit=6&itemType=journalArticle";
-            //var chosenLibraryItems = "https://api.crossref.org/works/10.1515/9783110278736";
-            //var chosenLibraryItems = "https://hb2.ub.tu-dortmund.de/manage-test/search?core=hb2&q=ftudo:%22Deuse%2C%20Jochen%22&format=csl";
+            var id_type = $("input[type='radio']:checked").val();
+            var query_id = $('#query_id').val().trim();
+            console.log("id_type: " + id_type);
+            console.log("query_id: " + query_id);
 
-            //var chosenLibraryItems = "https://hb2.ub.tu-dortmund.de/manage-test/search?q=owner%3A%22Marek.Kropelnicki%40ruhr-uni-bochum.de%22&format=csl";
-            //var chosenLibraryItems = "https://hb2.ub.tu-dortmund.de/manage-test/search?q=owner%3A%22stefanie.buechter%40tu-dortmund.de%22&format=csl";
+            var chosenLibraryItems = "";
+            if (id_type == 'doi') {
+                chosenLibraryItems = "{{ url_for('search_crossref') }}?format=html&doi=" + query_id;
+            }
+            else if (id_type == 'isbn') {
+                chosenLibraryItems = "{{ url_for('search_gbv') }}?format=html&isbns=" + query_id;
+            }
+            else if (id_type == 'pmid') {
+            }
 
-            var chosenLibraryItems = "{{ url_for('search_crossref') }}?doi="
-            var doi = $('#query_id').val().trim();
-            chosenLibraryItems += doi;
+            console.log("chosenLibraryItems: " + chosenLibraryItems);
 
-            // Chicago Manual of Style (Full Note)
-            // var chosenStyleID = "chicago-fullnote-bibliography";
-            // DIN 1505-2
-            // var chosenStyleID = "din-1505-2";
-            var chosenStyleID = "chicago-author-date";
-            //var chosenStyleID = "journal-of-medical-internet-research";
-            //var chosenStyleID = "national-library-of-medicine-grant-proposals";
-            //var chosenStyleID = "world-journal-of-gastroenterology";
-
-            // Fetch citation data
             var xhr = new XMLHttpRequest();
             xhr.open('GET', chosenLibraryItems, false);
             xhr.send(null);
-            var citationData = JSON.parse(xhr.responseText);
-            console.log(citationData)
+            var citationData = xhr.responseText;
+            //console.log(citationData)
 
-            // Refactor citation data for keyed access
-            var citations = {};
-            var itemIDs = [];
-
-            for (var i=0,ilen=citationData.items.length;i<ilen;i++) {
-            var item = citationData.items[i];
-            if (!item.issued) continue;
-            if (item.URL) delete item.URL;
-            var id = item.id;
-            citations[id] = item;
-            itemIDs.push(id);
-            }
-
-            // Initialize a system object
-            citeprocSys = {
-            retrieveLocale: function (lang){
-              console.log(lang)
-              var xhr = new XMLHttpRequest();
-              xhr.open('GET', 'https://raw.githubusercontent.com/Juris-M/citeproc-js-docs/master/locales-' + lang + '.xml', false);
-              xhr.send(null);
-              return xhr.responseText;
-            },
-            retrieveItem: function(id){
-              return citations[id];
-            }
-            };
-
-            // Instantiate processor
-            function getProcessor(styleID) {
-            // Get the CSL style as a serialized string of XML
-            var xhr = new XMLHttpRequest();
-            xhr.open('GET', 'https://raw.githubusercontent.com/citation-style-language/styles/master/' + styleID + '.csl', false);
-            xhr.send(null);
-            var styleAsText = xhr.responseText;
-            var citeproc = new CSL.Engine(citeprocSys, styleAsText);
-            return citeproc;
-            };
-
-            // This runs at document ready, and renders the bibliography
-            function processorOutput() {
-            ret = '';
-            var citeproc = getProcessor(chosenStyleID);
-            citeproc.updateItems(itemIDs);
-            var bibResult = citeproc.makeBibliography();
-            results = bibResult[1].join('\n');
-            if (results == '')
-                return "{{ _('No Records found') }}";
-            else
-                return results + '<a href="' + '{{ url_for("new_by_identifiers") }}' + '?doi=' + doi + '">{{ _('Use this Record') }}</a>';
-            }
-
-            var button = document.getElementById('csl-cites-button');
-            var target = document.getElementById("csl-inner-block");
             var content = document.getElementById("csl-content-block");
-            content.innerHTML = processorOutput();
+            content.innerHTML = citationData;
 
+            return false;
+        });
+
+        $(document).on('click', '.submit_new', function (event)  {
+
+            var query = $('#query').val().trim();
+
+            var chosenLibraryItems = "{{ url_for('search_gbv') }}?format=html&q=";
+            chosenLibraryItems += query;
+
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', chosenLibraryItems, false);
+            xhr.send(null);
+            var citationData = xhr.responseText;
+            //console.log(citationData)
+
+            var content = document.getElementById("csl-books-block");
+            content.innerHTML = '<strong>{{ _('Books') }}</strong>' + citationData;
+
+            var chosenLibraryItems = "{{ url_for('search_crossref') }}?format=html&q=";
+            chosenLibraryItems += query;
+
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', chosenLibraryItems, false);
+            xhr.send(null);
+            var citationData = xhr.responseText;
+            //console.log(citationData)
+
+            var content = document.getElementById("csl-articles-block");
+            content.innerHTML = '<br/><strong>{{ _('Articles') }}</strong>' + citationData;
+            return false;
         });
     </script>
 {% endblock %}

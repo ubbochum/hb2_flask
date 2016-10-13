@@ -1,0 +1,9 @@
+    <div class="csl-bib-body">
+        {% for entry in entries %}
+            <div class="csl-entry">
+                {% if intern %}<span class="glyphicon glyphicon-minus" aria-hidden="true"></span> {% endif %}
+                {{ entry }}
+            </div>
+        {% endfor %}
+    </div>
+    

@@ -20,7 +20,8 @@
 #  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 #  THE SOFTWARE.
 
-
+import uuid
+import datetime
 from flask import Markup
 from flask.ext.babel import lazy_gettext
 from flask.ext.wtf import Form, RecaptchaField
@@ -35,6 +36,14 @@ def Isbn(form, field):
     theisbn = pyisbn.Isbn(field.data.strip())
     if theisbn.validate() == False:
         raise ValidationError(lazy_gettext('Not a valid ISBN!'))
+
+
+def timestamp():
+    date_string = str(datetime.datetime.now())[:-3]
+    if date_string.endswith('0'):
+        date_string = '%s1' % date_string[:-1]
+
+    return date_string
 
 
 class CustomTextInput(TextInput):
@@ -69,8 +78,11 @@ class AbstractForm(Form):
 class PersonForm(Form):
     name = StringField(lazy_gettext('Name'), validators=[Optional()],
                        widget=CustomTextInput(placeholder=lazy_gettext('Name, Given name')))
+    # gnd = StringField(lazy_gettext('GND'),
+    #                  validators=[Optional(), Regexp('(1|10)\d{7}[0-9X]|[47]\d{6}-\d|[1-9]\d{0,7}-[0-9X]|3\d{7}[0-9X]')],
+    #                  description=Markup(lazy_gettext('<a href="https://portal.d-nb.de/opac.htm?method=showOptions#top" target="_blank">Find in GND</a>')))
     gnd = StringField(lazy_gettext('GND'),
-                      validators=[Optional(), Regexp('(1|10)\d{7}[0-9X]|[47]\d{6}-\d|[1-9]\d{0,7}-[0-9X]|3\d{7}[0-9X]')],
+                      validators=[Optional()],
                       description=Markup(lazy_gettext('<a href="https://portal.d-nb.de/opac.htm?method=showOptions#top" target="_blank">Find in GND</a>')))
     orcid = StringField(lazy_gettext('ORCID'), validators=[Optional()],
                         description=Markup(lazy_gettext('<a href="https://orcid.org/orcid-search/search" target="_blank">Find in ORCID</a>')))
@@ -92,6 +104,8 @@ class PersonUserForm(Form):
     # editor = BooleanField(lazy_gettext('Editor'), validators=[Optional()])
     corresponding_author = BooleanField(lazy_gettext('Corresponding Author'), validators=[Optional()],
                                         description=lazy_gettext('The person handling the publication process'))
+    rubi = BooleanField(lazy_gettext('RUB member'), validators=[Optional()])
+    tudo = BooleanField(lazy_gettext('TUDO member'), validators=[Optional()])
 
 
 class PatentPersonForm(PersonForm):
@@ -231,7 +245,8 @@ class URLProfileForm(Form):
 
 
 class PersonFromGndForm(Form):
-    gnd = StringField(lazy_gettext('GND'), validators=[DataRequired(), Regexp('(1|10)\d{7}[0-9X]|[47]\d{6}-\d|[1-9]\d{0,7}-[0-9X]|3\d{7}[0-9X]')], description=Markup(lazy_gettext('<a href="https://portal.d-nb.de/opac.htm?method=showOptions#top" target="_blank">Find in GND</a>')))
+    # gnd = StringField(lazy_gettext('GND'), validators=[DataRequired(), Regexp('(1|10)\d{7}[0-9X]|[47]\d{6}-\d|[1-9]\d{0,7}-[0-9X]|3\d{7}[0-9X]')], description=Markup(lazy_gettext('<a href="https://portal.d-nb.de/opac.htm?method=showOptions#top" target="_blank">Find in GND</a>')))
+    gnd = StringField(lazy_gettext('GND'), validators=[DataRequired()], description=Markup(lazy_gettext('<a href="https://portal.d-nb.de/opac.htm?method=showOptions#top" target="_blank">Find in GND</a>')))
 
 
 class PersonAdminForm(Form):
@@ -252,9 +267,12 @@ class PersonAdminForm(Form):
     group = FieldList(FormField(GroupForm), min_entries=1)
     url = FieldList(FormField(URLProfileForm), min_entries=1)
 
+    # gnd = StringField(lazy_gettext('GND'),
+    #                  validators=[Optional(),
+    #                              Regexp('(1|10)\d{7}[0-9X]|[47]\d{6}-\d|[1-9]\d{0,7}-[0-9X]|3\d{7}[0-9X]', message=lazy_gettext('Invalid value!'))],
+    #                  description=Markup(lazy_gettext('<a href="https://portal.d-nb.de/opac.htm?method=showOptions#top" target="_blank">Find in GND</a>')))
     gnd = StringField(lazy_gettext('GND'),
-                      validators=[Optional(),
-                                  Regexp('(1|10)\d{7}[0-9X]|[47]\d{6}-\d|[1-9]\d{0,7}-[0-9X]|3\d{7}[0-9X]', message=lazy_gettext('Invalid value!'))],
+                      validators=[Optional()],
                       description=Markup(lazy_gettext('<a href="https://portal.d-nb.de/opac.htm?method=showOptions#top" target="_blank">Find in GND</a>')))
     orcid = StringField(lazy_gettext('ORCID'), validators=[Optional()], description=Markup(lazy_gettext('<a href="https://orcid.org/orcid-search/search" target="_blank">Find in ORCID</a>')))
     viaf = StringField(lazy_gettext('VIAF'), validators=[Optional()], description=Markup(lazy_gettext('<a href="http://www.viaf.org" target="_blank">Find in VIAF</a>')))
@@ -398,12 +416,14 @@ class GroupAdminForm(Form):
     changed = StringField(lazy_gettext('Record Change Date'), widget=CustomTextInput(readonly='readonly'))
     deskman = StringField(lazy_gettext('Deskman'), validators=[Optional()], widget=CustomTextInput(admin_only='admin_only'))
     destatis = FieldList(FormField(DestatisForm), min_entries=1)
+    note = TextAreaField(lazy_gettext('Notes'), validators=[Optional()], widget=CustomTextInput(
+        placeholder=lazy_gettext('Please put any information that does not fit other fields here.')))
 
     same_as = FieldList(StringField(lazy_gettext('Same As'), validators=[Optional()]), min_entries=1)
 
     def groups(self):
         yield [
-            {'group': [self.id, self.pref_label, self.description, self.start_date, self.end_date, self.url],
+            {'group': [self.id, self.pref_label, self.description, self.start_date, self.end_date, self.url, self.note],
              'label': lazy_gettext('Basic')},
             {'group': [self.funds],
              'label': lazy_gettext('Funds')},
@@ -414,6 +434,23 @@ class GroupAdminForm(Form):
             {'group': [self.id, self.created, self.changed, self.editorial_status, self.catalog, self.owner, self.deskman,
                        self.same_as],
              'label': lazy_gettext('Administrative')},
+        ]
+
+
+class GroupAdminUserForm(GroupAdminForm):
+    id = HiddenField(validators=[UUID(), Optional()], default=str(uuid.uuid4))
+    created = HiddenField(default=timestamp())
+    changed = HiddenField(default=timestamp())
+    catalog = SelectMultipleField(lazy_gettext('Data Catalog'), choices=forms_vocabularies.CATALOGS,
+                                  description=lazy_gettext('Choose one or more DataCatalog'))
+
+    def simple_groups(self):
+        yield [
+            {'group': [self.pref_label, self.description, self.start_date, self.end_date, self.url,
+                       self.note, self.id, self.created, self.changed],
+             'label': lazy_gettext('Working group details')},
+            {'group': [self.funds],
+             'label': lazy_gettext('Funds')},
         ]
 
 
@@ -433,7 +470,13 @@ class CorporationForm(Form):
     rubi = BooleanField(lazy_gettext('RUB member'), validators=[Optional()])
     tudo = BooleanField(lazy_gettext('TUDO member'), validators=[Optional()])
 
-    admin_only = ['gnd', 'viaf', 'isni']
+
+class CorporationUserForm(Form):
+    name = StringField(lazy_gettext('Name'))
+    gnd = HiddenField(validators=[Optional()])
+
+    rubi = BooleanField(lazy_gettext('RUB member'), validators=[Optional()])
+    tudo = BooleanField(lazy_gettext('TUDO member'), validators=[Optional()])
 
 
 class PatentCorporationForm(CorporationForm):
@@ -762,11 +805,21 @@ class ArticleJournalForm(ArticleForm):
         ]
 
 
+class ArticleRelationUserForm(Form):
+    is_part_of = StringField(lazy_gettext('Journal'))
+    volume = StringField(lazy_gettext('Volume / Year'))
+    issue = StringField(lazy_gettext('Issue'))
+    page_first = StringField(lazy_gettext('First Page'))
+    page_last = StringField(lazy_gettext('Last Page'))
+
+
 class ArticleJournalUserForm(ArticleJournalForm):
-    id = HiddenField(validators=[UUID(), Optional()])
-    created = HiddenField()
-    changed = HiddenField()
+    id = HiddenField(validators=[UUID(), Optional()], default=str(uuid.uuid4))
+    created = HiddenField(default=timestamp())
+    changed = HiddenField(default=timestamp())
     person = FieldList(FormField(PersonUserForm), min_entries=1)
+    corporation = FieldList(FormField(CorporationUserForm), min_entries=1)
+    is_part_of = FieldList(FormField(ArticleRelationUserForm), min_entries=1)
 
     def simple_groups(self):
         yield [
@@ -774,7 +827,7 @@ class ArticleJournalUserForm(ArticleJournalForm):
                        self.language, self.issued, self.uri, self.DOI, self.peer_reviewed,
                        self.note, self.id, self.created, self.changed],
              'label': lazy_gettext('Publication Details')},
-            {'group': [self.person],
+            {'group': [self.person, self.corporation],
              'label': lazy_gettext('Contributors')},
             {'group': [self.is_part_of],
              'label': lazy_gettext('Journal')},
@@ -782,6 +835,8 @@ class ArticleJournalUserForm(ArticleJournalForm):
              'label': lazy_gettext('Keywords')},
             {'group': [self.abstract],
              'label': lazy_gettext('Abstract')},
+            {'group': [self.affiliation_context, self.group_context],
+             'label': lazy_gettext('Work belongs to')},
         ]
 
 
@@ -918,10 +973,11 @@ class CollectionForm(ContainerForm):
 
 
 class CollectionUserForm(CollectionForm):
-    id = HiddenField()
-    created = HiddenField()
-    changed = HiddenField()
+    id = HiddenField(validators=[UUID(), Optional()], default=str(uuid.uuid4))
+    created = HiddenField(default=timestamp())
+    changed = HiddenField(default=timestamp())
     person = FieldList(FormField(PersonUserForm), min_entries=1)
+    corporation = FieldList(FormField(CorporationUserForm), min_entries=1)
 
     def simple_groups(self):
         yield [
@@ -931,12 +987,14 @@ class CollectionUserForm(CollectionForm):
                        self.uri, self.DOI, self.ISBN, self.peer_reviewed, self.note,
                        self.id, self.created, self.changed],
              'label': lazy_gettext('Publication Details')},
-            {'group': [self.person],
+            {'group': [self.person, self.corporation],
              'label': lazy_gettext('Contributors')},
             {'group': [self.keyword],
              'label': lazy_gettext('Keywords')},
             {'group': [self.abstract],
              'label':lazy_gettext('Abstract')},
+            {'group': [self.affiliation_context, self.group_context],
+             'label': lazy_gettext('Work belongs to')},
         ]
 
 
@@ -1119,10 +1177,11 @@ class ChapterForm(WorkForm):
 
 
 class ChapterUserForm(ChapterForm):
-    id = HiddenField()
-    created = HiddenField()
-    changed = HiddenField()
+    id = HiddenField(validators=[UUID(), Optional()], default=str(uuid.uuid4))
+    created = HiddenField(default=timestamp())
+    changed = HiddenField(default=timestamp())
     person = FieldList(FormField(PersonUserForm), min_entries=1)
+    corporation = FieldList(FormField(CorporationUserForm), min_entries=1)
 
     def simple_groups(self):
         yield [
@@ -1130,7 +1189,7 @@ class ChapterUserForm(ChapterForm):
                        self.issued, self.uri, self.DOI, self.peer_reviewed, self.note,
                        self.id, self.created, self.changed],
              'label': lazy_gettext('Publication Details')},
-            {'group': [self.person],
+            {'group': [self.person, self.corporation],
              'label': lazy_gettext('Contributors')},
             {'group': [self.is_part_of],
              'label': lazy_gettext('Is published in')},
@@ -1138,6 +1197,8 @@ class ChapterUserForm(ChapterForm):
              'label': lazy_gettext('Keywords')},
             {'group': [self.abstract],
              'label':lazy_gettext('Abstract')},
+            {'group': [self.affiliation_context, self.group_context],
+             'label': lazy_gettext('Work belongs to')},
         ]
 
 
@@ -1388,10 +1449,11 @@ class MonographForm(PrintedWorkForm):
 
 
 class MonographUserForm(MonographForm):
-    id = HiddenField()
-    created = HiddenField()
-    changed = HiddenField()
+    id = HiddenField(validators=[UUID(), Optional()], default=str(uuid.uuid4))
+    created = HiddenField(default=timestamp())
+    changed = HiddenField(default=timestamp())
     person = FieldList(FormField(PersonUserForm), min_entries=1)
+    corporation = FieldList(FormField(CorporationUserForm), min_entries=1)
 
     def simple_groups(self):
         yield [
@@ -1401,12 +1463,14 @@ class MonographUserForm(MonographForm):
                        self.uri, self.DOI, self.ISBN, self.peer_reviewed, self.note,
                        self.id, self.created, self.changed],
              'label': lazy_gettext('Publication Details')},
-            {'group': [self.person],
+            {'group': [self.person, self.corporation],
              'label': lazy_gettext('Contributors')},
             {'group': [self.keyword],
              'label': lazy_gettext('Keywords')},
             {'group': [self.abstract],
              'label':lazy_gettext('Abstract')},
+            {'group': [self.affiliation_context, self.group_context],
+             'label': lazy_gettext('Work belongs to')},
         ]
 
 
@@ -1519,6 +1583,7 @@ class ReportUserForm(ReportForm):
     created = HiddenField()
     changed = HiddenField()
     person = FieldList(FormField(PersonUserForm), min_entries=1)
+    corporation = FieldList(FormField(CorporationUserForm), min_entries=1)
 
     def simple_groups(self):
         yield [
@@ -1527,7 +1592,7 @@ class ReportUserForm(ReportForm):
                        self.uri, self.DOI, self.ISBN, self.peer_reviewed, self.note,
                        self.id, self.created, self.changed],
              'label': lazy_gettext('Publication Details')},
-            {'group': [self.person],
+            {'group': [self.person, self.corporation],
              'label': lazy_gettext('Contributors')},
             {'group': [self.is_part_of],
              'label': lazy_gettext('Is published in')},
@@ -1535,6 +1600,8 @@ class ReportUserForm(ReportForm):
              'label': lazy_gettext('Keywords')},
             {'group': [self.abstract],
              'label':lazy_gettext('Abstract')},
+            {'group': [self.affiliation_context, self.group_context],
+             'label': lazy_gettext('Work belongs to')},
         ]
 
 
@@ -1588,10 +1655,11 @@ class ResearchDataForm(WorkForm):
 
 
 class ResearchDataUserForm(ResearchDataForm):
-    id = HiddenField()
-    created = HiddenField()
-    changed = HiddenField()
+    id = HiddenField(validators=[UUID(), Optional()], default=str(uuid.uuid4))
+    created = HiddenField(default=timestamp())
+    changed = HiddenField(default=timestamp())
     person = FieldList(FormField(PersonUserForm), min_entries=1)
+    corporation = FieldList(FormField(CorporationUserForm), min_entries=1)
 
     def simple_groups(self):
         yield [
@@ -1601,7 +1669,7 @@ class ResearchDataUserForm(ResearchDataForm):
                        self.uri, self.DOI, self.peer_reviewed, self.note,
                        self.id, self.created, self.changed],
              'label': lazy_gettext('Publication Details')},
-            {'group': [self.person],
+            {'group': [self.person, self.corporation],
              'label': lazy_gettext('Contributors')},
             {'group': [self.license, self.license_text],
              'label': lazy_gettext('License')},
@@ -1611,6 +1679,8 @@ class ResearchDataUserForm(ResearchDataForm):
              'label': lazy_gettext('Keywords')},
             {'group': [self.abstract],
              'label':lazy_gettext('Abstract')},
+            {'group': [self.affiliation_context, self.group_context],
+             'label': lazy_gettext('Work belongs to')},
         ]
 
 

@@ -25,10 +25,8 @@ __author__ = 'hagbeck'
 import datetime
 import uuid
 import logging
-import simplejson as json
 from simplejson import JSONDecodeError
 import requests
-from requests import RequestException
 
 try:
     import site_secrets as secrets
@@ -76,7 +74,6 @@ def crossref2csl(doi='', query=''):
     rows = 10
 
     csl_json = []
-    csl_record = {}
 
     record = {}
     try:
@@ -98,7 +95,11 @@ def crossref2csl(doi='', query=''):
 
     for item in crossref_items:
 
-        csl_record.setdefault('id', doi)
+        csl_record = {}
+
+        doi_from_data = item.get('DOI')
+        csl_record.setdefault('doi', doi_from_data)
+        csl_record.setdefault('id', doi_from_data)
 
         csl_type = item.get('type')
         csl_record.setdefault('type', csl_type)
@@ -139,9 +140,6 @@ def crossref2csl(doi='', query=''):
 
         publisher = item.get('publisher')
         csl_record.setdefault('publisher', publisher)
-
-        doi_from_data = item.get('DOI')
-        csl_record.setdefault('doi', doi_from_data)
 
         if item.get('ISBN'):
             isbns = []

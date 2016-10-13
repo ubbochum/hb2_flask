@@ -40,7 +40,7 @@
                         </dd>
                     {% endif %}
                     <br/>
-                    {% if record.data.destatis %}
+                    {% if record.data.destatis and (record.data.destatis.0.id or record.data.destatis.0.label) %}
                         <dt>
                             {{ _('Destatis') }} <a href="https://www.destatis.de/DE/Methoden/Klassifikationen/BildungKultur/StudentenPruefungsstatistik.pdf?__blob=publicationFile">[Info]</a>
                         </dt>

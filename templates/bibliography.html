@@ -1,0 +1,8 @@
+{% if group %}
+    {% for group in groups %}
+        <h4 id="{{ groupValue }}">{{ vocabulary[groupValue] }}</h4>
+        {% include 'bibliography_entries.html' %}
+    {% endfor %}
+{% else %}
+    {% include 'bibliography_entries.html' %}
+{% endif %}

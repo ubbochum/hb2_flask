@@ -16,8 +16,8 @@
             <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><i class="fa fa-plus"></i> {{ _('New') }}</a>
             <ul class="dropdown-menu">
                 <li><a href="{{ url_for('new_by_form') }}">{{ _('Work') }}</a></li>
-                <li class="divider"></li>
                 {% if current_user.role == 'admin' or current_user.role == 'superadmin' %}
+                <li class="divider"></li>
                 <li><a href="{{ url_for('new_person') }}">{{ _('Person') }}</a></li>
                 <li><a href="{{ url_for('new_person_from_gnd') }}">{{ _('Person from GND') }}</a></li>
                 <li><a href="{{ url_for('new_orga') }}">{{ _('Organisation') }}</a></li>

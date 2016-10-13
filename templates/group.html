@@ -41,7 +41,7 @@
                         {% endfor %}
                     </dd>
                 {% endif %}
-                {% if record.data.destatis %}
+                {% if record.data.destatis and (record.data.destatis.0.id or record.data.destatis.0.label) %}
                     <hr/>
                     <dt>
                         {{ _('Destatis') }} <a href="https://www.destatis.de/DE/Methoden/Klassifikationen/BildungKultur/StudentenPruefungsstatistik.pdf?__blob=publicationFile">[Info]</a>
@@ -53,49 +53,51 @@
                     </dd>
                 {% endif %}
                 <br/>
-                {% if record.data.parent_id %}
-                    <dt>
-                        {{ _('Parent') }}
-                    </dt>
-                    <dd>
-                        <a href="{{ url_for('show_orga', orga_id=record.data.parent_id) }}">{% if record.data.parent_label %}{{ record.data.parent_label }}{% else %}{{ record.data.parent_id }}{% endif %}</a><br/>
-                    </dd>
+                {% if config.DEBUG and (current_user.role == 'admin' or current_user.role == 'superadmin') %}
+                    {% if record.data.parent_id %}
+                        <dt>
+                            {{ _('Parent') }}
+                        </dt>
+                        <dd>
+                            <a href="{{ url_for('show_orga', orga_id=record.data.parent_id) }}">{% if record.data.parent_label %}{{ record.data.parent_label }}{% else %}{{ record.data.parent_id }}{% endif %}</a><br/>
+                        </dd>
+                    {% endif %}
+                    <br/>
+                    {% if record.data.id %}
+                        <dt>
+                            {{ _('ID') }}
+                        </dt>
+                        <dd>
+                            {{ record.data.id }}
+                        </dd>
+                    {% endif %}
+                    {% if record.data.created %}
+                        <dt>
+                            {{ _('Record creation date') }}
+                        </dt>
+                        <dd>
+                            {{ record.data.created }}
+                        </dd>
+                    {% endif %}
+                    {% if record.data.changed %}
+                        <dt>
+                            {{ _('Record creation date') }}
+                        </dt>
+                        <dd>
+                            {{ record.data.changed }}
+                        </dd>
+                    {% endif %}
+                    {% if record.data.owner %}
+                        <dt>
+                            {{ _('Owner') }}
+                        </dt>
+                        <dd>
+                            {{ record.data.owner }}
+                        </dd>
+                    {% endif %}
+                        <dt>{{ _('Editorial Status') }}</dt>
+                        <dd><span class="label label-{% if record.data.editorial_status == 'new' %}info{% elif record.data.editorial_status == 'in_process' %}default{% elif record.data.editorial_status == 'processed' %}primary{% elif record.data.editorial_status == 'final_editing' %}warning{% elif record.data.editorial_status == 'deleted' %}danger{% elif record.data.editorial_status == 'finalized' or record.data.editorial_status == 'imported' %}success{% endif %}">{% if record.locked %} <i class="fa fa-lock"></i> {% endif %}{{ record.data.editorial_status|capitalize }}</span></dd>
                 {% endif %}
-                <br/>
-                {% if record.data.id %}
-                    <dt>
-                        {{ _('ID') }}
-                    </dt>
-                    <dd>
-                        {{ record.data.id }}
-                    </dd>
-                {% endif %}
-                {% if record.data.created %}
-                    <dt>
-                        {{ _('Record creation date') }}
-                    </dt>
-                    <dd>
-                        {{ record.data.created }}
-                    </dd>
-                {% endif %}
-                {% if record.data.changed %}
-                    <dt>
-                        {{ _('Record creation date') }}
-                    </dt>
-                    <dd>
-                        {{ record.data.changed }}
-                    </dd>
-                {% endif %}
-                {% if record.data.owner %}
-                    <dt>
-                        {{ _('Owner') }}
-                    </dt>
-                    <dd>
-                        {{ record.data.owner }}
-                    </dd>
-                {% endif %}
-                    <dt>{{ _('Editorial Status') }}</dt>
-                    <dd><span class="label label-{% if record.data.editorial_status == 'new' %}info{% elif record.data.editorial_status == 'in_process' %}default{% elif record.data.editorial_status == 'processed' %}primary{% elif record.data.editorial_status == 'final_editing' %}warning{% elif record.data.editorial_status == 'deleted' %}danger{% elif record.data.editorial_status == 'finalized' or record.data.editorial_status == 'imported' %}success{% endif %}">{% if record.locked %} <i class="fa fa-lock"></i> {% endif %}{{ record.data.editorial_status|capitalize }}</span></dd>
             </dl>
                 {% if config.DEBUG and (current_user.role == 'admin' or current_user.role == 'superadmin') %}
                     <div>

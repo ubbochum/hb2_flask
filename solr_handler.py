@@ -34,7 +34,7 @@ try:
 except ImportError:
     import secrets
 
-logging.basicConfig (level=logging.INFO,
+logging.basicConfig (level=logging.ERROR,
     format='%(asctime)s %(levelname)-4s %(message)s',
     datefmt='%a, %d %b %Y %H:%M:%S',
 )
@@ -198,8 +198,8 @@ class Solr(object):
             params += '&qf=%s' % self.queryField
         if self.stats == 'true':
             params += '&stats=true&stats.field=' + '&stats.field='.join(self.stats_fl)
-        # TODO 2016-09-20, hagbeck: the following line blocks OR queries
-        params += '&q.op=AND'
+        if self.handler != 'query':
+            params += '&q.op=AND'
 
         self.request_url = '%s%s' % (url, params)
         # logging.fatal(iri_to_uri(self.request_url))

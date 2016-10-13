@@ -94,7 +94,9 @@
                         {% if person.isni %}<br/><a href="http://isni.org/isni/{{ person.isni|replace(' ', '') }}">{{ _('ISNI') }}</a>{% endif %}
                         <br/>
                         {% for role in person.role %}
-                            {{ role_map.get(role) }}{% if not loop.last %}, {% endif %}
+                            {{ role_map.get(role) }}
+                            {% if role == 'edt' and person.start_year %}({{ person.start_year }} - {{ person.end_year }}){% endif %}
+                            {% if not loop.last %}, {% endif %}
                         {% endfor %}
                         <br/>
                         {% if person.corresponding_author %}Corresponding {{ role_map.get('aut') }}{% endif %}
@@ -496,7 +498,7 @@
                         {{ record.data.priority_date.split(' ')[0] }}
                     </dd>
                 {% endif %}
-                {% if record.data.ipc_keyword and record.data.ipc_keyword.0 %}
+                {% if record.data.ipc_keyword and (record.data.ipc_keyword.0.id or record.data.ipc_keyword.0.label) %}
                 <dt>
                     {% trans count=record.data.ipc_keyword|length %}
                     IPC keyword
@@ -525,7 +527,8 @@
                                     <a href="{{ url_for('show_record', pubtype=mypart.pubtype, record_id=mypart.id) }}">{{ mypart.title }}</a>
                                     {% if mypart.volume or (mypart.page_first and mypart.page_last) %}:{% endif %}
                                     {% if mypart.volume %}
-                                        {{ _('Vol.') }}: {{ mypart.volume }}{% if mypart.issue %}, {{ _('Issue') }}: {{ mypart.issue }}{% endif %}
+                                        {% if mypart.pubtype != 'Series' %}{{ _('Vol.') }}: {% endif %}{{ mypart.volume }}
+                                        {% if mypart.issue %}, {{ _('Issue') }}: {{ mypart.issue }}{% endif %}
                                     {% endif %}
                                     {% if not mypart.volume and mypart.issue %}
                                         {{ _('Issue') }}: {{ mypart.issue }}
@@ -552,7 +555,8 @@
                                 {{ mypart.is_part_of }}
                                 {% if mypart.volume or (mypart.page_first and mypart.page_last) %}:{% endif %}
                                 {% if mypart.volume %}
-                                    {{ _('Vol.') }}: {{ mypart.volume }}{% if mypart.issue %}, {{ _('Issue') }}: {{ mypart.issue }}{% endif %}
+                                    {% if mypart.pubtype != 'Series' %}{{ _('Vol.') }}: {% endif %}{{ mypart.volume }}
+                                    {% if mypart.issue %}, {{ _('Issue') }}: {{ mypart.issue }}{% endif %}
                                 {% endif %}
                                 {% if not mypart.volume and mypart.issue %}
                                     {{ _('Issue') }}: {{ mypart.issue }}
@@ -676,7 +680,7 @@
                 </dt>
                 <dd>
                     {% for DOI in record.data.DOI %}
-                        <a href="https://dx.doi.org/{{ DOI }}" target="_blank">{{ DOI }}</a>{% if not loop.last %}<br/>{% endif %}
+                        <a href="https://dx.doi.org/{{ DOI }}" target="_blank">http://dx.doi.org/{{ DOI }}</a>{% if not loop.last %}<br/>{% endif %}
                     {% endfor %}
                 </dd>
             {% endif %}

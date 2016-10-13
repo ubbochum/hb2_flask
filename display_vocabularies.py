@@ -58,6 +58,10 @@ SUBTYPE2TEXT = {
     'review': lazy_gettext('Review'),
     'second_state_examination': lazy_gettext('2nd State Examination'),
     'sermon': lazy_gettext('Sermon'),
+    'Collection': lazy_gettext('Collection'),
+    'Conference': lazy_gettext('Conference'),
+    'Monograph': lazy_gettext('Monograph'),
+    'SpecialIssue': lazy_gettext('SpecialIssue'),
 }
 
 PUBTYPE2FORM = {

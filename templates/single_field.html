@@ -26,6 +26,7 @@
         {% elif field.type == 'FileField' %}
             {{ field }}
         {% elif field.type == 'HiddenField' %}
+            {{ field }}
         {% else %}
             {% if 'title' in field.name %}
                 {{ field(class='form-control typeahead_title') }}
