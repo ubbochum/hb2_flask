@@ -938,15 +938,16 @@ def _record2solr(form, action, relitems=True):
 
         if field == 'has_part' and len(form.data.get(field)) > 0:
 
-            # logging.info('HP: %s' % form.data.get(field))
-            # for myhp in form.data.get(field):
-            # logging.info('HP ' + myhp)
             hp_ids = []
             try:
-                for hp in form.data.get(field):
-                    if hp.get('has_part') != '':
-                        hp_ids.append(hp.get('has_part').strip())
-                # logging.info('hp_ids: %s' % len(hp_ids))
+                for idx, hp in enumerate(form.data.get(field)):
+                    if hp:
+                        if 'has_part' in hp:
+                            if hp.get('has_part') != '':
+                                hp_ids.append(hp.get('has_part').strip())
+                        else:
+                            # logging.info('PEEP')
+                            hp_ids.append(hp)
                 queries = []
                 if len(hp_ids) == 1:
                     queries.append('id:%s' % hp_ids[0])
@@ -954,9 +955,6 @@ def _record2solr(form, action, relitems=True):
                     query = '{!terms f=id}'
                     tmp = []
                     for hp_id in hp_ids:
-                        # logging.info('hp_id: %s' % hp_id)
-                        # logging.info('len(tmp): %s' % len(tmp))
-                        # logging.info('len(query): %s' % len(query + ','.join(tmp) + ',' + hp_id))
                         if len(tmp) < 2:
                             tmp.append(hp_id)
                         elif len(query + ','.join(tmp) + ',' + hp_id) < 7168:
@@ -966,7 +964,6 @@ def _record2solr(form, action, relitems=True):
                             tmp = [hp_id]
                     if len(tmp) > 0:
                         queries.append('{!terms f=id}%s' % ','.join(tmp))
-                # logging.info('queries: %s' % len(queries))
                 if len(queries) > 0:
                     for query in queries:
                         hp_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT,
@@ -983,6 +980,7 @@ def _record2solr(form, action, relitems=True):
                         for doc in hp_solr.results:
                             myjson = json.loads(doc.get('wtf_json'))
                             has_part.append(myjson.get('id'))
+                            # TODO get len(myjson.get('is_part_of')) >> if len > 1 then suche den richtigen Treffer!
                             solr_data.setdefault('has_part_id', []).append(myjson.get('id'))
                             solr_data.setdefault('has_part', []).append(json.dumps({'pubtype': myjson.get('pubtype'),
                                                                                     'id': myjson.get('id'),
@@ -1823,7 +1821,11 @@ def news():
 
 
 @app.route('/persons')
+@login_required
 def persons():
+    if current_user.role != 'admin' and current_user.role != 'superadmin':
+        flash(gettext('For Admins ONLY!!!'))
+        return redirect(url_for('homepage'))
     page = int(request.args.get('page', 1))
     sorting = request.args.get('sort', '')
     if sorting == '':
@@ -1859,7 +1861,11 @@ def persons():
 
 
 @app.route('/organisations')
+@login_required
 def orgas():
+    if current_user.role != 'admin' and current_user.role != 'superadmin':
+        flash(gettext('For Admins ONLY!!!'))
+        return redirect(url_for('homepage'))
     page = int(request.args.get('page', 1))
     mystart = 0
     query = '*:*'
@@ -1889,7 +1895,11 @@ def orgas():
 
 
 @app.route('/groups')
+@login_required
 def groups():
+    if current_user.role != 'admin' and current_user.role != 'superadmin':
+        flash(gettext('For Admins ONLY!!!'))
+        return redirect(url_for('homepage'))
     page = int(request.args.get('page', 1))
     mystart = 0
     query = '*:*'
@@ -3479,9 +3489,8 @@ def render_bibliography(docs=None, format='html', locale='', style='', commit_li
     return publist
 
 
-########################################################################################################################
-# SUPER_ADMIN
-########################################################################################################################
+# ---------- SUPER_ADMIN ----------
+
 
 @app.route('/superadmin', methods=['GET'])
 @login_required
@@ -3697,9 +3706,7 @@ def redis_clean(db='0'):
         return 'No database with ID %s exists!' % db
 
 
-########################################################################################################################
-# IMPORT / EXPORT
-########################################################################################################################
+# ---------- IMPORT / EXPORT ----------
 
 @app.route('/export/solr_dump/<core>')
 @login_required
@@ -3971,9 +3978,7 @@ def store_mods():
     """Store a collection of MODS records in Solr and SolRDF"""
 
 
-########################################################################################################################
-# ORCID
-########################################################################################################################
+# ---------- ORCID ----------
 
 class OrcidForm(Form):
     read_limited = BooleanField(lazy_gettext('read limited'), validators=[Optional()], default='checked')
@@ -4255,9 +4260,7 @@ def orcid_login():
             return redirect(url_for('orcid_start'))
 
 
-########################################################################################################################
-# LOGIN / LOGOUT
-########################################################################################################################
+# ---------- LOGIN / LOGOUT ----------
 
 
 class UserNotFoundError(Exception):
@@ -4463,9 +4466,7 @@ def logout():
 ORCID_RE = re.compile('\d{4}-\d{4}-\d{4}-\d{4}')
 
 
-########################################################################################################################
-# BASICS
-########################################################################################################################
+# ---------- BASICS ----------
 
 
 def str2bool(v):

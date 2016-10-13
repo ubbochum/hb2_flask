@@ -9,16 +9,14 @@ img {max-width: 1024px;}
 .caption {font-variant: small-caps; color: white; opacity: 0.4; background-color: black; padding: 12px; max-width: 512px; margin-bottom: 36px; margin-top: 18px; border-radius: 10px;}
 header {
     min-height: 1.5em;
-    margin: -14px;
+    margin: -10px;
     background: #ffffff; /* Old browsers */
-    background: -moz-linear-gradient(top,  #ffffff 41%, #f6f6f6 70%, #ededed 100%); /* FF3.6+ */
-    background: -webkit-gradient(linear, left top, left bottom, color-stop(41%,#ffffff), color-stop(70%,#f6f6f6), color-stop(100%,#ededed)); /* Chrome,Safari4+ */
-    background: -webkit-linear-gradient(top,  #ffffff 41%,#f6f6f6 70%,#ededed 100%); /* Chrome10+,Safari5.1+ */
-    background: -o-linear-gradient(top,  #ffffff 41%,#f6f6f6 70%,#ededed 100%); /* Opera 11.10+ */
-    background: -ms-linear-gradient(top,  #ffffff 41%,#f6f6f6 70%,#ededed 100%); /* IE10+ */
-    background: linear-gradient(to bottom,  #ffffff 41%,#f6f6f6 70%,#ededed 100%); /* W3C */
-    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#ededed',GradientType=0 ); /* IE6-9 */
-    padding-bottom: 2em;
+    padding-bottom: 1.5em;
+    /* beta */
+    background-image:url(https://www.ub.tu-dortmund.de/images/stempel-beta.jpg) !important;
+    background: no-repeat right;
+    background-position: 98% 1.25em;
+    /* beta Ende */
 }
 header p {
     min-height: 1.5em;
@@ -135,6 +133,7 @@ li.active > .dropdown-menu li a:active, li.active > .dropdown-menu li a:hover, l
 .navbar {margin-bottom:.5em;}
 .navbar a {
         background: #fff;
+        /*margin:.6em .25em 0 .25em;*/
         margin:.5em .25em;
         height: 2.5em;
         padding: .5em 1em !important;
@@ -149,3 +148,27 @@ li.active > .dropdown-menu li a:active, li.active > .dropdown-menu li a:hover, l
 .label-success {background:#649600;}
 .list-group-item {overflow:auto;}
 hr {margin:.75em 0;}
+#feedback {
+position:fixed;
+top:50%;
+right:-.85em;
+font-weight:bold;
+font-size:1.2em;
+line-height:1.5em;
+padding:.5em;
+transform:rotate(90deg);
+-moz-transform:rotate(90deg);
+-o-transform:rotate(90deg);
+-webkit-transform:rotate(90deg);
+-ms-transform:rotate(90deg);
+border:1px solid #b2b3b6;
+color:#000;
+background:#e0eacc;
+}
+#feedback a {
+text-decoration:none;
+}
+#feedback a:hover, #feedback a:focus, #feedback a:active {
+color:#fff !important;
+background:#649600 !important;
+}

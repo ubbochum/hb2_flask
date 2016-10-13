@@ -24,6 +24,7 @@ key = ''
 
 contact_mail = ''
 
+APP_DEBUG = True
 APP_BASE_URL = ''
 APP_PORT = 5005
 # This parameter allows to start the application without CSRF security (set to False).

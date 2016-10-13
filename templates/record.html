@@ -764,6 +764,22 @@
                     </ul>
                 </dd>
             {% endif %}
+            {% if (record.data.affiliation_context and record.data.affiliation_context.0) or (record.data.group_context and record.data.group_context.0) %}
+                <hr/>
+                <dt>{{ _('Work belongs to') }}</dt>
+                <dd>
+                    {% for context in record.data.affiliation_context %}
+                        {% if context %}
+                            <a href="{{ url_for('show_orga', orga_id=context) }}">{{ context }}</a><br/>
+                        {% endif %}
+                    {% endfor %}
+                    {% for context in record.data.group_context %}
+                        {% if context %}
+                            <a href="{{ url_for('show_group', group_id=context) }}">{{ context }}</a><br/>
+                        {% endif %}
+                    {% endfor %}
+                </dd>
+            {% endif %}
             {% if current_user.role == 'admin' or current_user.role == 'superadmin' %}
                 <hr/>
                 {% if record.data.id %}
