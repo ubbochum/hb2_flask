@@ -336,6 +336,16 @@
                     {% endfor %}
                 </dd>
             {% endif %}
+            {% if record.data.pubtype != 'Lecture' %}
+                {% if record.data.lecture_title %}
+                <dt>
+                    {{ _('Lecture Series') }}
+                </dt>
+                <dd>
+                    {{ record.data.lecture_title }}
+                </dd>
+                {% endif %}
+            {% endif %}
             {% if record.data.startdate_conference or record.data.enddate_conference %}
             <dt>
                 {{ _('Date') }}
@@ -399,7 +409,7 @@
                     {{ record.data.edition }}
                 </dd>
             {% endif %}
-             {% if record.data.issued %}
+            {% if record.data.issued %}
                 <dt>
                     {% if record.data.pubtype == 'Lecture' %}{{ _('Held') }}{% else%}{{ _('Issued') }}{% endif %}
                 </dt>
@@ -407,8 +417,16 @@
                     {{ record.data.issued }}
                 </dd>
             {% endif %}
+            {% if record.data.date_updated %}
+                <dt>
+                    {{ _('Date updated') }}
+                </dt>
+                <dd>
+                    {{ record.data.date_updated }}
+                </dd>
+            {% endif %}
             {% if record.data.number_of_pages %}
-                {% if record.data.pubtype == 'AudioVideoDocument' %}
+                {% if record.data.pubtype == 'AudioVideoDocument' or record.data.pubtype == 'RadioTVProgram' %}
                     <dt>
                         {{ _('Duration') }}
                     </dt>

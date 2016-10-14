@@ -358,8 +358,12 @@ class OrgaAdminForm(Form):
                       description=Markup(lazy_gettext('<a href="https://portal.d-nb.de/opac.htm?method=showOptions#top" target="_blank">Find in GND</a>')))
     parent_id = StringField(lazy_gettext('Parent ID'))
     parent_label = StringField(lazy_gettext('Parent Label'))
-    start_date = StringField(lazy_gettext('Start Date'))
-    end_date = StringField(lazy_gettext('End Date'))
+    start_date = StringField(lazy_gettext('Start Date'),
+                             validators=[Optional(), Regexp('[12]\d{3}-[01]\d-[0123]\d')],
+                             widget=CustomTextInput(placeholder=lazy_gettext('YYYY-MM-DD')))
+    end_date = StringField(lazy_gettext('End Date'),
+                           validators=[Optional(), Regexp('[12]\d{3}-[01]\d-[0123]\d')],
+                           widget=CustomTextInput(placeholder=lazy_gettext('YYYY-MM-DD')))
     correction_request = StringField(lazy_gettext('Correction Request'))
     owner = FieldList(StringField(lazy_gettext('Owner')), min_entries=1)
     editorial_status = SelectField(lazy_gettext('Editorial Status'), validators=[DataRequired()],
@@ -395,17 +399,22 @@ class OrgaAdminForm(Form):
 
 class GroupAdminForm(Form):
     pref_label = StringField(lazy_gettext('Label'))
-    id = StringField(lazy_gettext('Working Group ID'),
-                     description=lazy_gettext('A working group ID such as GND, ISNI or a URI'),
-                     validators=[DataRequired()])
+    id = StringField(lazy_gettext('ID'), validators=[Optional()], widget=CustomTextInput(readonly='readonly'))
     description = TextAreaField(lazy_gettext('Description'), validators=[Optional()], widget=CustomTextInput(
         placeholder=lazy_gettext('Please put any information that does not fit other fields here.')))
+    gnd = StringField(lazy_gettext('GND'),
+                      validators=[Optional(), Regexp('(1|10)\d{7}[0-9X]|[47]\d{6}-\d|[1-9]\d{0,7}-[0-9X]|3\d{7}[0-9X]', message=lazy_gettext('Invalid value!'))],
+                      description=Markup(lazy_gettext('<a href="https://portal.d-nb.de/opac.htm?method=showOptions#top" target="_blank">Find in GND</a>')))
     funds = FieldList(FormField(FundsForm), min_entries=1)
     url = FieldList(FormField(URLProfileForm), min_entries=1)
     parent_id = StringField(lazy_gettext('Parent ID'))
     parent_label = StringField(lazy_gettext('Parent Label'))
-    start_date = StringField(lazy_gettext('Start Date'))
-    end_date = StringField(lazy_gettext('End Date'))
+    start_date = StringField(lazy_gettext('Start Date'),
+                             validators=[Optional(), Regexp('[12]\d{3}-[01]\d-[0123]\d')],
+                             widget=CustomTextInput(placeholder=lazy_gettext('YYYY-MM-DD')))
+    end_date = StringField(lazy_gettext('End Date'),
+                           validators=[Optional(), Regexp('[12]\d{3}-[01]\d-[0123]\d')],
+                           widget=CustomTextInput(placeholder=lazy_gettext('YYYY-MM-DD')))
     correction_request = StringField(lazy_gettext('Correction Request'))
     owner = FieldList(StringField(lazy_gettext('Owner')), min_entries=1)
     editorial_status = SelectField(lazy_gettext('Editorial Status'), validators=[DataRequired()],
@@ -423,7 +432,7 @@ class GroupAdminForm(Form):
 
     def groups(self):
         yield [
-            {'group': [self.id, self.pref_label, self.description, self.start_date, self.end_date, self.url, self.note],
+            {'group': [self.pref_label, self.gnd, self.description, self.start_date, self.end_date, self.url, self.note],
              'label': lazy_gettext('Basic')},
             {'group': [self.funds],
              'label': lazy_gettext('Funds')},

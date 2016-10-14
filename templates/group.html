@@ -71,6 +71,16 @@
                             {{ record.data.id }}
                         </dd>
                     {% endif %}
+                    {% if record.data.same_as %}
+                        <dt>{{ _('Same as') }}</dt>
+                        <dd>
+                            <ul class="list-unstyled">
+                                {% for doc in record.data.same_as %}
+                                    <li><a href="{{ url_for('show_record', pubtype=pubtype, record_id=doc) }}">{{ doc }}</a></li>
+                                {% endfor %}
+                            </ul>
+                        </dd>
+                    {% endif %}
                     {% if record.data.created %}
                         <dt>
                             {{ _('Record creation date') }}

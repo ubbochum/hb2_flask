@@ -981,18 +981,20 @@ def _record2solr(form, action, relitems=True):
                             myjson = json.loads(doc.get('wtf_json'))
                             has_part.append(myjson.get('id'))
                             # TODO get len(myjson.get('is_part_of')) >> if len > 1 then suche den richtigen Treffer!
-                            solr_data.setdefault('has_part_id', []).append(myjson.get('id'))
-                            solr_data.setdefault('has_part', []).append(json.dumps({'pubtype': myjson.get('pubtype'),
-                                                                                    'id': myjson.get('id'),
-                                                                                    'title': myjson.get('title'),
-                                                                                    'page_first': myjson.get('is_part_of')[
-                                                                                        0].get('page_first', ''),
-                                                                                    'page_last': myjson.get('is_part_of')[
-                                                                                        0].get('page_last', ''),
-                                                                                    'volume': myjson.get('is_part_of')[
-                                                                                        0].get('volume', ''),
-                                                                                    'issue': myjson.get('is_part_of')[
-                                                                                        0].get('issue', '')}))
+                            logging.debug('PARTS: myjson.get(\'is_part_of\') = %s' % myjson.get('is_part_of'))
+                            if len(myjson.get('is_part_of')) > 0:
+                                for host in myjson.get('is_part_of'):
+                                    logging.debug('PARTS: host = %s' % host)
+                                    logging.debug('PARTS: %s vs. %s' % (host.get('is_part_of'), id))
+                                    if host.get('is_part_of') == id:
+                                        solr_data.setdefault('has_part_id', []).append(myjson.get('id'))
+                                        solr_data.setdefault('has_part', []).append(json.dumps({'pubtype': myjson.get('pubtype'),
+                                                                                                'id': myjson.get('id'),
+                                                                                                'title': myjson.get('title'),
+                                                                                                'page_first': host.get('page_first', ''),
+                                                                                                'page_last': host.get('page_last', ''),
+                                                                                                'volume': host.get('volume', ''),
+                                                                                                'issue': host.get('issue', '')}))
                             # logging.info(solr_data.get('has_part'))
             except AttributeError as e:
                 logging.error('has_part: %s' % e)
@@ -1653,6 +1655,9 @@ def _group2solr(form, action):
     tmp = {}
     # logging.info(form.data)
 
+    id = form.data.get('id').strip()
+    logging.info('ID: %s' % id)
+
     if not form.data.get('editorial_status'):
         form.editorial_status.data = 'new'
     if action == 'create':
@@ -1699,7 +1704,9 @@ def _group2solr(form, action):
         elif field == 'dwid':
             tmp.setdefault('account', form.data.get(field))
         elif field == 'gnd':
-            tmp.setdefault('gnd', form.data.get(field))
+            if len(form.data.get(field)) > 0:
+                tmp.setdefault('gnd', form.data.get(field).strip())
+                form.id.data = form.data.get(field).strip()
         elif field == 'created':
             tmp.setdefault('created', form.data.get(field).strip().replace(' ', 'T') + 'Z')
         elif field == 'changed':
@@ -1717,8 +1724,8 @@ def _group2solr(form, action):
                     tmp.setdefault('destatis_label', []).append(destatis.get('destatis_label').strip())
                 if destatis.get('destatis_id'):
                     tmp.setdefault('destatis_id', []).append(destatis.get('destatis_id').strip())
-        elif field == 'parent_id' and len(form.data.get('parent_id')) > 0 and (
-            not form.data.get('parent_label') or len(form.data.get('parent_label')) == 0):
+        elif field == 'parent_id' and len(form.data.get('parent_id')) > 0 and \
+                (not form.data.get('parent_label') or len(form.data.get('parent_label')) == 0):
             tmp.setdefault('parent_id', form.data.get(field))
             try:
                 query = 'id:%s' % form.data.get(field)
@@ -1740,17 +1747,39 @@ def _group2solr(form, action):
                     form.parent_label.data = label
             except AttributeError as e:
                 logging.error(e)
-        elif field == 'parent_label' and len(form.data.get('parent_label')) > 0 and (
-            not form.data.get('parent_id') or len(form.data.get('parent_id')) == 0):
+        elif field == 'parent_label' and len(form.data.get('parent_label')) > 0 and \
+                (not form.data.get('parent_id') or len(form.data.get('parent_id')) == 0):
             tmp.setdefault('fparent', form.data.get(field))
             tmp.setdefault('parent_label', form.data.get(field))
 
-    wtf_json = json.dumps(form.data)
-    tmp.setdefault('wtf_json', wtf_json)
-    # logging.info(tmp)
-    groups_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT,
-                       application=secrets.SOLR_APP, core='group', data=[tmp])
-    groups_solr.update()
+    same_as = form.data.get('same_as')
+    logging.info('same_as: %s' % same_as)
+
+    # save record to index
+    try:
+        logging.info('%s vs. %s' % (id, form.data.get('id')))
+        if id != form.data.get('id'):
+            delete_group_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT,
+                                     application=secrets.SOLR_APP, core='group', del_id=id)
+            delete_group_solr.delete()
+            form.same_as.append_entry(id)
+            tmp.setdefault('id', form.data.get('id'))
+            tmp.setdefault('same_as', []).append(id)
+
+            id = form.data.get('id')
+        else:
+            tmp.setdefault('id', id)
+        # build json
+        wtf_json = json.dumps(form.data)
+        tmp.setdefault('wtf_json', wtf_json)
+        # logging.info(tmp)
+        groups_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT,
+                           application=secrets.SOLR_APP, core='group', data=[tmp])
+        groups_solr.update()
+    except AttributeError as e:
+        logging.error(e)
+
+    return id
 
 
 @app.route('/dashboard')
@@ -2669,8 +2698,22 @@ def show_group(group_id=''):
     show_group_solr.request()
 
     if len(show_group_solr.results) == 0:
-        flash('The requested record %s was not found!' % group_id, category='warning')
-        return redirect(url_for('groups'))
+
+        show_group_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT,
+                               application=secrets.SOLR_APP, query='same_as:%s' % group_id, core='group',
+                               facet='false')
+        show_group_solr.request()
+
+        if len(show_group_solr.results) == 0:
+            flash('The requested record %s was not found!' % group_id, category='warning')
+            return redirect(url_for('groups'))
+        else:
+            thedata = json.loads(show_group_solr.results[0].get('wtf_json'))
+            form = GroupAdminForm.from_json(thedata)
+
+            return render_template('group.html', record=form, header=form.data.get('pref_label'),
+                                   site=theme(request.access_route), action='retrieve', record_id=group_id,
+                                   pubtype='group', del_redirect=url_for('groups'))
     else:
         thedata = json.loads(show_group_solr.results[0].get('wtf_json'))
         form = GroupAdminForm.from_json(thedata)
@@ -2872,7 +2915,7 @@ def edit_orga(orga_id=''):
         redirect_id = _orga2solr(form, action='update')
         unlock_record_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
                                   application=secrets.SOLR_APP, core='organistion',
-                                  data=[{'id': orga_id, 'locked': {'set': 'false'}}])
+                                  data=[{'id': redirect_id, 'locked': {'set': 'false'}}])
         unlock_record_solr.update()
 
         return show_orga(redirect_id)
@@ -2924,13 +2967,13 @@ def edit_group(group_id=''):
     if valid:
 
         # logging.info('FORM: %s' % form.data)
-        _group2solr(form, action='update')
+        redirect_id = _group2solr(form, action='update')
         unlock_record_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, 
                                   application=secrets.SOLR_APP, core='group',
-                                  data=[{'id': group_id, 'locked': {'set': 'false'}}])
+                                  data=[{'id': redirect_id, 'locked': {'set': 'false'}}])
         unlock_record_solr.update()
 
-        return show_group(form.data.get('id').strip())
+        return show_group(redirect_id)
         # return redirect(url_for('groups'))
 
     form.changed.data = timestamp()
