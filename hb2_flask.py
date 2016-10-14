@@ -980,12 +980,11 @@ def _record2solr(form, action, relitems=True):
                         for doc in hp_solr.results:
                             myjson = json.loads(doc.get('wtf_json'))
                             has_part.append(myjson.get('id'))
-                            # TODO get len(myjson.get('is_part_of')) >> if len > 1 then suche den richtigen Treffer!
-                            logging.debug('PARTS: myjson.get(\'is_part_of\') = %s' % myjson.get('is_part_of'))
+                            # logging.debug('PARTS: myjson.get(\'is_part_of\') = %s' % myjson.get('is_part_of'))
                             if len(myjson.get('is_part_of')) > 0:
                                 for host in myjson.get('is_part_of'):
-                                    logging.debug('PARTS: host = %s' % host)
-                                    logging.debug('PARTS: %s vs. %s' % (host.get('is_part_of'), id))
+                                    # logging.debug('PARTS: host = %s' % host)
+                                    # logging.debug('PARTS: %s vs. %s' % (host.get('is_part_of'), id))
                                     if host.get('is_part_of') == id:
                                         solr_data.setdefault('has_part_id', []).append(myjson.get('id'))
                                         solr_data.setdefault('has_part', []).append(json.dumps({'pubtype': myjson.get('pubtype'),
