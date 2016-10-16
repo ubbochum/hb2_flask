@@ -1,6 +1,37 @@
 from flask.ext.babel import lazy_gettext
 from forms import *
 
+PUBTYPE_GER = {
+    'ArticleJournal': 'Zeitschriftenartikel',
+    'ArticleNewspaper': 'Zeitungsartikel',
+    'AudioBook': 'Hörbuch',
+    'AudioVideoDocument': 'Audio- und Videodokument',
+    'Chapter': 'Kapitel',
+    'ChapterInLegalCommentary': 'Beitrag im Gesetzeskommentar',
+    'ChapterInMonograph': 'Kapitel in einer Monographie',
+    'Collection': 'Sammelwerk',
+    'Conference': 'Konfenrenz',
+    'Edition': '',
+    'InternetDocument': 'Internetdokument',
+    'Journal': 'Zeitschrift',
+    'Lecture': 'Vortrag',
+    'LegalCommentary': 'Gesetzeskommentar',
+    'Monograph': 'Monographie',
+    'MultivolumeWork': 'Mehrbändiges Werk',
+    'Newspaper': 'Zeitung',
+    'Other': 'Sonstiges',
+    'Patent': 'Patent',
+    'PressRelease': 'Pressemitteilung',
+    'RadioTVProgram': 'Radio- oder TV-Programm',
+    'Report': 'Report',
+    'ResearchData': 'Forschungsdaten',
+    'Series': 'Reihe',
+    'Software': 'Software',
+    'SpecialIssue': 'Sonderheft',
+    'Standard': 'Norm',
+    'Thesis': 'Hochschulschrift',
+}
+
 PUBTYPE2TEXT = {
     'ArticleJournal': lazy_gettext('Article in Journal'),
     'ArticleNewspaper': lazy_gettext('Article in Newspaper'),

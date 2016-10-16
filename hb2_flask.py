@@ -3426,12 +3426,16 @@ def bibliography(agent='', agent_id='', style='harvard1'):
                     publist_docs.append(json.loads(doc.get('wtf_json')))
 
                 if str2bool(group_by_type):
-                    logging.debug('LOCALE: %s' % get_locale())
-                    biblist += '<h4 id="%s">%s</h4>' % (result.get('groupValue'), result.get('groupValue'))
+                    logging.debug('LOCALE: %s' % locale)
+                    group_value = result.get('groupValue')
+                    if locale.startswith('de'):
+                        group_value = display_vocabularies.PUBTYPE_GER.get(result.get('groupValue'))
+                    biblist += '<h4 id="%s">%s</h4>' % (result.get('groupValue'), group_value)
                 else:
                     biblist += '<h4 id="%s">%s</h4>' % (result.get('groupValue'), result.get('groupValue'))
 
-                biblist += render_bibliography(wtf_csl.wtf_csl(publist_docs), format, locale, style)
+                # biblist += render_bibliography(wtf_csl.wtf_csl(publist_docs), format, locale, style)
+                biblist += citeproc_node(wtf_csl.wtf_csl(publist_docs), format, locale, style)
                 publist_docs = []
 
             response = biblist
@@ -3439,20 +3443,59 @@ def bibliography(agent='', agent_id='', style='harvard1'):
             for result in results:
                 publist_docs.append(json.loads(result.get('wtf_json')))
 
-            response = render_bibliography(wtf_csl.wtf_csl(publist_docs), format, locale, style)
+            #response = render_bibliography(wtf_csl.wtf_csl(publist_docs), format, locale, style)
+            response = citeproc_node(wtf_csl.wtf_csl(publist_docs), format, locale, style)
 
     if response:
         try:
 
             storage_publists_cache = app.extensions['redis']['REDIS_PUBLIST_CACHE']
 
-            storage_publists_cache.set(key, response)
-            storage_publists_cache.hset(agent_id, key, timestamp())
+            # storage_publists_cache.set(key, response)
+            # storage_publists_cache.hset(agent_id, key, timestamp())
 
         except Exception as e:
             logging.error('REDIS: %s' % e)
 
     return response
+
+
+def citeproc_node(docs=None, format='html', locale='', style=''):
+
+    # TODO secrets.py
+    locales_url = '/home/hagbeck/MiscProjects/citeproc-node/csl-locales/locales.json'
+
+    with open(locales_url) as data_file:
+        locales = json.load(data_file)
+
+    # load a CSL style (from the current directory)
+    locale = locales.get('primary-dialects').get(locale)
+    logging.debug('LOCALE: %s' % locale)
+
+    # TODO secrets.py
+    citeproc_url = 'http://127.0.0.1:8085?responseformat=%s&style=%s&locale=%s' % (format, style, locale)
+
+    items = {}
+
+    for item in docs:
+        items.setdefault(item.get('id'), item)
+
+    # logging.debug(json.dumps({'items': items}, indent=4))
+
+    response = requests.post(citeproc_url, data=json.dumps({'items': items}),
+                             headers={'Content-type': 'application/json'})
+
+    logging.debug(response.content)
+
+    bib = response.content.decode()
+    if format == 'html':
+        urls = re.findall(urlmarker.URL_REGEX, bib)
+        # logging.info(urls)
+
+        for url in urls:
+            bib = bib.replace(url, '<a href="%s">%s</a>' % (url, url))
+
+    return bib
 
 
 def render_bibliography(docs=None, format='html', locale='', style='', commit_link=False, commit_system=''):
