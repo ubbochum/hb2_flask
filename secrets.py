@@ -24,6 +24,8 @@ key = ''
 
 contact_mail = ''
 
+BOOTSTRAP_SERVE_LOCAL = False
+
 APP_DEBUG = True
 APP_BASE_URL = ''
 APP_PORT = 5005
@@ -31,16 +33,12 @@ APP_PORT = 5005
 # THIS IS NOT RECOMMENDED! (but sometime necessary)
 APP_SECURITY = True
 
-BOOTSTRAP_SERVE_LOCAL = False
-
 # To make the app run on a different path than root, set this to True and change your web server configuration accordingly.
 # For nginx see e.g. https://gist.github.com/ubbochum/7b50facf1923fff61bc4
 DIFFERENT_PROXY_PATH = False
 
 orcid_sandbox_client_id = ''
 orcid_sandbox_client_secret = ''
-
-orcid_contact_mail = ''
 
 orcid_app_data = {
     'tudo': {
@@ -67,16 +65,8 @@ orcid_scopes = [
     '/activities/update',
 ]
 
-WAITING_FOR_REDIRECT = 5
-
-CATALOG = ''
-
-MODS_TEST_FILE = ''
-MODS_FILES_PATH = ''
-
-RESULTS_DIR = ''
-
-BACKUP_DIR = '..'
+CSL_DATA_DIR = '/home/hb2/csl'
+CSL_LOCALES_REG = '/home/hb2/csl/locales/locales.json'
 
 SOLR_HOST = '127.0.0.1'
 SOLR_PORT = '8983'
@@ -383,3 +373,6 @@ REDMINE_URL = ''
 REDMINE_USER = ''
 REDMINE_KEY = ''
 REDMINE_PROJECT = ''
+
+CITEPROC_LOCALES_FILE = ''
+CITEPROC_SERVICE_URL = ''

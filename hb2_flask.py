@@ -3170,7 +3170,7 @@ def duplicates():
                            header=lazy_gettext('Duplicates'), site=theme(request.access_route), offset=mystart - 1)
 
 
-@app.route(('/consolidate/persons'))
+@app.route('/consolidate/persons')
 @login_required
 def consolidate_persons():
     if secrets.APP_SECURITY:
@@ -3265,11 +3265,11 @@ def bibliography(agent='', agent_id='', style='harvard1'):
     elif pubsort and pubsort not in pubsorts:
         return make_response('Bad request: pubsort!', 400)
 
-    # TODO first look at cache in redis
     key = request.full_path.replace('&refresh=true', '').replace('?refresh=true', '?')
     # logging.debug('KEY: %s' % key)
     response = ''
     if not refresh:
+        # request in cache?
         try:
 
             storage_publists_cache = app.extensions['redis']['REDIS_PUBLIST_CACHE']
@@ -3426,7 +3426,7 @@ def bibliography(agent='', agent_id='', style='harvard1'):
                     publist_docs.append(json.loads(doc.get('wtf_json')))
 
                 if str2bool(group_by_type):
-                    logging.debug('LOCALE: %s' % locale)
+                    # logging.debug('LOCALE: %s' % locale)
                     group_value = result.get('groupValue')
                     if locale.startswith('de'):
                         group_value = display_vocabularies.PUBTYPE_GER.get(result.get('groupValue'))
@@ -3451,8 +3451,8 @@ def bibliography(agent='', agent_id='', style='harvard1'):
 
             storage_publists_cache = app.extensions['redis']['REDIS_PUBLIST_CACHE']
 
-            # storage_publists_cache.set(key, response)
-            # storage_publists_cache.hset(agent_id, key, timestamp())
+            storage_publists_cache.set(key, response)
+            storage_publists_cache.hset(agent_id, key, timestamp())
 
         except Exception as e:
             logging.error('REDIS: %s' % e)
@@ -3462,18 +3462,16 @@ def bibliography(agent='', agent_id='', style='harvard1'):
 
 def citeproc_node(docs=None, format='html', locale='', style=''):
 
-    # TODO secrets.py
-    locales_url = '/home/hagbeck/MiscProjects/citeproc-node/csl-locales/locales.json'
+    locales_url = secrets.CITEPROC_LOCALES_FILE
 
     with open(locales_url) as data_file:
         locales = json.load(data_file)
 
     # load a CSL style (from the current directory)
     locale = locales.get('primary-dialects').get(locale)
-    logging.debug('LOCALE: %s' % locale)
+    # logging.debug('LOCALE: %s' % locale)
 
-    # TODO secrets.py
-    citeproc_url = 'http://127.0.0.1:8085?responseformat=%s&style=%s&locale=%s' % (format, style, locale)
+    citeproc_url = secrets.CITEPROC_SERVICE_URL % (format, style, locale)
 
     items = {}
 
@@ -3485,7 +3483,7 @@ def citeproc_node(docs=None, format='html', locale='', style=''):
     response = requests.post(citeproc_url, data=json.dumps({'items': items}),
                              headers={'Content-type': 'application/json'})
 
-    logging.debug(response.content)
+    # logging.debug(response.content)
 
     bib = response.content.decode()
     if format == 'html':

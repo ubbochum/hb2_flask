@@ -17,7 +17,15 @@
             <div class="col-sm-offset-1 col-sm-10">
                 <h3>{{ _('Integrate with ORCID') }}</h3>
                 <p>{{ _('With just a few clicks we will make you and your work individually recognisable on the web and in important data sources.') }}</p>
-                <p>Learn more in this short <a href="https://vimeo.com/97150912">video clip</a>.</p>
+                <p>
+                    {% if site == 'dortmund' %}
+                    {{ _('You can find further information on our ') }}<a href="https://www.ub.tu-dortmund.de/publikationsunterstuetzung/orcid.html" target="_blank">{{ _('ORCID Website') }}</a>
+                    {% elif site == 'bochum' %}
+                    {{ _('You can find further information on our ') }}<a href="http://www.ub.ruhr-uni-bochum.de/informationen/orcid.html" target="_blank">{{ _('ORCID Website') }}</a>
+                    {% endif %}
+                    {{ _('or learn more in this short <a href="https://vimeo.com/97150912">video clip</a>.') }}
+                </p>
+                <p></p>
                 <div class="col-sm-8">
                     <a class="btn btn-default btn-lg" href="{{ url_for('orcid_start') }}">
                         <img id="orcid-id-logo" src="https://orcid.org/sites/default/files/images/orcid_24x24.png" width='24' height='24' alt="ORCID logo"/> {{ _('Create or Connect your ORCID iD') }}
@@ -107,7 +115,14 @@
             <div class="col-sm-4">
                 <h4>{{ _('Integrate with ORCID') }}</span></h4>
                 <p>{{ _('With just a few clicks we will make you and your work individually recognisable on the web and in important data sources.') }}</p>
-                <p>Learn more in this short <a href="https://vimeo.com/97150912">video clip</a>.</p>
+                <p>
+                    {% if site == 'dortmund' %}
+                    {{ _('You can find further information on our ') }}<a href="https://www.ub.tu-dortmund.de/publikationsunterstuetzung/orcid.html" target="_blank">{{ _('ORCID Website') }}</a>
+                    {% elif site == 'bochum' %}
+                    {{ _('You can find further information on our ') }}<a href="http://www.ub.ruhr-uni-bochum.de/informationen/orcid.html" target="_blank">{{ _('ORCID Website') }}</a>
+                    {% endif %}
+                    {{ _('or learn more in this short <a href="https://vimeo.com/97150912">video clip</a>.') }}
+                </p>
                 <p>
                     <a class="btn btn-default" href="{{ url_for('orcid_start') }}">
                         <img id="orcid-id-logo" src="https://orcid.org/sites/default/files/images/orcid_24x24.png" width='24' height='24' alt="ORCID logo"/> Create or Connect your ORCID iD
