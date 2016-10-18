@@ -157,102 +157,107 @@ def crossref2wtfjson(doi=''):
 
     wtf = {}
 
-    record = requests.get('http://api.crossref.org/works/%s' % doi).json()
+    record = {}
+    try:
+        record = requests.get('http://api.crossref.org/works/%s' % doi).json()
+    except JSONDecodeError:
+        pass
 
-    wtf.setdefault('id', str(uuid.uuid4()))
-    timestamp = str(datetime.datetime.now())
-    wtf.setdefault('created', timestamp)
-    wtf.setdefault('changed', timestamp)
-    wtf.setdefault('editorial_status', 'new')
+    if record.get('message'):
+        wtf.setdefault('id', str(uuid.uuid4()))
+        timestamp = str(datetime.datetime.now())
+        wtf.setdefault('created', timestamp)
+        wtf.setdefault('changed', timestamp)
+        wtf.setdefault('editorial_status', 'new')
 
-    pubtype = CROSSREF_PUBTYPES.get(record.get('message').get('type'))
-    wtf.setdefault('pubtype', pubtype)
+        pubtype = CROSSREF_PUBTYPES.get(record.get('message').get('type'))
+        wtf.setdefault('pubtype', pubtype)
 
-    title = record.get('message').get('title')[0]
-    wtf.setdefault('title', title)
+        title = record.get('message').get('title')[0]
+        wtf.setdefault('title', title)
 
-    issued = record.get('message').get('created').get('date-parts')[0][0]
-    if record.get('message').get('created').get('date-parts')[0][1]:
-        issued = '%s-%s' % (issued, record.get('message').get('created').get('date-parts')[0][1])
-    if record.get('message').get('created').get('date-parts')[0][2]:
-        issued = '%s-%s' % (issued, record.get('message').get('created').get('date-parts')[0][2])
+        issued = record.get('message').get('created').get('date-parts')[0][0]
+        if record.get('message').get('created').get('date-parts')[0][1]:
+            issued = '%s-%s' % (issued, record.get('message').get('created').get('date-parts')[0][1])
+        if record.get('message').get('created').get('date-parts')[0][2]:
+            issued = '%s-%s' % (issued, record.get('message').get('created').get('date-parts')[0][2])
 
-    wtf.setdefault('issued', issued)
+        wtf.setdefault('issued', issued)
 
-    is_part_of = []
-    if record.get('message').get('container-title'):
-        for jtitle in record.get('message').get('container-title'):
-            if jtitle != '':
-                part = {}
-                part.setdefault('is_part_of', jtitle)
-                if record.get('message').get('volume'):
-                    part.setdefault('volume', record.get('message').get('volume'))
-                if record.get('message').get('issue'):
-                    part.setdefault('issue', record.get('message').get('issue'))
-                if record.get('message').get('page_first'):
-                    part.setdefault('page_first', record.get('message').get('page_first'))
-                if record.get('message').get('page_last'):
-                    part.setdefault('page_last', record.get('message').get('page_last'))
-                if record.get('message').get('page'):
-                    page = str(record.get('message').get('page')).split('-')
-                    part.setdefault('page_first', page[0])
-                    if len(page) > 1:
-                        part.setdefault('page_last',  page[1])
-                is_part_of.append(part)
-                break
+        is_part_of = []
+        if record.get('message').get('container-title'):
+            for jtitle in record.get('message').get('container-title'):
+                if jtitle != '':
+                    part = {}
+                    part.setdefault('is_part_of', jtitle)
+                    if record.get('message').get('volume'):
+                        part.setdefault('volume', record.get('message').get('volume'))
+                    if record.get('message').get('issue'):
+                        part.setdefault('issue', record.get('message').get('issue'))
+                    if record.get('message').get('page_first'):
+                        part.setdefault('page_first', record.get('message').get('page_first'))
+                    if record.get('message').get('page_last'):
+                        part.setdefault('page_last', record.get('message').get('page_last'))
+                    if record.get('message').get('page'):
+                        page = str(record.get('message').get('page')).split('-')
+                        part.setdefault('page_first', page[0])
+                        if len(page) > 1:
+                            part.setdefault('page_last',  page[1])
+                    is_part_of.append(part)
+                    break
 
-    if record.get('message').get('parent-title'):
-        for jtitle in record.get('message').get('parent-title'):
-            if jtitle != '':
-                part = {}
-                part.setdefault('is_part_of', jtitle)
-                if record.get('message').get('volume'):
-                    part.setdefault('volume', record.get('message').get('volume'))
-                if record.get('message').get('issue'):
-                    part.setdefault('issue', record.get('message').get('issue'))
-                if record.get('message').get('page_first'):
-                    part.setdefault('page_first', record.get('message').get('page_first'))
-                if record.get('message').get('page_last'):
-                    part.setdefault('page_last', record.get('message').get('page_last'))
-                if record.get('message').get('page'):
-                    page = str(record.get('message').get('page')).split('-')
-                    part.setdefault('page_first', page[0])
-                    if len(page) > 1:
-                        part.setdefault('page_last',  page[1])
-                is_part_of.append(part)
-                break
+        if record.get('message').get('parent-title'):
+            for jtitle in record.get('message').get('parent-title'):
+                if jtitle != '':
+                    part = {}
+                    part.setdefault('is_part_of', jtitle)
+                    if record.get('message').get('volume'):
+                        part.setdefault('volume', record.get('message').get('volume'))
+                    if record.get('message').get('issue'):
+                        part.setdefault('issue', record.get('message').get('issue'))
+                    if record.get('message').get('page_first'):
+                        part.setdefault('page_first', record.get('message').get('page_first'))
+                    if record.get('message').get('page_last'):
+                        part.setdefault('page_last', record.get('message').get('page_last'))
+                    if record.get('message').get('page'):
+                        page = str(record.get('message').get('page')).split('-')
+                        part.setdefault('page_first', page[0])
+                        if len(page) > 1:
+                            part.setdefault('page_last',  page[1])
+                    is_part_of.append(part)
+                    break
 
-    if len(is_part_of) > 0:
-        wtf.setdefault('is_part_of', is_part_of)
+        if len(is_part_of) > 0:
+            wtf.setdefault('is_part_of', is_part_of)
 
-    persons = []
-    if record.get('message').get('author'):
-        for author in record.get('message').get('author'):
-            person = {}
-            person.setdefault('name', '%s, %s' % (author.get('family'), author.get('given')))
-            person.setdefault('role', []).append('aut')
-            persons.append(person)
+        persons = []
+        if record.get('message').get('author'):
+            for author in record.get('message').get('author'):
+                person = {}
+                person.setdefault('name', '%s, %s' % (author.get('family'), author.get('given')))
+                person.setdefault('role', []).append('aut')
+                persons.append(person)
 
-    if record.get('message').get('editor'):
-        for editor in record.get('message').get('editor'):
-            person = {}
-            person.setdefault('name', '%s, %s' % (editor.get('family'), editor.get('given')))
-            person.setdefault('role', []).append('edt')
-            persons.append(person)
+        if record.get('message').get('editor'):
+            for editor in record.get('message').get('editor'):
+                person = {}
+                person.setdefault('name', '%s, %s' % (editor.get('family'), editor.get('given')))
+                person.setdefault('role', []).append('edt')
+                persons.append(person)
 
-    if len(persons) > 0:
-        wtf.setdefault('person', persons)
+        if len(persons) > 0:
+            wtf.setdefault('person', persons)
 
-    publisher = record.get('message').get('publisher')
-    wtf.setdefault('publisher', publisher)
+        publisher = record.get('message').get('publisher')
+        wtf.setdefault('publisher', publisher)
 
-    wtf.setdefault('DOI', []).append(doi)
+        wtf.setdefault('DOI', []).append(doi)
 
-    if record.get('message').get('ISBN'):
-        isbns = []
-        for isbn in record.get('message').get('ISBN'):
-            isbns.append(isbn.strip().split('isbn/')[1])
-        wtf.setdefault('isbn', isbns)
+        if record.get('message').get('ISBN'):
+            isbns = []
+            for isbn in record.get('message').get('ISBN'):
+                isbns.append(isbn.strip().split('isbn/')[1])
+            wtf.setdefault('isbn', isbns)
 
     return wtf
 

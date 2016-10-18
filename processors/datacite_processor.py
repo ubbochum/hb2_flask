@@ -42,32 +42,55 @@ logging.basicConfig(level=logging.DEBUG,
 # https://api.datacite.org/
 
 # TODO see https://schema.datacite.org/meta/kernel-3.1/doc/DataCite-MetadataKernel_v3.1.pdf
-DATACITE_PUBTYPES = {
+DATACITE_TYPES = {
     'book': 'Monograph',
-    'book-chapter': 'Chapter',
-    'book-edited': 'Collection',
-    'book-section': 'Chapter',
-    'book-series': 'Series',
-    'book-set': 'Monograph',
-    'book-track': 'Chapter',
-    'component': 'Report',
-    'data-set': 'ResearchData',
+    'editedbook': 'Collection',
+    'bookchapter': 'Chapter',
+    'bookseries': 'Series',
+    'journalarticle': 'ArticleJournal',
+    'article': 'ArticleJournal',
+    'journalissue': 'Collection',
+    'conferencepaper': 'Chapter',
+    'dictionaryentry': 'Chapter',
+    'encyclopediaentry': 'Chapter',
+    'workingpaper': 'Report',
+    'bookprospectus': 'Other',
+    'bookreview': 'Other',
+    'conferenceabstract': 'Other',
+    'conferenceposter': 'Other',
+    'conferenceprogram': 'Other',
+    'isclosure': 'Other',
     'dissertation': 'Thesis',
-    'journal-article': 'ArticleJournal',
-    'journal': 'Journal',
-    'journal-issue': 'Collection',
-    'journal-volume': 'Collection',
-    'monograph': 'Monograph',
-    'other': 'Report',
-    'preprint': 'Report',
-    'proceedings': 'Conference',
-    'proceedings-article': 'Chapter',
-    'reference': 'Collection',
-    'reference-entry': 'Chapter',
+    'fundingsubmission': 'Other',
+    'license': 'Other',
+    'magazinearticle': 'ArticleNewspaper',
+    'manual': 'Other',
+    'newsletterarticle': 'InternetDocument',
+    'newspaperarticle': 'ArticleNewspaper',
+    'onlineresource': 'InternetDocument',
+    'patent': 'Patent',
+    'registeredcopyright': 'Other',
+    'researchtool': 'ResearchData',
+    'supervisedstudentpublication': 'Thesis',
+    'test': 'ResearchData',
+    'trademark': 'Other',
+    'translation': 'Other',
+    'universityacademicunit': 'Thesis',
+    'website': 'InternetDocument',
+    'audiovisual': 'AudioVideoDocument',
+    'collection': 'ResearchData',
+    'dataset': 'ResearchData',
+    'event': 'ResearchData',
+    'image': 'ResearchData',
+    'interactiveresource': 'ResearchData',
+    'model': 'ResearchData',
+    'physicalobject': 'ResearchData',
+    'service': 'ResearchData',
+    'software': 'ResearchData',
+    'sound': 'ResearchData',
+    'workflow': 'ResearchData',
+    'other': 'Other',
     'report': 'Report',
-    'report-series': 'Series',
-    'standard': 'Standard',
-    'standard-series': 'Series',
 }
 
 
@@ -107,7 +130,12 @@ def datacite2csl(doi='', query=''):
             csl_record.setdefault('doi', doi_from_data)
             csl_record.setdefault('id', doi_from_data)
 
-            csl_type = item.get('attributes').get('resource-type')
+            if item.get('attributes').get('type'):
+                csl_type = item.get('attributes').get('type')
+            elif item.get('attributes').get('resource-type'):
+                csl_type = item.get('attributes').get('resource-type')
+            else:
+                csl_type = item.get('attributes').get('resource-type-general')
             csl_record.setdefault('type', csl_type)
 
             title = item.get('attributes').get('title')
@@ -116,15 +144,6 @@ def datacite2csl(doi='', query=''):
             issued = item.get('attributes').get('published')
             csl_issued = {'raw': issued}
             csl_record.setdefault('issued', csl_issued)
-
-            journal_title = None
-            for jtitle in item.get('attributes').get('container-title'):
-                if jtitle != '':
-                    journal_title = jtitle
-                    break
-
-            if journal_title is not None:
-                csl_record.setdefault('parent_title', journal_title)
 
             authors = []
             if item.get('attributes').get('author'):
@@ -135,10 +154,6 @@ def datacite2csl(doi='', query=''):
                         # authors.append({'literal': author.get('literal')})
                     elif author.get('family') or author.get('given'):
                         authors.append({'family': author.get('family'), 'given': author.get('given')})
-
-            if item.get('attributes').get('editor'):
-                for editor in item.get('attributes').get('editor'):
-                    authors.append({'family': editor.get('family'), 'given': editor.get('given')})
 
             if len(authors) > 0:
                 csl_record.setdefault('author', authors)
@@ -161,12 +176,70 @@ def datacite2wtfjson(doi=''):
 
     record = requests.get('https://api.datacite.org/works/%s' % doi).json()
 
-    wtf.setdefault('id', str(uuid.uuid4()))
-    timestamp = str(datetime.datetime.now())
-    wtf.setdefault('created', timestamp)
-    wtf.setdefault('changed', timestamp)
-    wtf.setdefault('editorial_status', 'new')
+    if record.get('data'):
+        datacite_items = record.get('data')
+    else:
+        datacite_items = []
 
+    for item in datacite_items:
 
-# logging.debug(json.dumps(datacite2csl('10.4230/DAGREP.1.10.37', ''), indent=4))
+        if item.get('type') == 'works':
+            wtf.setdefault('id', str(uuid.uuid4()))
+            timestamp = str(datetime.datetime.now())
+            wtf.setdefault('created', timestamp)
+            wtf.setdefault('changed', timestamp)
+            wtf.setdefault('editorial_status', 'new')
+
+            if str(item.get('attributes').get('resource-type-general')).lower() == 'text':
+                logging.debug(str(item.get('attributes').get('resource-type')))
+                pubtype = DATACITE_TYPES.get(str(item.get('attributes').get('resource-type')).lower())
+            else:
+                pubtype = item.get('attributes').get('resource-type-general')
+
+            wtf.setdefault('pubtype', pubtype)
+
+            title = item.get('attributes').get('title')
+            wtf.setdefault('title', title)
+
+            issued = item.get('attributes').get('published')
+            wtf.setdefault('issued', issued)
+
+            persons = []
+            if item.get('attributes').get('author'):
+                for author in item.get('attributes').get('author'):
+                    person = {}
+                    if author.get('literal'):
+                        tmp = author.get('literal').split(' ')
+                        person.setdefault('name', '%s, %s' % (tmp[len(tmp) - 1], author.get('literal').replace(' %s' % tmp[len(tmp) - 1], '')))
+                    else:
+                        person.setdefault('name', '%s, %s' % (author.get('family'), author.get('given')))
+                    person.setdefault('role', []).append('aut')
+                    persons.append(person)
+
+            if len(persons) > 0:
+                wtf.setdefault('person', persons)
+
+            publisher_id = item.get('attributes').get('publisher-id')
+
+            for item1 in datacite_items:
+
+                if item1.get('type') == 'publishers' and item1.get('id') == publisher_id:
+                    wtf.setdefault('publisher', item1.get('attributes').get('title'))
+
+            wtf.setdefault('DOI', []).append(doi)
+
+            if item.get('attributes').get('description'):
+                abstract = {}
+                abstract.setdefault('content', item.get('attributes').get('description'))
+                abstract.setdefault('shareable', True)
+                wtf.setdefault('abstract', []).append(abstract)
+
+            break
+
+    return wtf
+
+# logging.debug(json.dumps(datacite2csl('10.4230/DAGREP.1.10.37'), indent=4))
+# logging.debug(json.dumps(datacite2wtfjson('10.4230/DAGREP.1.10.37'), indent=4))
+# logging.debug(json.dumps(datacite2wtfjson('10.5162/sensor11/c1.3'), indent=4))
+# logging.debug(json.dumps(datacite2wtfjson('10.17877/DE290R-7365'), indent=4))
 

@@ -424,15 +424,15 @@ def search_crossref():
     if doi != '':
         thedata = crossref_processor.crossref2csl(doi=doi)
         # TODO if thedata == []: datacite request
-        # if len(thedata.get('items')) == 0:
-        #     thedata = datacite_processor.datacite2csl(doi=doi)
+        if len(thedata.get('items')) == 0:
+            thedata = datacite_processor.datacite2csl(doi=doi)
 
     elif query != '':
         thedata = crossref_processor.crossref2csl(query=query)
 
     if format == 'html':
         return render_bibliography(docs=thedata.get('items'), format=format, locale=locale, style=style,
-                                  commit_link=True, commit_system='crossref')
+                                   commit_link=True, commit_system='crossref')
     else:
         return jsonify(thedata)
 
@@ -2089,6 +2089,11 @@ def new_by_identifiers():
 
     if doi != '':
         wtf_json = crossref_processor.crossref2wtfjson(doi)
+
+        # TODO if wtf_json = '' >> datacite
+        logging.debug(wtf_json)
+        if not wtf_json.get('id'):
+            wtf_json = datacite_processor.datacite2wtfjson(doi)
 
         if not wtf_json.get('catalog') or wtf_json.get('catalog')[0] == '':
             if current_user and current_user.affiliation and current_user.affiliation == 'tudo':
