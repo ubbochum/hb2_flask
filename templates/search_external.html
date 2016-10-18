@@ -84,7 +84,7 @@
             $('#pmid').attr('checked', false);
         });
         $(document).on('click', '#pmid', function (event)  {
-            console.log('PMID')
+            //console.log('PMID')
             $('#query_id').attr({placeholder:"{{ _('PMID, e.g. 15894097') }}"});
             $('#doi').attr('checked', false);
             $('#isbn').attr('checked', false);
@@ -95,8 +95,8 @@
 
             var id_type = $("input[type='radio']:checked").val();
             var query_id = $('#query_id').val().trim();
-            console.log("id_type: " + id_type);
-            console.log("query_id: " + query_id);
+            //console.log("id_type: " + id_type);
+            //console.log("query_id: " + query_id);
 
             var chosenLibraryItems = "";
             if (id_type == 'doi') {
@@ -108,7 +108,7 @@
             else if (id_type == 'pmid') {
             }
 
-            console.log("chosenLibraryItems: " + chosenLibraryItems);
+            //console.log("chosenLibraryItems: " + chosenLibraryItems);
 
             var xhr = new XMLHttpRequest();
             xhr.open('GET', chosenLibraryItems, false);
@@ -117,7 +117,12 @@
             //console.log(citationData)
 
             var content = document.getElementById("csl-content-block");
-            content.innerHTML = citationData;
+            if (citationData == '') {
+                content.innerHTML = '{{ _('No results') }}';
+            }
+            else {
+                content.innerHTML = citationData;
+            }
 
             return false;
         });

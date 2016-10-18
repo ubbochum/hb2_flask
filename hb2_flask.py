@@ -61,6 +61,7 @@ import display_vocabularies
 import urlmarker
 from forms import *
 from processors import crossref_processor
+from processors import datacite_processor
 from processors import mods_processor
 from processors import wtf_csl
 from solr_handler import Solr
@@ -422,13 +423,16 @@ def search_crossref():
     thedata = []
     if doi != '':
         thedata = crossref_processor.crossref2csl(doi=doi)
+        # TODO if thedata == []: datacite request
+        # if len(thedata.get('items')) == 0:
+        #     thedata = datacite_processor.datacite2csl(doi=doi)
 
     elif query != '':
         thedata = crossref_processor.crossref2csl(query=query)
 
     if format == 'html':
         return render_bibliography(docs=thedata.get('items'), format=format, locale=locale, style=style,
-                                   commit_link=True, commit_system='crossref')
+                                  commit_link=True, commit_system='crossref')
     else:
         return jsonify(thedata)
 
@@ -3505,14 +3509,16 @@ def render_bibliography(docs=None, format='html', locale='', style='', commit_li
     # logging.debug('csl-docs: %s' % docs)
     if len(docs) > 0:
 
-        with open(secrets.CSL_LOCALES_REG) as data_file:
+        locales_url = secrets.CITEPROC_LOCALES_FILE
+
+        with open(locales_url) as data_file:
             locales = json.load(data_file)
 
         bib_source = CiteProcJSON(docs)
         # load a CSL style (from the current directory)
-        locale = '%s/locales/locales-%s' % (secrets.CSL_DATA_DIR, locales.get('primary-dialects').get(locale))
+        locale = '%s/csl-locales/locales-%s' % (secrets.CSL_DATA_DIR, locales.get('primary-dialects').get(locale))
         # logging.info('locale: %s' % locale)
-        bib_style = CitationStylesStyle('%s/styles/%s' % (secrets.CSL_DATA_DIR, style),
+        bib_style = CitationStylesStyle('%s/csl/%s' % (secrets.CSL_DATA_DIR, style),
                                         locale=locale,
                                         validate=False)
         # Create the citeproc-py bibliography, passing it the:

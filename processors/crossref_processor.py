@@ -87,7 +87,10 @@ def crossref2csl(doi='', query=''):
         pass
 
     if doi != '':
-        crossref_items = [record.get('message')]
+        if record.get('message'):
+            crossref_items = [record.get('message')]
+        else:
+            crossref_items = []
     elif query != '':
         crossref_items = record.get('message').get('items')
     else:
@@ -114,7 +117,6 @@ def crossref2csl(doi='', query=''):
             issued = '%s-%s' % (issued, item.get('created').get('date-parts')[0][2])
 
         csl_issued = {'raw': issued}
-
         csl_record.setdefault('issued', csl_issued)
 
         journal_title = None
