@@ -4656,11 +4656,11 @@ def connect():
 def contact():
     site = theme(request.access_route)
     if site == 'bochum':
-        return redirect('mailto:bibliographie-ub.rub.de')
+        return redirect('mailto:bibliographie-ub@rub.de')
     elif site == 'dortmund':
         return redirect('http://www.ub.tu-dortmund.de/mail-hsb.html')
     else:
-        return redirect('mailto:bibliographie-ub.rub.de')
+        return redirect('mailto:bibliographie-ub@rub.de')
 
 
 # if __name__ == '__main__':
