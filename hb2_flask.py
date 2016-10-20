@@ -218,7 +218,7 @@ def homepage():
                 person_solr.request()
 
             if len(person_solr.results) == 0:
-                flash(gettext("You are currently not registered as contributor of any work. Please register new works..."), 'danger')
+                flash(gettext("You are currently not registered as contributor of any work. Please register new works..."), 'warning')
             else:
                 if person_solr.results[0].get('gnd'):
                     gnd_id = person_solr.results[0].get('gnd').strip()
@@ -312,16 +312,17 @@ def search():
     if num_found == 1:
         if core == 'hb2':
             return redirect(url_for('show_record', record_id=search_solr.results[0].get('id'),
-                                    pubtype=search_solr.results[0].get('pubtype')))
+                                    pubtype=search_solr.results[0].get('pubtype'), core=core))
         if core == 'person':
-            return redirect(url_for('show_person', person_id=search_solr.results[0].get('id')))
+            return redirect(url_for('show_person', person_id=search_solr.results[0].get('id'), core=core))
         if core == 'organisation':
-            return redirect(url_for('show_orga', orga_id=search_solr.results[0].get('id')))
+            return redirect(url_for('show_orga', orga_id=search_solr.results[0].get('id'), core=core))
         if core == 'group':
-            return redirect(url_for('show_group', group_id=search_solr.results[0].get('id')))
+            return redirect(url_for('show_group', group_id=search_solr.results[0].get('id'), core=core))
     elif num_found == 0:
-        flash('%s: %s' % (gettext('Your Search Found no Results'), query))
-        return render_template('search.html', header=lazy_gettext('Search'), site=theme(request.access_route))
+        flash('%s: %s' % (gettext('Your Search Found no Results'), query), 'error')
+        return redirect(url_for('homepage'))
+        # return render_template('search.html', header=lazy_gettext('Search'), site=theme(request.access_route))
     else:
         pagination = Pagination(page=page, total=num_found, found=num_found, bs_version=3, search=True,
                                 record_name=lazy_gettext('titles'), per_page=rows,
@@ -391,8 +392,9 @@ def search_gbv():
                 % ('pica.isb', isbn))
             # logging.info(etree.tostring(mods))
             item = mods_processor.mods2csl(mods)
-            # logging.info(item.get('items')[0])
-            thedata.append(item.get('items')[0])
+            # logging.info(item.get('items'))
+            if len(item.get('items')) > 0:
+                thedata.append(item.get('items')[0])
 
         thedata = {'items': thedata}
 
@@ -494,12 +496,13 @@ def _record2solr(form, action, relitems=True):
 
         # logging.info('FORM: %s' % form.data)
 
+    if form.data.get('id'):
+        solr_data.setdefault('id', form.data.get('id').strip())
+        id = form.data.get('id').strip()
+
     for field in form.data:
         # logging.info('%s => %s' % (field, form.data.get(field)))
         # record information
-        if field == 'id':
-            solr_data.setdefault('id', form.data.get(field).strip())
-            id = form.data.get(field).strip()
         if field == 'same_as':
             for same_as in form.data.get(field):
                 if len(same_as.strip()) > 0:
@@ -4120,7 +4123,7 @@ def orcid_start():
                              data=[{'id': current_user.id, 'orcidscopes': {'set': orcid_scopes}}], facet='false')
             user_solr.update()
             # try to get authorization code
-            logging.info('current_user.affiliation = %s' % current_user.affiliation)
+            # logging.info('current_user.affiliation = %s' % current_user.affiliation)
             sandbox = secrets.orcid_app_data.get(current_user.affiliation).get('sandbox')
             client_id = secrets.orcid_app_data.get(current_user.affiliation).get('sandbox_client_id')
             client_secret = secrets.orcid_app_data.get(current_user.affiliation).get('sandbox_client_secret')
@@ -4221,11 +4224,14 @@ def orcid_login():
                          data=[{'id': current_user.id, 'orcidtokenrevoked': {'set': 'true'}}], facet='false')
         user_solr.update()
         flash(gettext('You haven\'t granted the selected rights!'), 'error')
+        logging.error('You haven\'t granted the selected rights! (code==\'\')')
         return redirect(url_for('orcid_start'))
     else:
         try:
             token = api.get_token_from_authorization_code(code, '%s/%s' % (redirect_uri, url_for('orcid_login')))
             orcid_id = token.get('orcid')
+            logging.info('ORCID: %s' % orcid_id)
+            logging.info('ORCID: token = %s' % token)
 
             # add orcid_id to person if exists. if not exists person then create an entity
             try:
@@ -4249,6 +4255,7 @@ def orcid_login():
                                            application=secrets.SOLR_APP, core='person', query=query, facet='false',
                                            fields=['wtf_json'])
                         person_solr.request()
+                    # TODO TU alternatives
                     else:
                         logging.info('keine Treffer zu email in person: %s' % current_user.email)
                         new_person_json = {}
@@ -4280,7 +4287,7 @@ def orcid_login():
                 if len(person_solr.results) == 1:
                     for idx1, doc in enumerate(person_solr.results):
                         myjson = json.loads(doc.get('wtf_json'))
-                        logging.info('id: %s' % myjson.get('id'))
+                        # logging.info('id: %s' % myjson.get('id'))
                         lock_record_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT,
                                                 application=secrets.SOLR_APP, core='person',
                                                 data=[{'id': myjson.get('id'), 'locked': {'set': 'true'}}])
@@ -4318,6 +4325,7 @@ def orcid_login():
                     'orcidrefreshtoken': {'set': token.get('refresh_token')},
                     'orcidtokenrevoked': {'set': 'false'}
                 }
+                logging.info('ORCID: hb2_users.data = %s' % tmp)
                 user_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT,
                                  application=secrets.SOLR_APP, core='hb2_users',
                                  data=[tmp], facet='false')
@@ -4352,6 +4360,38 @@ def orcid_login():
             logging.error(e.response.text)
             flash(gettext('ORCID-ERROR: %s' % e.response.text), 'error')
             return redirect(url_for('orcid_start'))
+
+
+@app.route('/orcid/link_failed/<affiliation>')
+@login_required
+def link_failed(affiliation=''):
+    if secrets.APP_SECURITY:
+        if current_user.role != 'admin' and current_user.role != 'superadmin':
+            flash(gettext('For Admins ONLY!!!'))
+            return redirect(url_for('homepage'))
+
+    if affiliation:
+        query = '-orcidid:[\'\' TO *] AND orcidscopes:[\'\' TO *]'
+        fquery = ['role:user', 'affiliation:%s' % affiliation]
+        hb2_users_solr = Solr(host=secrets.SOLR_HOST, port=secrets.SOLR_PORT,
+                              application=secrets.SOLR_APP, core='hb2_users', handler='query',
+                              query=query, facet='false', rows=100000,
+                              fquery=fquery)
+        hb2_users_solr.request()
+
+        if len(hb2_users_solr.results) > 0:
+            csv = ''
+            for hb2_user in hb2_users_solr.results:
+                csv += '%s; %s; %s; "%s"\n' % (hb2_user.get('id'), hb2_user.get('name'), hb2_user.get('email'), hb2_user.get('orcidscopes'))
+
+            resp = make_response(csv, 200)
+            resp.headers['Content-Type'] = 'text/csv'
+            return resp
+        else:
+            return make_response('No results', 404)
+
+    else:
+        return make_response('Please set affiliation parameter', 400)
 
 
 # ---------- LOGIN / LOGOUT ----------

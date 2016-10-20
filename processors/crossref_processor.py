@@ -25,6 +25,7 @@ __author__ = 'hagbeck'
 import datetime
 import uuid
 import logging
+import simplejson as json
 from simplejson import JSONDecodeError
 import requests
 
@@ -98,57 +99,60 @@ def crossref2csl(doi='', query=''):
 
     for item in crossref_items:
 
-        csl_record = {}
+        if item.get('title'):
+            # logging.debug(json.dumps(item, indent=4))
 
-        doi_from_data = item.get('DOI')
-        csl_record.setdefault('doi', doi_from_data)
-        csl_record.setdefault('id', doi_from_data)
+            csl_record = {}
 
-        csl_type = item.get('type')
-        csl_record.setdefault('type', csl_type)
+            doi_from_data = item.get('DOI')
+            csl_record.setdefault('doi', doi_from_data)
+            csl_record.setdefault('id', doi_from_data)
 
-        title = item.get('title')[0]
-        csl_record.setdefault('title', title)
+            csl_type = item.get('type')
+            csl_record.setdefault('type', csl_type)
 
-        issued = item.get('created').get('date-parts')[0][0]
-        if item.get('created').get('date-parts')[0][1]:
-            issued = '%s-%s' % (issued, item.get('created').get('date-parts')[0][1])
-        if item.get('created').get('date-parts')[0][2]:
-            issued = '%s-%s' % (issued, item.get('created').get('date-parts')[0][2])
+            title = item.get('title')[0]
+            csl_record.setdefault('title', title)
 
-        csl_issued = {'raw': issued}
-        csl_record.setdefault('issued', csl_issued)
+            issued = item.get('created').get('date-parts')[0][0]
+            if item.get('created').get('date-parts')[0][1]:
+                issued = '%s-%s' % (issued, item.get('created').get('date-parts')[0][1])
+            if item.get('created').get('date-parts')[0][2]:
+                issued = '%s-%s' % (issued, item.get('created').get('date-parts')[0][2])
 
-        journal_title = None
-        for jtitle in item.get('container-title'):
-            if jtitle != '':
-                journal_title = jtitle
-                break
+            csl_issued = {'raw': issued}
+            csl_record.setdefault('issued', csl_issued)
 
-        if journal_title is not None:
-            csl_record.setdefault('parent_title', journal_title)
+            journal_title = None
+            for jtitle in item.get('container-title'):
+                if jtitle != '':
+                    journal_title = jtitle
+                    break
 
-        authors = []
-        if item.get('author'):
-            for author in item.get('author'):
-                authors.append({'family': author.get('family'), 'given': author.get('given')})
+            if journal_title is not None:
+                csl_record.setdefault('parent_title', journal_title)
 
-        if item.get('editor'):
-            for editor in item.get('editor'):
-                authors.append({'family': editor.get('family'), 'given': editor.get('given')})
+            authors = []
+            if item.get('author'):
+                for author in item.get('author'):
+                    authors.append({'family': author.get('family'), 'given': author.get('given')})
 
-        if len(authors) > 0:
-            csl_record.setdefault('author', authors)
+            if item.get('editor'):
+                for editor in item.get('editor'):
+                    authors.append({'family': editor.get('family'), 'given': editor.get('given')})
 
-        publisher = item.get('publisher')
-        csl_record.setdefault('publisher', publisher)
+            if len(authors) > 0:
+                csl_record.setdefault('author', authors)
 
-        if item.get('ISBN'):
-            isbns = []
-            for isbn in item.get('ISBN'):
-                isbns.append(isbn.strip().split('isbn/')[1])
+            publisher = item.get('publisher')
+            csl_record.setdefault('publisher', publisher)
 
-        csl_json.append(csl_record)
+            if item.get('ISBN'):
+                isbns = []
+                for isbn in item.get('ISBN'):
+                    isbns.append(isbn.strip().split('isbn/')[1])
+
+            csl_json.append(csl_record)
 
     return {'items': csl_json}
 

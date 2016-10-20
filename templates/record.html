@@ -95,7 +95,9 @@
                         <br/>
                         {% for role in person.role %}
                             {{ role_map.get(role) }}
-                            {% if role == 'edt' and person.start_year %}({{ person.start_year }} - {{ person.end_year }}){% endif %}
+                            {% if role == 'edt' and person.start_year %}
+                                ({{ person.start_year }}{% if person.start_volume %}, {{ _('Vol.') }} {{ person.start_volume }}{% endif %}{% if person.start_issue %}, {{ _('Issue') }} {{ person.start_issue }}{% endif %} - {{ person.end_year }}{% if person.end_volume %}, {{ _('Vol.') }} {{ person.end_volume }}{% if person.end_issue %}, {{ _('Issue') }} {{ person.end_issue }}{% endif %}{% endif %})
+                            {% endif %}
                             {% if not loop.last %}, {% endif %}
                         {% endfor %}
                         <br/>
@@ -336,7 +338,7 @@
                     {% endfor %}
                 </dd>
             {% endif %}
-            {% if record.data.pubtype != 'Lecture' %}
+            {% if record.data.pubtype == 'Lecture' %}
                 {% if record.data.lecture_title %}
                 <dt>
                     {{ _('Lecture Series') }}
