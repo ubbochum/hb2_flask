@@ -34,7 +34,7 @@ try:
 except ImportError:
     import secrets
 
-logging.basicConfig (level=logging.INFO,
+logging.basicConfig (level=logging.ERROR,
     format='%(asctime)s %(levelname)-4s %(message)s',
     datefmt='%a, %d %b %Y %H:%M:%S',
 )
@@ -42,11 +42,11 @@ logging.basicConfig (level=logging.INFO,
 class Solr(object):
     def __init__(self, host=secrets.SOLR_HOST, port=secrets.SOLR_PORT, application='solr', handler='select',
                  query='*:*', fquery=[], fields=[], writer='python', start='0', rows='10', facet='false',
-                 facet_fields=secrets.SOLR_FACETS, facet_mincount=0, facet_limit=10, facet_offset=0, sort='score desc',
+                 facet_fields=secrets.SOLR_SEARCH_FACETS, facet_mincount=0, facet_limit=10, facet_offset=0, sort='score desc',
                  terms_fl='', terms_limit=10, terms_prefix='', terms_sort='count', mlt=False, mlt_fields=[],
                  omitHeader='false', query_field='', sort_facet_by_index={}, fuzzy='false',
                  compress=False, facet_sort='count', facet_tree=(), spellcheck='false', spellcheck_collate='false',
-                 spellcheck_count=5, suggest_query='', group='false', group_field='', group_limit=1,
+                 spellcheck_count=5, suggest_query='', group=False, group_field='', group_limit=1,
                  group_sort='score desc', group_ngroups='true', coordinates='0,0', json_nl='arrmap',# cursor='',
                  boost_most_recent='false', csv_separator='\t', core=secrets.SOLR_CORE, stats='false', stats_fl=[],
                  data='', del_id='', export_field='', json_facet={}):
@@ -113,6 +113,8 @@ class Solr(object):
         fuzzy_tilde = ''
         if self.fuzzy == 'true':
             fuzzy_tilde = '~'
+        #logging.info(self.facet)
+        #logging.info(self.facet_fields)
         if self.facet == 'true': # Old-style facetting...
             facets = '&facet.field='.join(self.facet_fields)
             params = '%s?q=%s%s&wt=%s&start=%s&rows=%s&facet.limit=%s&facet.mincount=%s&facet.offset=%s&facet.field=%s&json.nl=%s&facet=%s&facet.sort=%s&omitHeader=%s&defType=%s&facet.threads=-1' % (
@@ -135,7 +137,7 @@ class Solr(object):
             if len(self.facet_tree) > 0:
                 params += '&facet.pivot='
                 for field in self.facet_tree:
-                    #params += '&facet.pivot=%s,%s' % (self.facet_tree[0], self.facet_tree[1])
+                    # params += '&facet.pivot=%s,%s' % (self.facet_tree[0], self.facet_tree[1])
                     params += '%s,' % field
                 params = params[:-1]
         else:
@@ -146,20 +148,22 @@ class Solr(object):
                 params += '&boost=recip(ms(NOW/YEAR,year_boost),3.16e-11,1,1)'
             if self.writer == 'csv':
                 params += '&csv.separator=%s' % self.csv_separator
-            #logging.info(self.json_facet)
+            # logging.info(self.json_facet)
             if self.json_facet:
                 params += '&json.facet=%s' % (json.dumps(self.json_facet))
         if len(self.fquery) > 0:
             for fq in (self.fquery):
                 try:
-                    #params += '&fq=%s' % urllib.parse.unquote(fq.encode('utf8'))
-                    params += '&fq=%s' % urllib.parse.unquote(fq)
+                    # params += '&fq=%s' % urllib.parse.unquote(fq.encode('utf8'))
+                    val = urllib.parse.unquote(fq).replace('#', '\%23')
+                    # logging.info('%s >> %s' % (fq,val))
+                    params += '&fq=%s' % val
                 except UnicodeDecodeError:
                     params += '&fq=%s' % urllib.parse.unquote(fq)
         if self.sort:
-            #if self.cursor:
-                #params += '&sort=katkey+asc&cursorMark=%s' % self.cursor
-            #elif self.sort != 'score desc':
+            # if self.cursor:
+                # params += '&sort=katkey+asc&cursorMark=%s' % self.cursor
+            # elif self.sort != 'score desc':
             if self.sort != 'score desc':
                 params += '&sort=%s' % self.sort
         if len(self.fields) > 0:
@@ -173,16 +177,16 @@ class Solr(object):
                 self.writer, self.defType)
             # if self.boost_most_recent == 'true':
             #     params += '&boost=recip(ms(NOW/YEAR,year_boost),3.16e-11,1,1)'
-            #self.response = eval(urllib.request.urlopen('%s%s' % (url, mparams)).read())
-            #logging.info(url)
-            #logging.info(mparams)
+            # self.response = eval(urllib.request.urlopen('%s%s' % (url, mparams)).read())
+            # logging.info(url)
+            # logging.info(mparams)
             self.response = eval(requests.get('%s%s' % (url, mparams)).text)
             for mlt in self.response.get('moreLikeThis'):
                 self.mlt_results = self.response.get('moreLikeThis').get(mlt).get('docs')
         if self.spellcheck == 'true':
             params += '&spellcheck=true&spellcheck.collate=%s&spellcheck.count=%s' % (
                 self.spellcheck_collate, self.spellcheck_count)
-        if self.group[0] == 'true':
+        if self.group[0]:
             params += '&group=true&group.field=%s&group.limit=%s&group.sort=%s&group.ngroups=%s' % (
                 self.group_field[0], self.group_limit[0], self.group_sort[0], self.group_ngroups[0])
         if self.coordinates != '0,0':
@@ -194,11 +198,13 @@ class Solr(object):
             params += '&qf=%s' % self.queryField
         if self.stats == 'true':
             params += '&stats=true&stats.field=' + '&stats.field='.join(self.stats_fl)
-        params += '&q.op=AND'
+        if self.handler != 'query':
+            params += '&q.op=AND'
 
         self.request_url = '%s%s' % (url, params)
-        #logging.fatal(iri_to_uri(self.request_url))
-        if self.compress == True:
+        # logging.fatal(iri_to_uri(self.request_url))
+        # logging.info('REQUEST: %s' % self.request_url)
+        if self.compress:
             import urllib2
             import StringIO
             import gzip
@@ -212,23 +218,23 @@ class Solr(object):
 
             self.response = eval(gzipper.read())
         else:
-            #logging.error(self.request_url)
+            # logging.error(self.request_url)
             try:
-                #self.response = eval(urllib.request.urlopen(iri_to_uri(self.request_url)).read())
+                # self.response = eval(urllib.request.urlopen(iri_to_uri(self.request_url)).read())
                 self.response = eval(requests.get(iri_to_uri(self.request_url)).text)
             except NameError:
-                #self.response = urllib.request.urlopen(iri_to_uri(self.request_url)).read()
+                # self.response = urllib.request.urlopen(iri_to_uri(self.request_url)).read()
                 self.response = requests.get(iri_to_uri(self.request_url)).text
             except SyntaxError:
-                #self.response = urllib.request.urlopen(iri_to_uri(self.request_url)).read()
+                # self.response = urllib.request.urlopen(iri_to_uri(self.request_url)).read()
                 self.response = requests.get(iri_to_uri(self.request_url)).text
-            #self.response = eval(urllib.request.urlopen(self.request_url).read())
-        #logging.error(self.response)
+            # self.response = eval(urllib.request.urlopen(self.request_url).read())
+        # logging.error(self.response)
         try:
             self.results = self.response.get('response').get('docs')
         except AttributeError: # Grouped results...
-            #logging.fatal(e)
-            #logging.error(self.response)
+            # logging.fatal(e)
+            # logging.error(self.response)
             try:
                 if self.response.get('grouped'):
                     self.results = self.response.get('grouped').get(self.group_field[0]).get('groups')
@@ -236,10 +242,11 @@ class Solr(object):
                 pass
         if self.facet == 'true':
             self.facets = self.response.get('facet_counts').get('facet_fields')
+            # logging.info(self.facets)
         if len(self.facet_tree) > 0:
             self.tree = self.response.get('facet_counts').get('facet_pivot')
         if self.json_facet:
-            #logging.info(self.response.get('facets'))
+            # logging.info(self.response.get('facets'))
             self.facets = self.response.get('facets')
         if self.spellcheck == 'true' or self.handler.endswith('suggest'):
             try:
@@ -248,7 +255,7 @@ class Solr(object):
                 pass
         if self.omitHeader != 'true':
             self.qtime = float(self.response.get('responseHeader').get('QTime')) / 1000
-            #logging.error(self.qtime)
+            # logging.error(self.qtime)
 
     def suggest(self):
         url = 'http://%s:%s/%s/' % (self.host, self.port, self.application)
@@ -259,7 +266,7 @@ class Solr(object):
                                                                                self.suggest_query),
                                                                            self.writer, self.json_nl, self.omitHeader)
         self.request_url = '%s%s' % (url, params)
-        #self.response = eval(urllib.request.urlopen(iri_to_uri(self.request_url)).read())
+        # self.response = eval(urllib.request.urlopen(iri_to_uri(self.request_url)).read())
         self.response = eval(requests.get(iri_to_uri(self.request_url)).text)
         self.suggestions = self.response.get('spellcheck').get('suggestions')
 
@@ -287,13 +294,16 @@ class Solr(object):
         return self._count
 
     def update(self):
-        url = 'http://%s:%s/%s/%s/update/?commit=true&versions=true' % (self.host, self.port, self.application, self.core)
+        url = 'http://%s:%s/%s/%s/update/?commit=true&versions=true' % (self.host, self.port, self.application,
+                                                                        self.core)
+        #logging.info(json.dumps(self.data))
         resp = requests.post(url, headers={'Content-type': 'application/json'}, data=json.dumps(self.data))
         return resp
 
     def delete(self):
         url = 'http://%s:%s/%s/%s/update?commit=true' % (self.host, self.port, self.application, self.core)
-        resp = requests.post(url, headers={'Content-type': 'application/json'}, data=json.dumps({'delete': {'id': self.del_id}}))
+        resp = requests.post(url, headers={'Content-type': 'application/json'},
+                             data=json.dumps({'delete': {'id': self.del_id}}))
         return resp.status_code
 
     def export(self):
@@ -301,9 +311,25 @@ class Solr(object):
         cm = '*'
         export_docs = []
         while not done:
-            resp = requests.get('http://%s:%s/%s/%s/query?q=*:*&sort=id asc&fl=%s&cursorMark=%s' % (self.host, self.port, self.application, self.core, self.export_field, cm)).json()
-            for doc in resp.get('response').get('docs'):
-                export_docs.append(json.loads(doc.get(self.export_field)))
+            if self.export_field == '':
+                resp = requests.get('http://%s:%s/%s/%s/query?q=%s&sort=id asc&cursorMark=%s' %
+                                    (self.host, self.port, self.application, self.core, self.query, cm)).json()
+                for doc in resp.get('response').get('docs'):
+                    try:
+                        export_docs.append(doc)
+                    except TypeError as e:
+                        logging.error(e)
+                        logging.error(doc.get('id'))
+            else:
+                resp = requests.get('http://%s:%s/%s/%s/query?q=%s&sort=id asc&fl=%s&cursorMark=%s' %
+                                    (self.host, self.port, self.application, self.core, self.query,
+                                     '%s, %s' % (self.export_field, 'id'), cm)).json()
+                for doc in resp.get('response').get('docs'):
+                    try:
+                        export_docs.append(json.loads(doc.get(self.export_field)))
+                    except TypeError as e:
+                        logging.error(e)
+                        logging.error(doc.get('id'))
             if cm == resp.get('nextCursorMark'):
                 done = True
             cm = resp.get('nextCursorMark')

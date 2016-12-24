@@ -7,13 +7,22 @@
     {{ super() }}
     <link rel="stylesheet" href="{{ url_for('static', filename='font-awesome/css/font-awesome.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='octicons/octicons.css') }}">
-    {% if site == 'bochum' %}<link rel="stylesheet" href="{{ url_for('static', filename='site/bochum/css/rub.css') }}">{% endif %}
+    {% if site == 'bochum' %}
+        <link rel="stylesheet" href="{{ url_for('static', filename='site/bochum/css/rub.css') }}">
+    {% elif site == 'dortmund' %}
+        <link rel="stylesheet" href="{{ url_for('static', filename='site/dortmund/css/tudo.css') }}">
+    {% endif %}
 {% endblock %}
 {% block content %}
     {% block modal %}{% endblock %}
     <div class="container">
-        {% include 'rub-header.html' %}
+        {% if site == 'bochum' %}
+            {% include 'rub-header.html' %}
+        {% elif site == 'dortmund' %}
+            {% include 'tudo-header.html' %}
+        {% endif %}
         {% include 'navbar.html' %}
+        <div id="feedback"><a href="{{ url_for('contact') }}">Feedback</a></div>
         {% block site_content %}{% endblock %}
         {% include 'footer.html' %}
     </div>

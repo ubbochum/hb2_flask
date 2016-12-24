@@ -7,36 +7,94 @@
 {% macro render_multi_field(multifield) %}
 {% if multifield[0] %}
     {% if multifield[0].type == 'FormField' %}
-    <div id="{{ multifield[0].name }}_container" class="multi_enclosure">
-    <div class="col-sm-2 control-label">{{ multifield[0].name|capitalize|rem_form_count|replace('_', ' ') }}</div>
-    <div class="col-sm-6" style="margin: 0 0 12px -10px;;"><a class="btn btn-sm btn-default add" href="#"><i class="fa fa-plus"></i> {{_('Add another')}}</a></div>
+    {% for enclosure in multifield %}
+    {% if enclosure.name|rem_form_count not in form.admin_only %}
+    <div id="{{ enclosure.name }}_container" class="multi_enclosure">
+    <div class="col-sm-2 control-label">{{ enclosure.name|capitalize|rem_form_count|replace('_', ' ') }}</div>
+    <div class="col-sm-6" style="margin: 0 0 12px -10px;;">
+        {% if not loop.last %}
+            <a class="btn btn-sm btn-danger remove" href="#"><i class="fa fa-trash"></i> {{_('Remove this')}}</a>
+        {% else %}
+            <a class="btn btn-sm btn-default add" href="#"><i class="fa fa-plus"></i> {{_('Add another')}}</a>
+        {% endif %}
+    </div>
     <div class="col-sm-4">&nbsp;</div>
     <div class="clearfix"></div>
-    {% for enclosure in multifield %}
         {% for subfield in enclosure %}
             {% if subfield.type != 'CSRFTokenField' %}
                 <div class="form-group">
-                {% if current_user.role != 'admin' %}
+                {% if current_user.role != 'admin' and current_user.role != 'superadmin' %}
                     {% if subfield.name|last_split not in form.admin_only %}
-{#                        <div class="col-sm-2 control-label" id="{{ subfield.name }}">{{ subfield.label }}</div>#}
                         <div class="col-sm-2 control-label">&nbsp;</div>
                         {% if subfield.type != 'BooleanField' %}
-                            <div class="col-sm-6"><span class="subfield_label">{{ subfield.label }}</span><br/>{{ subfield(class='form-control') }}</div>
+                            <div class="col-sm-6">
+                                {% if subfield.type != 'HiddenField' %}
+                                <span class="subfield_label">{{ subfield.label }}</span><br/>
+                                {% endif %}
+                                {% if 'title' in subfield.name %}
+                                    {{ subfield(class='form-control typeahead_title') }}
+                                {% elif '-is_part_of' in subfield.name %}
+                                    {{ subfield(class='form-control typeahead_part_of') }}
+                                {% elif '-has_part' in subfield.name %}
+                                    {{ subfield(class='form-control typeahead_has_part') }}
+                                {% elif '-other_version' in subfield.name %}
+                                    {{ subfield(class='form-control typeahead_other_version') }}
+                                {% elif 'person-' in subfield.name and '-name' in subfield.name %}
+                                    {{ subfield(class='form-control typeahead_pers') }}
+                                {% elif 'corporation-' in subfield.name and '-name' in subfield.name %}
+                                    {{ subfield(class='form-control typeahead_orga') }}
+                                {% elif 'affiliation-' in subfield.name and '-label' in subfield.name %}
+                                    {{ subfield(class='form-control typeahead_orga') }}
+                                {% elif 'group-' in subfield.name and '-label' in subfield.name %}
+                                    {{ subfield(class='form-control typeahead_group') }}
+                                {% elif 'affiliation_context' in subfield.name %}
+                                    {{ subfield(class='form-control typeahead_orga') }}
+                                {% elif 'group_context' in subfield.name %}
+                                    {{ subfield(class='form-control typeahead_group') }}
+                                {% else %}
+                                    {{ subfield(class='form-control') }}
+                                {% endif %}
+                            </div>
                         {% else %}
-                            <div class="col-sm-6"><div class="checkbox"><label><input type="checkbox" id="{{ subfield.name }}">{{ subfield.label }}</label></div></div>
+                            <div class="col-sm-6"><div class="checkbox">{{ subfield }}<span class="subfield_label">{{ subfield.label }}</span></div></div>
                         {% endif %}
                         {% if subfield.description %}<div class="clearfix"></div><div class="col-sm-offset-2"><p class="help-block" style="margin-top: 8px;margin-left:15px;">{{ subfield.description }}</p></div>{% endif %}
                         <div class="col-sm-4">&nbsp;</div>
-{#                        <div class="clearfix"></div>#}
                     {% endif %}
                 {% else %}
                     {% if subfield.name not in form.user_only %}
-{#                        <div class="col-sm-2 control-label" id="{{ subfield.name }}">{{ subfield.label }}</div>#}
                         <div class="col-sm-2 control-label">&nbsp;</div>
                         {% if subfield.type != 'BooleanField' %}
-                            <div class="col-sm-6"><span class="subfield_label">{{ subfield.label }}</span><br/>{{ subfield(class='form-control') }}</div>
+                            <div class="col-sm-6">
+                                {% if subfield.type != 'HiddenField' %}
+                                <span class="subfield_label">{{ subfield.label }}</span><br/>
+                                {% endif %}
+                                {% if '-title' in subfield.name %}
+                                    {{ subfield(class='form-control typeahead_title') }}
+                                {% elif '-is_part_of' in subfield.name %}
+                                    {{ subfield(class='form-control typeahead_part_of') }}
+                                {% elif '-has_part' in subfield.name %}
+                                    {{ subfield(class='form-control typeahead_has_part') }}
+                                {% elif '-other_version' in subfield.name %}
+                                    {{ subfield(class='form-control typeahead_other_version') }}
+                                {% elif 'person-' in subfield.name and '-name' in subfield.name %}
+                                    {{ subfield(class='form-control typeahead_pers') }}
+                                {% elif 'corporation-' in subfield.name and '-name' in subfield.name %}
+                                    {{ subfield(class='form-control typeahead_orga') }}
+                                {% elif 'affiliation-' in subfield.name and '-label' in subfield.name %}
+                                    {{ subfield(class='form-control typeahead_orga') }}
+                                {% elif 'group-' in subfield.name and '-label' in subfield.name %}
+                                    {{ subfield(class='form-control typeahead_group') }}
+                                {% elif '-affiliation_context' in subfield.name %}
+                                    {{ subfield(class='form-control typeahead_orga') }}
+                                {% elif '-group_context' in subfield.name %}
+                                    {{ subfield(class='form-control typeahead_group') }}
+                                {% else %}
+                                    {{ subfield(class='form-control') }}
+                                {% endif %}
+                            </div>
                         {% else %}
-                            <div class="col-sm-6"><div class="checkbox"><label><input type="checkbox" id="{{ subfield.name }}">{{ subfield.label }}</label></div></div>
+                            <div class="col-sm-6"><div class="checkbox">{{ subfield }}<span class="subfield_label">{{ subfield.label }}</span></div></div>
                         {% endif %}
                         {% if subfield.description %}<div class="clearfix"></div><div class="col-sm-offset-2"><p class="help-block" style="margin-top: 8px;margin-left:15px;">{{ subfield.description }}</p></div>{% endif %}
                         <div class="col-sm-4">&nbsp;</div>
@@ -45,25 +103,59 @@
                 </div>
             {% endif %}
         {% endfor %}
-        {#<div class="col-sm-offset-2" style="margin-top: 8px;">
-            <span style="margin-left:15px;text-transform:uppercase;"><a class="btn btn-sm btn-default" href="#" data-field="{{ multifield[0].name }}"><i class="fa fa-plus"></i> {{_('Add another')}}</a></span>
-        </div>#}
+        {#<span style="margin-left:15px;text-transform:uppercase;"><a class="btn btn-sm btn-default" href="#" data-field="{{ multifield[0].name }}"><i class="fa fa-plus"></i> {{_('Add another')}}</a></span>#}
+        </div>
+    {% endif %}
     {% endfor %}
-    </div>
     {% else %}
-        {% for entry in multifield.entries %}<div class="form-group" id="{{ entry.name }}_container">
-{#            <div class="col-sm-2 control-label" id="{{ multifield.name }}">{{ multifield.label }}</div>#}
-            <div class="col-sm-2 control-label">{{ entry.label }}</div>
-            <div class="col-sm-6">{% if entry.flags.required %}{{ entry(class='form-control',required='required') }}{% else %}{{ entry(class='form-control') }}{% endif %}</div>
-            <div class="col-sm-1">
-                {% if loop.last %}
-                    <a class="btn btn-sm btn-default add-atomic" href="#"><i class="fa fa-plus"></i> {{_('Add another')}}</a>
-                {% else %}
-                    <a class="btn btn-sm btn-danger remove" href="#"><i class="fa fa-trash"></i> {{_('Remove this')}}</a>
+        {% for entry in multifield.entries %}
+            {% if entry.name|rem_form_count not in form.admin_only %}
+            <div class="form-group" id="{{ entry.name }}_container">
+                {% if entry.type != 'HiddenField' %}
+                <div class="col-sm-2 control-label">{{ entry.label }}</div>
                 {% endif %}
+                <div class="col-sm-6">
+                    {% if entry.flags.required %}
+                        {% if '-title' in entry.name %}
+                            {{ entry(class='form-control typeahead_title',required='required') }}
+                        {% elif 'person-' in entry.name %}
+                            {{ entry(class='form-control typeahead_pers',required='required') }}
+                        {% elif 'corporation-' in entry.name %}
+                            {{ entry(class='form-control typeahead_orga',required='required') }}
+                        {% elif '-affiliation_context' in entry.name %}
+                            {{ entry(class='form-control typeahead_orga',required='required') }}
+                        {% elif '-group_context' in entry.name %}
+                            {{ entry(class='form-control typeahead_group',required='required') }}
+                        {% else %}
+                            {{ entry(class='form-control',required='required') }}
+                        {% endif %}
+                    {% else %}
+                        {% if '-title' in entry.name %}
+                            {{ entry(class='form-control typeahead_title') }}
+                        {% elif 'person-' in entry.name %}
+                            {{ entry(class='form-control typeahead_pers') }}
+                        {% elif 'corporation-' in entry.name %}
+                            {{ entry(class='form-control typeahead_orga') }}
+                        {% elif '-affiliation_context' in entry.name %}
+                            {{ entry(class='form-control typeahead_orga') }}
+                        {% elif '-group_context' in entry.name %}
+                            {{ entry(class='form-control typeahead_group') }}
+                        {% else %}
+                            {{ entry(class='form-control') }}
+                        {% endif %}
+                    {% endif %}
+                </div>
+                <div class="col-sm-1">
+                    {% if loop.last %}
+                        <a class="btn btn-sm btn-default add-atomic" href="#"><i class="fa fa-plus"></i> {{_('Add another')}}</a>
+                    {% else %}
+                        <a class="btn btn-sm btn-danger remove" href="#"><i class="fa fa-trash"></i> {{_('Remove this')}}</a>
+                    {% endif %}
+                </div>
+                <div class="clearfix"></div>
             </div>
-            <div class="clearfix"></div>
-        </div>{% endfor %}
+            {% endif %}
+        {% endfor %}
     {% endif %}
     {% endif %}
 {% endmacro %}

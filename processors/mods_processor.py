@@ -22,100 +22,186 @@
 
 from lxml import etree
 import uuid
+import datetime
+import logging
 
-def convert(record, owner):
-    csl = {}
-    metadata = {}
+try:
+    import site_secrets as secrets
+except ImportError:
+    import secrets
+
+logging.basicConfig(level=logging.DEBUG,
+                    format='%(asctime)s %(levelname)-4s %(message)s',
+                    datefmt='%a, %d %b %Y %H:%M:%S',
+                    )
+
+
+def mods2csl(record):
+
+    csl_json = []
+
     MODS = 'http://www.loc.gov/mods/v3'
-    MODS_NS = '{%s}' % MODS
     NSDICT = {'m': MODS}
-    theid = str(uuid.uuid4())
-    csl.setdefault('ITEM%s' % theid, {}).setdefault('type', 'book')
-    csl_title = ''
-    metadata.setdefault('id', theid)
-    metadata.setdefault('owner', owner)
-    #logging.info(etree.tostring(record))
-    if record.xpath('//m:mods/m:titleInfo/m:nonSort', namespaces=NSDICT):
-        metadata.setdefault('nonSort', record.xpath('//m:mods/m:titleInfo/m:nonSort', namespaces=NSDICT)[0].text)
-        csl_title = metadata.get('nonSort') + ' '
-    metadata.setdefault('title', record.xpath('//m:mods/m:titleInfo/m:title', namespaces=NSDICT)[0].text)
-    csl_title += '%s' % metadata.get('title')
-    if record.xpath('//m:mods/m:titleInfo/m:subTitle', namespaces=NSDICT):
-        metadata.setdefault('subtitle', record.xpath('//m:mods/m:titleInfo/m:subTitle', namespaces=NSDICT)[0].text)
-        csl_title += ' : %s' % metadata.get('subtitle')
-    csl.setdefault('ITEM%s' % theid, {}).setdefault('title', csl_title)
-    names = []
-    if record.xpath('//m:mods/m:name[@type="personal"]', namespaces=NSDICT):
-        for name in record.xpath('//m:mods/m:name[@type="personal"]', namespaces=NSDICT):
+
+    for mods in record.xpath('//m:mods', namespaces=NSDICT):
+
+        csl = {}
+
+        theid = str(uuid.uuid4())
+        if mods.xpath('./m:recordInfo/m:recordIdentifier', namespaces=NSDICT):
+            theid = mods.xpath('./m:recordInfo/m:recordIdentifier', namespaces=NSDICT)[0].text
+
+        csl.setdefault('type', 'book')
+        csl_title = ''
+
+        csl.setdefault('id', theid)
+
+        # logging.info(etree.tostring(record))
+
+        if mods.xpath('./m:titleInfo/m:nonSort', namespaces=NSDICT):
+            csl_title = mods.xpath('./m:titleInfo/m:nonSort', namespaces=NSDICT)[0].text + ' '
+        csl_title += '%s' % mods.xpath('./m:titleInfo/m:title', namespaces=NSDICT)[0].text
+        if mods.xpath('./m:titleInfo/m:subTitle', namespaces=NSDICT):
+            csl_title += ' : %s' % mods.xpath('./m:titleInfo/m:subTitle', namespaces=NSDICT)[0].text
+        csl.setdefault('title', csl_title)
+
+        if mods.xpath('./m:name[@type="personal"]', namespaces=NSDICT):
+            for name in mods.xpath('./m:name[@type="personal"]', namespaces=NSDICT):
+                csl_tmp = {}
+                if name.xpath('./m:namePart[@type="family"]', namespaces=NSDICT):
+                    csl_tmp.setdefault('family', name.xpath('./m:namePart[@type="family"]', namespaces=NSDICT)[0].text)
+                if name.xpath('./m:namePart[@type="given"]', namespaces=NSDICT):
+                    csl_tmp.setdefault('given', name.xpath('./m:namePart[@type="given"]', namespaces=NSDICT)[0].text)
+
+                role = ''
+                if name.xpath('./m:role/m.roleTerm[@authority="marcrelator"]', namespaces=NSDICT):
+                    role = name.xpath('./m:role/m.roleTerm[@authority="marcrelator"]', namespaces=NSDICT)[0].text
+
+                if csl_tmp.get('family'):
+                    if role == 'edt':
+                        csl.setdefault('editor', []).append(csl_tmp)
+                    else:
+                        csl.setdefault('author', []).append(csl_tmp)
+
+        if mods.xpath('./m:originInfo/m:place/m:placeTerm[@type="text"]', namespaces=NSDICT):
+            csl.setdefault('publisher-place', mods.xpath('./m:originInfo/m:place/m:placeTerm[@type="text"]', namespaces=NSDICT)[0].text)
+        if mods.xpath('./m:originInfo/m:publisher', namespaces=NSDICT):
+            csl.setdefault('publisher', mods.xpath('./m:originInfo/m:publisher', namespaces=NSDICT)[0].text)
+        if mods.xpath('./m:originInfo/m:dateIssued', namespaces=NSDICT):
+            year = mods.xpath('./m:originInfo/m:dateIssued', namespaces=NSDICT)[0].text.replace('[', '').replace(']', '').replace('c', '')
+            if type(year) == int:
+                csl.setdefault('issued', {}).setdefault('date-parts', [[year]])
+
+        if mods.xpath('./m:language/m:languageTerm', namespaces=NSDICT):
+            csl.setdefault('language', mods.xpath('./m:language/m:languageTerm', namespaces=NSDICT)[0].text)
+
+        # if mods.xpath('./m:physicalDescription/m:extent', namespaces=NSDICT):
+            # csl.setdefault('page', mods.xpath('./m:physicalDescription/m:extent', namespaces=NSDICT)[0].text)
+
+        if mods.xpath('./m:abstract', namespaces=NSDICT):
+            csl.setdefault('abstract', mods.xpath('./m:abstract', namespaces=NSDICT)[0].text)
+
+        csl_json.append(csl)
+
+    return {'items': csl_json}
+
+
+def mods2wtfjson(ppn=''):
+
+    wtf = {}
+
+    record = etree.parse(
+        'http://sru.gbv.de/gvk?version=1.1&operation=searchRetrieve&query=%s=%s&maximumRecords=10&recordSchema=mods'
+        % ('pica.ppn', ppn))
+    # logging.info(etree.tostring(record))
+
+    MODS = 'http://www.loc.gov/mods/v3'
+    NSDICT = {'m': MODS}
+
+    mods = record.xpath('//m:mods', namespaces=NSDICT)[0]
+
+    wtf.setdefault('id', str(uuid.uuid4()))
+    timestamp = str(datetime.datetime.now())
+    wtf.setdefault('created', timestamp)
+    wtf.setdefault('changed', timestamp)
+    wtf.setdefault('editorial_status', 'new')
+
+    wtf.setdefault('pubtype', 'Monograph')
+
+    wtf.setdefault('title', mods.xpath('./m:titleInfo/m:title', namespaces=NSDICT)[0].text)
+    if mods.xpath('./m:titleInfo/m:subTitle', namespaces=NSDICT):
+        wtf.setdefault('subtitle', mods.xpath('./m:titleInfo/m:subTitle', namespaces=NSDICT)[0].text)
+
+    persons = []
+    if mods.xpath('./m:name[@type="personal"]', namespaces=NSDICT):
+        for name in mods.xpath('./m:name[@type="personal"]', namespaces=NSDICT):
             tmp = {}
-            csl_tmp = {}
-            if name.get('valueURI'):
-                tmp.setdefault('uri', name.get('valueURI'))
-            tmp.setdefault('family', name.xpath('./m:namePart[@type="family"]', namespaces=NSDICT)[0].text)
-            csl_tmp.setdefault('family', tmp.get('family'))
-            tmp.setdefault('given', name.xpath('./m:namePart[@type="given"]', namespaces=NSDICT)[0].text)
-            csl_tmp.setdefault('given', tmp.get('given'))
-            names.append(tmp)
-            csl.setdefault('ITEM%s' % theid, {}).setdefault('author', []).append(csl_tmp)
-    metadata.setdefault('name', names)
-    if record.xpath('//m:mods/m:originInfo/m:place/m:placeTerm[@type="text"]', namespaces=NSDICT):
-        metadata.setdefault('place', record.xpath('//m:mods/m:originInfo/m:place/m:placeTerm[@type="text"]', namespaces=NSDICT)[0].text)
-        csl.setdefault('ITEM%s' % theid, {}).setdefault('publisher-place', metadata.get('place'))
-    if record.xpath('//m:mods/m:originInfo/m:publisher', namespaces=NSDICT):
-        metadata.setdefault('publisher', record.xpath('//m:mods/m:originInfo/m:publisher', namespaces=NSDICT)[0].text)
-        csl.setdefault('ITEM%s' % theid, {}).setdefault('publisher', metadata.get('publisher'))
-    if record.xpath('//m:mods/m:originInfo/m:dateIssued', namespaces=NSDICT):
-        metadata.setdefault('issued', record.xpath('//m:mods/m:originInfo/m:dateIssued', namespaces=NSDICT)[0].text)
-        csl.setdefault('ITEM%s' % theid, {}).setdefault('issued', {}).setdefault('date-parts', [[metadata.get('issued')]])
-    if record.xpath('//m:mods/m:language/m:languageTerm', namespaces=NSDICT):
-        metadata.setdefault('language', record.xpath('//m:mods/m:language/m:languageTerm', namespaces=NSDICT)[0].text)
-        csl.setdefault('ITEM%s' % theid, {}).setdefault('language', record.xpath('//m:mods/m:language/m:languageTerm', namespaces=NSDICT)[0].text)
-    if record.xpath('//m:mods/m:physicalDescription/m:form', namespaces=NSDICT):
-        metadata.setdefault('form', record.xpath('//m:mods/m:physicalDescription/m:form', namespaces=NSDICT)[0].text)
-    if record.xpath('//m:mods/m:physicalDescription/m:extent', namespaces=NSDICT):
-        metadata.setdefault('pages', record.xpath('//m:mods/m:physicalDescription/m:extent', namespaces=NSDICT)[0].text)
-        csl.setdefault('ITEM%s' % theid, {}).setdefault('page', record.xpath('//m:mods/m:physicalDescription/m:extent', namespaces=NSDICT)[0].text)
-    if record.xpath('//m:mods/m:abstract', namespaces=NSDICT):
-        metadata.setdefault('abstract', record.xpath('//m:mods/m:abstract', namespaces=NSDICT)[0].text)
-        csl.setdefault('ITEM%s' % theid, {}).setdefault('abstract', record.xpath('//m:mods/m:abstract', namespaces=NSDICT)[0].text)
-    if record.xpath('//m:mods/m:note', namespaces=NSDICT):
-        notes = record.xpath('//m:mods/m:note', namespaces=NSDICT)
+            if name.get('authority') and name.get('authority') == 'gnd' and name.get('valueURI'):
+                tmp.setdefault('gnd', name.get('valueURI').split('gnd/')[1])
+            tmp.setdefault('name', '%s, %s' % (name.xpath('./m:namePart[@type="family"]', namespaces=NSDICT)[0].text, name.xpath('./m:namePart[@type="given"]', namespaces=NSDICT)[0].text))
+            persons.append(tmp)
+    wtf.setdefault('person', persons)
+
+    if mods.xpath('./m:originInfo/m:place/m:placeTerm[@type="text"]', namespaces=NSDICT):
+        wtf.setdefault('place', mods.xpath('./m:originInfo/m:place/m:placeTerm[@type="text"]', namespaces=NSDICT)[0].text)
+    if mods.xpath('./m:originInfo/m:publisher', namespaces=NSDICT):
+        wtf.setdefault('publisher', mods.xpath('./m:originInfo/m:publisher', namespaces=NSDICT)[0].text)
+    if mods.xpath('./m:originInfo/m:dateIssued', namespaces=NSDICT):
+        year = mods.xpath('./m:originInfo/m:dateIssued', namespaces=NSDICT)[0].text.replace('[', '').replace(']', '').replace('c', '')
+        if type(year) == int:
+            wtf.setdefault('issued', year)
+
+    if mods.xpath('./m:language/m:languageTerm', namespaces=NSDICT):
+        wtf.setdefault('language', mods.xpath('./m:language/m:languageTerm', namespaces=NSDICT)[0].text)
+
+    if mods.xpath('./m:physicalDescription/m:extent', namespaces=NSDICT):
+        wtf.setdefault('pages', mods.xpath('./m:physicalDescription/m:extent', namespaces=NSDICT)[0].text)
+
+    if mods.xpath('./m:abstract', namespaces=NSDICT):
+        abstract = {}
+        abstract.setdefault('content', mods.xpath('./m:abstract', namespaces=NSDICT)[0].text)
+        abstract.setdefault('shareable', True)
+        wtf.setdefault('abstract', []).append(abstract)
+
+    if mods.xpath('./m:note', namespaces=NSDICT):
+        notes = mods.xpath('./m:note', namespaces=NSDICT)
         for note in notes:
-            metadata.setdefault('note', []).append(note.text)
-    if record.xpath('//m:mods/m:subject', namespaces=NSDICT):
-        subj_list = []
-        subjects = record.xpath('//m:mods/m:subject', namespaces=NSDICT)
+            wtf.setdefault('note', []).append(note.text)
+
+    if mods.xpath('./m:subject', namespaces=NSDICT):
+        keywords = []
+        subjects = mods.xpath('./m:subject', namespaces=NSDICT)
         for subject in subjects:
-            tmp = {}
-            if subject.get('authority'):
-                tmp.setdefault('authority', subject.get('authority'))
-            for cat in subject:
-                tmp.setdefault(cat.tag.replace('{http://www.loc.gov/mods/v3}', ''), []).append(cat.text)
-            metadata.setdefault('subject', []).append(tmp)
-    if record.xpath('//m:mods/m:classification', namespaces=NSDICT):
-        classifications = record.xpath('//m:mods/m:classification', namespaces=NSDICT)
+            for topic in subject:
+                keywords.append(topic.text)
+        wtf.setdefault('keyword', keywords)
+
+    if mods.xpath('./m:classification', namespaces=NSDICT):
+        classifications = mods.xpath('./m:classification', namespaces=NSDICT)
         for classification in classifications:
             tmp = {}
-            if classification.get('authority'):
-                tmp.setdefault('authority', classification.get('authority'))
-            tmp.setdefault('label', classification.text)
-            metadata.setdefault('classification', []).append(tmp)
-    if record.xpath('//m:mods/m:relatedItem', namespaces=NSDICT):
-        items = record.xpath('//m:mods/m:relatedItem', namespaces=NSDICT)
-        for item in items:
-            tmp = {}
-            for subitem in item:
-                if subitem.tag == '{http://www.loc.gov/mods/v3}titleInfo':
-                    tmp.setdefault(item.get('type') + '_title', subitem[0].text)
-            metadata.setdefault('relatedItem', []).append(tmp)
-    if record.xpath('//m:mods/m:identifier[@type]', namespaces=NSDICT):
-        ids = record.xpath('//m:mods/m:identifier[@type]', namespaces=NSDICT)
+            if classification.get('authority') and classification.get('authority') == 'ddc':
+                tmp.setdefault('id', classification.text)
+                tmp.setdefault('label', '')
+                wtf.setdefault('ddc_subject', []).append(tmp)
+
+    if mods.xpath('./m:identifier[@type]', namespaces=NSDICT):
+        ids = mods.xpath('./m:identifier[@type]', namespaces=NSDICT)
         for myid in ids:
-            metadata.setdefault(myid.get('type'), []).append(myid.text)
-    if record.xpath('//m:mods/m:tableOfContents', namespaces=NSDICT):
-        tocs = record.xpath('//m:mods/m:tableOfContents', namespaces=NSDICT)
-        for toc in tocs:
-            metadata.setdefault(toc, []).append(toc.text)
-    #csl_wrapper.setdefault('items', csl)
-    #citation = requests.post('https://api.ub.rub.de/citeproc/mla/html/de-DE', json.dumps(csl_wrapper))
-    return metadata
+            wtf.setdefault(str(myid.get('type')).upper(), []).append(myid.text)
+
+    if mods.xpath('./m:relatedItem', namespaces=NSDICT):
+        items = mods.xpath('./m:relatedItem', namespaces=NSDICT)
+        for item in items:
+            if item.get('type') and (item.get('type') == 'series' or item.get('type') == 'host'):
+                tmp = {}
+                for subitem in item:
+                    if subitem.tag == '{http://www.loc.gov/mods/v3}titleInfo':
+                        tmp.setdefault('is_part_of', subitem[0].text)
+                        tmp.setdefault('volume', '')
+                wtf.setdefault('is_part_of', []).append(tmp)
+
+    # logging.debug('wtf_json: %s' % wtf)
+
+    return wtf
+
