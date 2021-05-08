@@ -3,7 +3,7 @@ bibtexparser==0.6.2
 blinker==1.4
 datadiff==2.0.0
 dominate==2.1.17
-eventlet==0.18.4
+eventlet==0.31.0
 Flask==0.10.1
 Flask-And-Redis==0.6
 Flask-Babel==0.9
